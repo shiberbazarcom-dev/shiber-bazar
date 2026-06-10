@@ -1,17 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { expandQuery, buildOrFilter } from '../lib/banglish'
 
-/* ── Public: search products across all shops ── */
+/* ── Public: search products across all shops (Banglish + Bengali) ── */
 export function useSearchProducts(query) {
   return useQuery({
     queryKey: ['products-search', query],
     queryFn: async () => {
       if (!query?.trim()) return []
+      const terms = expandQuery(query)
+      const orFilter = buildOrFilter(terms, ['name', 'description'])
       const { data, error } = await supabase
         .from('products')
         .select('*, shops(id, shop_name, slug, phone, whatsapp, logo_url)')
         .eq('is_active', true)
-        .ilike('name', `%${query.trim()}%`)
+        .or(orFilter)
         .limit(40)
       if (error) throw error
       return data || []

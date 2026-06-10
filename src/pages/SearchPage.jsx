@@ -5,6 +5,7 @@ import { useSearchProducts } from '../hooks/useProducts'
 import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import { whatsappUrl } from '../lib/utils'
+import { getBengaliMatch } from '../lib/banglish'
 
 const BLUE = '#2563EB'
 const GREEN = '#16a34a'
@@ -119,6 +120,9 @@ export default function SearchPage() {
   const totalShops    = shops.length
   const totalProducts = products.length
 
+  // Banglish match hint (e.g. user typed "murgi" → matched "মুরগি")
+  const bengaliMatch = query ? getBengaliMatch(query) : null
+
   return (
     <div>
       {/* ── Search hero ── */}
@@ -130,7 +134,7 @@ export default function SearchPage() {
               <input
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
-                placeholder={tab === 'shops' ? 'দোকানের নাম বা ক্যাটাগরি লিখুন...' : 'পণ্যের নাম লিখুন...'}
+                placeholder={tab === 'shops' ? 'দোকান খুঁজুন — বাংলা বা Banglish (murgi, chal, alu)...' : 'পণ্য খুঁজুন — বাংলা বা Banglish (rice, kapor, dim)...'}
                 autoFocus
                 className="flex-1 px-4 py-3 text-gray-700 placeholder:text-gray-400 text-sm focus:outline-none"
               />
@@ -142,6 +146,10 @@ export default function SearchPage() {
                 🔍
               </button>
             </div>
+            {/* Banglish support hint */}
+            <p className="text-center text-white/70 text-xs mt-2">
+              💡 Banglish সাপোর্ট: <span className="text-white font-medium">murgi, chal, alu, sabji</span> — সরাসরি লিখুন
+            </p>
 
             {/* Tabs */}
             <div className="flex gap-2 mt-4 justify-center">
@@ -171,23 +179,46 @@ export default function SearchPage() {
       {/* ── Results ── */}
       <div className="container-app py-6">
         {query && (
-          <p className="text-sm text-gray-500 mb-5">
-            "<span className="font-semibold text-gray-800">{query}</span>" — {' '}
-            {tab === 'shops'
-              ? `${isLoading ? '...' : totalShops}টি দোকান`
-              : `${isLoading ? '...' : totalProducts}টি পণ্য`
-            } পাওয়া গেছে
-          </p>
+          <div className="flex items-center gap-2 flex-wrap mb-5">
+            <p className="text-sm text-gray-500">
+              "<span className="font-semibold text-gray-800">{query}</span>"
+              {bengaliMatch && (
+                <> → <span className="font-semibold text-blue-700">{bengaliMatch}</span></>
+              )}
+              {' — '}
+              {tab === 'shops'
+                ? `${isLoading ? '...' : totalShops}টি দোকান`
+                : `${isLoading ? '...' : totalProducts}টি পণ্য`
+              } পাওয়া গেছে
+            </p>
+            {bengaliMatch && (
+              <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                🔤 Banglish → বাংলা
+              </span>
+            )}
+          </div>
         )}
 
         {/* No query state */}
         {!query && (
-          <div className="text-center py-20">
+          <div className="text-center py-16">
             <p className="text-5xl mb-4">{tab === 'shops' ? '🏪' : '📦'}</p>
-            <p className="text-gray-500 text-base font-medium">
+            <p className="text-gray-500 text-base font-medium mb-3">
               {tab === 'shops' ? 'দোকান খুঁজতে নাম বা বিভাগ লিখুন' : 'পণ্যের নাম লিখুন'}
             </p>
-            <p className="text-gray-400 text-sm mt-1">যেকোনো ভাষায় লিখতে পারেন</p>
+            {/* Banglish example chips */}
+            <div className="flex flex-wrap gap-2 justify-center max-w-sm mx-auto">
+              {(tab === 'shops'
+                ? ['মুদি দোকান', 'pharmacy', 'kapor', 'jewellery', 'salon']
+                : ['chal', 'murgi', 'alu', 'dim', 'sabji', 'tel']
+              ).map(ex => (
+                <button key={ex} onClick={() => setInputVal(ex)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 transition-all">
+                  {ex}
+                </button>
+              ))}
+            </div>
+            <p className="text-gray-400 text-xs mt-3">বাংলা ও Banglish — দুটোই চলবে</p>
           </div>
         )}
 

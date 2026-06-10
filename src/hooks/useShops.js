@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { expandQuery, buildOrFilter } from '../lib/banglish'
 
 const SHOP_FIELDS = '*, categories(id,name,icon,slug), profiles(full_name,avatar_url,phone)'
 const PAGE_SIZE   = 12
@@ -18,7 +19,10 @@ export function useShops({ categoryId, search, sortBy = 'newest', featured } = {
 
       if (categoryId) q = q.eq('category_id', categoryId)
       if (featured)   q = q.eq('is_featured', true)
-      if (search)     q = q.ilike('shop_name', `%${search}%`)
+      if (search) {
+        const terms = expandQuery(search)
+        q = q.or(buildOrFilter(terms, ['shop_name', 'description']))
+      }
 
       if (sortBy === 'newest')     q = q.order('created_at', { ascending: false })
       if (sortBy === 'rating')     q = q.order('avg_rating', { ascending: false })
@@ -114,29 +118,30 @@ export function useGlobalSearch(query) {
       if (!query?.trim()) return { shops: [], products: [], categories: [] }
       
       const searchTerm = query.trim()
-      
+      const terms = expandQuery(searchTerm)
+
       const [shopsRes, productsRes, categoriesRes] = await Promise.all([
-        // Search shops
+        // Search shops (name + description)
         supabase
           .from('shops')
           .select('id, shop_name, slug, logo, address, avg_rating')
           .eq('status', 'approved')
           .eq('is_active', true)
-          .ilike('shop_name', `%${searchTerm}%`)
+          .or(buildOrFilter(terms, ['shop_name', 'description']))
           .limit(5),
-        // Search products
+        // Search products (name + description)
         supabase
           .from('products')
           .select('id, name, price, image_url, shop_id, shops(id, shop_name, slug)')
           .eq('is_active', true)
-          .ilike('name', `%${searchTerm}%`)
+          .or(buildOrFilter(terms, ['name', 'description']))
           .limit(5),
-        // Search categories
+        // Search categories (name)
         supabase
           .from('categories')
           .select('id, name, slug, icon')
           .eq('is_active', true)
-          .ilike('name', `%${searchTerm}%`)
+          .or(buildOrFilter(terms, ['name']))
           .limit(5),
       ])
 
