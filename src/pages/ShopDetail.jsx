@@ -335,9 +335,10 @@ export default function ShopDetail() {
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{shop.shop_name}</h1>
                 {shop.verification_status === 'verified' && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full flex-shrink-0">
-                    ✅ যাচাইকৃত
-                  </span>
+                  <svg title="যাচাইকৃত" className="flex-shrink-0" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="10" fill="#2563EB"/>
+                    <path d="M6 10.5l2.5 2.5 5.5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 )}
                 {shop.is_featured && (
                   <span className="text-xs font-bold text-white px-2 py-0.5 rounded-full flex-shrink-0"
@@ -408,14 +409,10 @@ export default function ShopDetail() {
           </div>
 
           {/* ── Stats strip ── */}
-          <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100">
             <div className="text-center">
               <p className="text-lg sm:text-xl font-bold text-gray-900">{products.length}</p>
               <p className="text-xs text-gray-500">পণ্য</p>
-            </div>
-            <div className="text-center border-l border-gray-100">
-              <p className="text-lg sm:text-xl font-bold text-gray-900">{(shop.view_count || 0).toLocaleString('bn-BD')}</p>
-              <p className="text-xs text-gray-500">ভিজিট</p>
             </div>
             <div className="text-center border-l border-gray-100">
               <p className="text-lg sm:text-xl font-bold text-gray-900">{shop.review_count || 0}</p>
