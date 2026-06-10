@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input, Textarea, Select } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Upload, ArrowLeft, ArrowRight, CheckCircle, Store, Phone, Image, Clock } from 'lucide-react'
+// @ts-ignore
+import { getTemplateProducts } from '@/data/categoryProductTemplates'
 
 // @ts-ignore
 const useAuthHook = useAuth
@@ -198,8 +201,27 @@ export default function AddShop() {
       if (openingHours.trim())  payload.opening_hours     = openingHours.trim()
       if (deliveryAvailable)    payload.delivery_available = true
       if (tags.trim())          payload.tags              = tags.split(',').map(t => t.trim()).filter(Boolean)
-      const { error } = await supabase.from('shops').insert(payload)
+      const { data: shopData, error } = await supabase.from('shops').insert(payload).select('id').single()
       if (error) throw error
+
+      // Auto-add template products for the selected category
+      const categoryName = categories.find((c: any) => c.id === categoryId)?.name || ''
+      const templates = getTemplateProducts(categoryName)
+      if (templates.length > 0 && shopData?.id) {
+        const products = templates.map((t: any) => ({
+          shop_id: shopData.id,
+          name: t.name,
+          price: t.price,
+          stock: t.stock,
+          is_active: true,
+          is_featured: false,
+        }))
+        const { error: prodError } = await supabase.from('products').insert(products)
+        if (!prodError) {
+          toast.success(`আপনার দোকানে ${templates.length}টি পণ্য স্বয়ংক্রিয়ভাবে যোগ হয়েছে! 🎉`)
+        }
+      }
+
       navigate('/dashboard/shops', { state: { success: true } })
     } catch (err: any) {
       setErrors({ submit: err.message })
