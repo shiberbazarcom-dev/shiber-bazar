@@ -35,6 +35,7 @@ const Favorites         = lazy(() => import('./pages/dashboard/Favorites'))
 const ShopOrders        = lazy(() => import('./pages/dashboard/ShopOrders'))
 const Products          = lazy(() => import('./pages/dashboard/Products'))
 const Profile           = lazy(() => import('./pages/dashboard/Profile'))
+const QRCodePage        = lazy(() => import('./pages/dashboard/QRCode'))
 
 /* ── Super Admin / Market Manager ── */
 const AdminDashboard   = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -168,6 +169,11 @@ export default function App() {
               <Route path="products" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
                   <Products />
+                </ProtectedRoute>
+              } />
+              <Route path="qr-code" element={
+                <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
+                  <QRCodePage />
                 </ProtectedRoute>
               } />
             </Route>

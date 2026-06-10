@@ -189,6 +189,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/add-shop',  icon: '➕', label: 'নতুন দোকান' },
     { to: '/dashboard/products',  icon: '🛍️', label: 'পণ্য আপলোড' },
     { to: '/dashboard/orders',    icon: '📦', label: 'অর্ডার' },       // ← badge here
+    { to: '/dashboard/qr-code',   icon: '🔲', label: 'QR কোড' },
     { to: '/dashboard/favorites', icon: '❤️', label: 'পছন্দের দোকান' },
     { to: '/dashboard/profile',   icon: '👤', label: 'প্রোফাইল' },
   ]
