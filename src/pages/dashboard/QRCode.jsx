@@ -3,7 +3,6 @@ import { useMyShops } from '../../hooks/useShops'
 
 const SITE_URL = 'https://shiber-bazar.vercel.app'
 const BLUE = '#2563EB'
-const GREEN = '#16a34a'
 
 function qrUrl(url, size = 300) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&color=000000&bgcolor=ffffff&margin=10&qzone=1&format=png`
@@ -12,7 +11,6 @@ function qrUrl(url, size = 300) {
 export default function QRCodePage() {
   const { data: shops = [], isLoading } = useMyShops()
   const [selectedIdx, setSelectedIdx] = useState(0)
-  const [downloading, setDownloading] = useState(false)
   const [posterDownloading, setPosterDownloading] = useState(false)
   const canvasRef = useRef(null)
 
@@ -20,25 +18,6 @@ export default function QRCodePage() {
   const shopUrl = shop
     ? `${SITE_URL}/shop/${shop.slug || shop.id}`
     : ''
-
-  /* ── Download just the QR image ── */
-  async function downloadQR() {
-    if (!shop) return
-    setDownloading(true)
-    try {
-      const resp = await fetch(qrUrl(shopUrl, 600))
-      const blob = await resp.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = `${shop.shop_name}-qr.png`
-      a.click()
-      URL.revokeObjectURL(a.href)
-    } catch {
-      alert('ডাউনলোড করতে সমস্যা হয়েছে।')
-    } finally {
-      setDownloading(false)
-    }
-  }
 
   /* ── Generate + download poster via Canvas ── */
   async function downloadPoster() {
@@ -75,7 +54,7 @@ export default function QRCodePage() {
       ctx.fillStyle = '#ffffff'
       ctx.textAlign = 'center'
       ctx.font = 'bold 38px sans-serif'
-      ctx.fillText('দোকান লিংক', W / 2, 80)
+      ctx.fillText('শিবের বাজার', W / 2, 80)
       ctx.font = '20px sans-serif'
       ctx.fillStyle = 'rgba(255,255,255,0.88)'
       ctx.fillText('আপনার দোকান এখন অনলাইনে', W / 2, 115)
@@ -275,31 +254,18 @@ export default function QRCodePage() {
             {shop.address && <p className="text-xs text-gray-400 mt-0.5">📍 {shop.address}</p>}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <button
-              onClick={downloadQR}
-              disabled={downloading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border-2 border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/40 transition-all disabled:opacity-60">
-              {downloading
-                ? <span className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              }
-              QR কোড ডাউনলোড করুন
-            </button>
-
-            <button
-              onClick={downloadPoster}
-              disabled={posterDownloading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-              style={{ background: `linear-gradient(135deg, ${BLUE}, #1d4ed8)` }}>
-              {posterDownloading
-                ? <span className="w-4 h-4 border-2 border-blue-200 border-t-white rounded-full animate-spin" />
-                : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              }
-              পোস্টার ডাউনলোড করুন
-            </button>
-          </div>
+          {/* Action button */}
+          <button
+            onClick={downloadPoster}
+            disabled={posterDownloading}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base text-white transition-all disabled:opacity-60 hover:opacity-90 hover:shadow-lg"
+            style={{ background: `linear-gradient(135deg, ${BLUE}, #1d4ed8)` }}>
+            {posterDownloading
+              ? <span className="w-5 h-5 border-2 border-blue-200 border-t-white rounded-full animate-spin" />
+              : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            }
+            পোস্টার ডাউনলোড করুন
+          </button>
         </div>
       )}
 
@@ -320,30 +286,6 @@ export default function QRCodePage() {
           </div>
         </div>
       </div>
-
-      {/* Shop URL copy */}
-      {shop && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">দোকানের লিংক</p>
-          <div className="flex items-center gap-2">
-            <input
-              readOnly
-              value={shopUrl}
-              className="flex-1 text-sm text-gray-700 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-200 min-w-0"
-            />
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(shopUrl)
-                  .then(() => alert('লিংক কপি হয়েছে!'))
-              }}
-              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
-              style={{ background: GREEN }}>
-              কপি
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">এই লিংকটি শেয়ার করুন — সরাসরি আপনার দোকানে নিয়ে যাবে</p>
-        </div>
-      )}
 
       {/* Hidden canvas for poster generation */}
       <canvas ref={canvasRef} className="hidden" />
