@@ -46,10 +46,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-base"
-                 style={{ background: '#2563EB' }}>
-              শ
-            </div>
+            <img src="/logo.png" alt="শিবের বাজার" className="h-9 w-auto object-contain" />
             <div className="hidden sm:block">
               <p className="font-bold text-gray-800 text-base leading-tight">শিবের বাজার</p>
               <p className="text-xs text-gray-400 leading-tight">দোকান ডিরেক্টরি</p>
