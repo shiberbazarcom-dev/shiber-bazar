@@ -18,6 +18,7 @@ const ProductDetails   = lazy(() => import('./pages/ProductDetails'))
 const ContactPage      = lazy(() => import('./pages/ContactPage'))
 const Login            = lazy(() => import('./pages/auth/Login'))
 const Register         = lazy(() => import('./pages/auth/Register'))
+const AuthCallback     = lazy(() => import('./pages/auth/AuthCallback'))
 
 /* Order & tracking (public, no auth) */
 const OrderPage        = lazy(() => import('./pages/OrderPage'))
@@ -121,6 +122,7 @@ export default function App() {
             <Route path="/search"         element={<PublicLayout><SearchPage /></PublicLayout>} />
             <Route path="/login"          element={<PublicLayout><Login /></PublicLayout>} />
             <Route path="/register"       element={<PublicLayout><Register /></PublicLayout>} />
+            <Route path="/auth/callback"  element={<AuthCallback />} />
             <Route path="/order"          element={<PublicLayout><OrderPage /></PublicLayout>} />
             <Route path="/order/:shopId"  element={<PublicLayout><OrderPage /></PublicLayout>} />
             <Route path="/track-order"    element={<PublicLayout><TrackOrder /></PublicLayout>} />
