@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '../../lib/utils'
 import { useOrderStats, useShopOrderStats } from '../../hooks/useOrders'
 import { supabase } from '../../lib/supabase'
@@ -103,6 +103,30 @@ function ForwardedOrderToast({ t, order }) {
   )
 }
 
+/* ── Admin: new shop toast ── */
+function NewShopToast({ t, shop }) {
+  return (
+    <div className={cn(
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full',
+      t.visible ? 'opacity-100' : 'opacity-0'
+    )}>
+      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">🏪</div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-800 text-sm">নতুন দোকান আবেদন!</p>
+        <p className="text-xs text-gray-700 font-medium mt-0.5 truncate">{shop.shop_name}</p>
+        <p className="text-xs text-gray-400 truncate">{shop.address || 'ঠিকানা নেই'}</p>
+        <a href="/admin/shops"
+          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
+          onClick={() => toast.dismiss(t.id)}>
+          দোকান দেখুন →
+        </a>
+      </div>
+      <button onClick={() => toast.dismiss(t.id)}
+        className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0">✕</button>
+    </div>
+  )
+}
+
 export default function DashboardLayout({ type = 'user' }) {
   const { user, profile, isAdmin, loading, role } = useAuth()
   const navigate = useNavigate()
@@ -117,6 +141,20 @@ export default function DashboardLayout({ type = 'user' }) {
 
   const adminBadge     = type === 'admin'               ? (adminStats?.pending    || 0) : 0
   const ownerBadge     = type !== 'admin' && isShopOwner ? (shopOwnerStats?.confirmed || 0) : 0
+
+  /* ── Pending shops count (admin only) ── */
+  const { data: pendingShopsCount = 0 } = useQuery({
+    queryKey: ['pending-shops-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('shops')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending_approval')
+      return count || 0
+    },
+    enabled: type === 'admin',
+    refetchInterval: 60000,
+  })
 
   /* ── Shop IDs ref (for filtering owner realtime events) ── */
   const shopIdsRef = useRef([])
@@ -140,6 +178,25 @@ export default function DashboardLayout({ type = 'user' }) {
           playBeep(880, 660)
           qc.invalidateQueries({ queryKey: ['order-stats'] })
           qc.invalidateQueries({ queryKey: ['admin-orders'] })
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [type, user]) // eslint-disable-line
+
+  /* ── Realtime: admin listens for new shop submissions (INSERT) ── */
+  useEffect(() => {
+    if (type !== 'admin' || !user) return
+    const ch = supabase
+      .channel('admin-new-shops')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shops' },
+        (payload) => {
+          toast.custom(t => <NewShopToast t={t} shop={payload.new} />, {
+            duration: 12000, position: 'top-right',
+          })
+          playBeep(520, 780)
+          qc.invalidateQueries({ queryKey: ['pending-shops-count'] })
+          qc.invalidateQueries({ queryKey: ['admin-shops'] })
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
@@ -223,6 +280,7 @@ export default function DashboardLayout({ type = 'user' }) {
   /* badge for each link */
   const getBadge = (to) => {
     if (to === '/admin/orders')     return adminBadge
+    if (to === '/admin/shops')      return pendingShopsCount
     if (to === '/dashboard/orders') return ownerBadge
     return 0
   }

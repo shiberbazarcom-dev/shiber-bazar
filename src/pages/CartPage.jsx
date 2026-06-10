@@ -152,14 +152,20 @@ export default function CartPage() {
                   <p className="text-xs text-gray-400 flex-shrink-0">{shopItems.length}টি পণ্য — ৳{totalForShop.toLocaleString('bn-BD')}</p>
                 </div>
                 <div className="flex gap-2">
-                  {/* Website order */}
+                  {/* Website order — passes all shop items as state */}
                   {shop?.id && (
-                    <Link
-                      to={`/order/${shop.id}?shop=${encodeURIComponent(shopName)}&items=${encodeURIComponent(shopItems.map(i => `${i.name} ×${i.qty||1}`).join(', '))}`}
+                    <button
+                      onClick={() => navigate(`/order/${shop.id}`, {
+                        state: {
+                          shopName,
+                          cartItems: shopItems,
+                          totalAmount: totalForShop,
+                        }
+                      })}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-opacity"
                       style={{ background: BLUE }}>
-                      🛒 ওয়েবসাইটে অর্ডার
-                    </Link>
+                      🛒 Order Now
+                    </button>
                   )}
                   {/* WhatsApp order */}
                   {phone ? (

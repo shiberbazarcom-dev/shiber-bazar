@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { usePlaceOrder } from '../hooks/useOrders'
 import { useAdminWhatsapp } from '../hooks/useSettings'
 import { whatsappUrl } from '../lib/utils'
@@ -10,16 +10,32 @@ const GREEN = '#2563EB'
 export default function OrderPage() {
   const { shopId } = useParams()
   const [searchParams] = useSearchParams()
-  const shopName     = searchParams.get('shop')    || ''
+  const location     = useLocation()
+
+  // Cart state (passed from CartPage "Order Now")
+  const cartState    = location.state || {}
+  const cartItems    = cartState.cartItems || []
+  const cartTotal    = cartState.totalAmount || 0
+
+  // Fallback to URL params (direct product order)
+  const shopName     = cartState.shopName || searchParams.get('shop') || ''
   const productParam = searchParams.get('product') || ''
   const priceParam   = parseFloat(searchParams.get('price') || '0') || 0
+
+  // Build product_name from cart items or URL param
+  const defaultProductName = cartItems.length > 0
+    ? cartItems.map(i => `${i.name} ×${i.qty || 1}`).join(', ')
+    : productParam
+  const defaultPrice = cartItems.length > 0
+    ? String(cartTotal)
+    : (priceParam > 0 ? String(priceParam) : '')
 
   const [form, setForm] = useState({
     customer_name:    '',
     customer_phone:   '',
     customer_address: '',
-    product_name:     productParam,
-    price:            priceParam > 0 ? String(priceParam) : '',
+    product_name:     defaultProductName,
+    price:            defaultPrice,
     quantity:         1,
     notes:            '',
     shop_id:          shopId || null,
