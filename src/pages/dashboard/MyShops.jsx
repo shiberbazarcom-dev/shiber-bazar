@@ -61,6 +61,21 @@ export default function MyShops() {
                             {shop.is_approved ? 'অনুমোদিত' : 'অপেক্ষমান'}
                           </Badge>
                           {shop.is_featured && <Badge variant="gold">⭐ বিশেষ</Badge>}
+                          {shop.verification_status === 'verified' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              ✅ যাচাইকৃত
+                            </span>
+                          )}
+                          {shop.verification_status === 'pending_review' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                              ⏳ যাচাই চলছে
+                            </span>
+                          )}
+                          {shop.verification_status === 'rejected' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-200">
+                              ❌ প্রত্যাখ্যাত
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-1.5 flex-shrink-0">

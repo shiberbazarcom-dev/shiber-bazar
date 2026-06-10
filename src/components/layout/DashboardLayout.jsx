@@ -201,10 +201,11 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin/categories', icon: '📋', label: 'বিভাগ' },
     { to: '/admin/users',      icon: '👥', label: 'ব্যবহারকারী' },
     { to: '/admin/roles',      icon: '🛡️', label: 'Role' },
-    { to: '/admin/orders',     icon: '📦', label: 'অর্ডার' },          // ← badge here
-    { to: '/admin/products',   icon: '🛍️', label: 'পণ্য' },
-    { to: '/admin/ads',        icon: '📢', label: 'বিজ্ঞাপন' },
-    { to: '/admin/settings',   icon: '⚙️', label: 'সেটিংস' },
+    { to: '/admin/orders',        icon: '📦', label: 'অর্ডার' },       // ← badge here
+    { to: '/admin/products',      icon: '🛍️', label: 'পণ্য' },
+    { to: '/admin/verifications', icon: '🔏', label: 'যাচাইকরণ' },
+    { to: '/admin/ads',           icon: '📢', label: 'বিজ্ঞাপন' },
+    { to: '/admin/settings',      icon: '⚙️', label: 'সেটিংস' },
   ]
 
   let links

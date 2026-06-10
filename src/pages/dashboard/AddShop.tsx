@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea, Select } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Upload, ArrowLeft, ArrowRight, CheckCircle, Store, Phone, Image, Clock } from 'lucide-react'
+import { Upload, ArrowLeft, ArrowRight, CheckCircle, Store, Phone, Image, Clock, ShieldCheck, X, FileText } from 'lucide-react'
 // @ts-ignore
 import { getTemplateProducts } from '@/data/categoryProductTemplates'
 
@@ -16,11 +16,32 @@ import { getTemplateProducts } from '@/data/categoryProductTemplates'
 const useAuthHook = useAuth
 
 const STEPS = [
-  { id: 1, icon: Store,  title: 'মূল তথ্য',  desc: 'দোকানের নাম ও বিভাগ' },
-  { id: 2, icon: Phone,  title: 'যোগাযোগ',   desc: 'ফোন, ঠিকানা, সোশ্যাল' },
-  { id: 3, icon: Image,  title: 'ছবি',        desc: 'লোগো ও কভার ছবি' },
-  { id: 4, icon: Clock,  title: 'সময়সূচী',  desc: 'খোলার সময়' },
+  { id: 1, icon: Store,       title: 'মূল তথ্য',    desc: 'দোকানের নাম ও বিভাগ' },
+  { id: 2, icon: Phone,       title: 'যোগাযোগ',     desc: 'ফোন, ঠিকানা, সোশ্যাল' },
+  { id: 3, icon: Image,       title: 'ছবি',          desc: 'লোগো ও কভার ছবি' },
+  { id: 4, icon: ShieldCheck, title: 'যাচাইকরণ',   desc: 'পরিচয় নথি (ঐচ্ছিক)' },
+  { id: 5, icon: Clock,       title: 'সময়সূচী',    desc: 'খোলার সময়' },
 ]
+
+const DOC_TYPES = [
+  { value: 'nid_front',       label: 'জাতীয় পরিচয়পত্র — সামনের দিক' },
+  { value: 'nid_back',        label: 'জাতীয় পরিচয়পত্র — পেছনের দিক' },
+  { value: 'trade_license',   label: 'ট্রেড লাইসেন্স' },
+  { value: 'driving_license', label: 'ড্রাইভিং লাইসেন্স' },
+  { value: 'passport',        label: 'পাসপোর্ট' },
+  { value: 'other',           label: 'অন্যান্য' },
+]
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5 MB
+
+type VerificationDoc = {
+  docType: string
+  file: File
+  previewUrl: string
+  uploading: boolean
+  uploadedPath: string | null
+  error: string | null
+}
 
 function generateSlug(name: string) {
   return name
@@ -88,6 +109,11 @@ export default function AddShop() {
 
   const [logoUploading, setLogoUploading] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
+
+  // Verification docs
+  const [verificationDocs, setVerificationDocs] = useState<VerificationDoc[]>([])
+  const [newDocType, setNewDocType] = useState('nid_front')
+  const verificationFileRef = useRef<HTMLInputElement>(null)
 
   // slug availability
   const [slugStatus, setSlugStatus] = useState<'idle'|'checking'|'available'|'taken'>('idle')
@@ -170,7 +196,74 @@ export default function AddShop() {
   }
 
   function nextStep() {
-    if (validateStep()) setStep(s => Math.min(s + 1, 4))
+    if (validateStep()) setStep(s => Math.min(s + 1, 5))
+  }
+
+  // ── Verification doc helpers ──────────────────────────────────────────
+  function handleVerificationFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    if (file.size > MAX_FILE_BYTES) {
+      toast.error('ফাইলটি ৫MB-এর বেশি। ছোট ফাইল ব্যবহার করুন।')
+      return
+    }
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf']
+    if (!allowed.includes(file.type)) {
+      toast.error('শুধু JPG, PNG বা PDF ফাইল আপলোড করা যাবে।')
+      return
+    }
+
+    const previewUrl = file.type === 'application/pdf' ? '' : URL.createObjectURL(file)
+    const newDoc: VerificationDoc = {
+      docType: newDocType,
+      file,
+      previewUrl,
+      uploading: false,
+      uploadedPath: null,
+      error: null,
+    }
+    setVerificationDocs(prev => [...prev, newDoc])
+  }
+
+  function removeVerificationDoc(idx: number) {
+    setVerificationDocs(prev => {
+      const next = [...prev]
+      if (next[idx].previewUrl) URL.revokeObjectURL(next[idx].previewUrl)
+      next.splice(idx, 1)
+      return next
+    })
+  }
+
+  async function uploadVerificationDocs(shopId: string) {
+    if (!verificationDocs.length) return
+    for (let i = 0; i < verificationDocs.length; i++) {
+      const doc = verificationDocs[i]
+      const ext = doc.file.name.split('.').pop()
+      const path = `${user.id}/${shopId}/${doc.docType}-${Date.now()}.${ext}`
+      try {
+        const { error: upErr } = await supabase.storage
+          .from('verification-docs')
+          .upload(path, doc.file, { upsert: false })
+        if (upErr) throw upErr
+
+        await supabase.from('shop_verifications').insert({
+          shop_id: shopId,
+          user_id: user.id,
+          document_type: doc.docType,
+          document_url: path,
+          status: 'pending_review',
+        })
+      } catch (err: any) {
+        // Non-blocking: log but don't fail shop creation
+        console.warn('Verification doc upload failed:', err.message)
+      }
+    }
+    // Update shop verification_status to pending_review if docs were uploaded
+    await supabase.from('shops')
+      .update({ verification_status: 'pending_review' })
+      .eq('id', shopId)
   }
 
   async function handleSubmit() {
@@ -203,6 +296,11 @@ export default function AddShop() {
       if (tags.trim())          payload.tags              = tags.split(',').map(t => t.trim()).filter(Boolean)
       const { data: shopData, error } = await supabase.from('shops').insert(payload).select('id').single()
       if (error) throw error
+
+      // Upload verification docs (non-blocking)
+      if (verificationDocs.length > 0) {
+        await uploadVerificationDocs(shopData.id)
+      }
 
       // Auto-add template products for the selected category
       const categoryName = categories.find((c: any) => c.id === categoryId)?.name || ''
@@ -282,7 +380,7 @@ export default function AddShop() {
 
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">ধাপ {step}: {STEPS[step-1].title}</CardTitle>
+          <CardTitle className="text-base">ধাপ {step}/{STEPS.length}: {STEPS[step-1].title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
 
@@ -460,8 +558,111 @@ export default function AddShop() {
             </>
           )}
 
-          {/* ── Step 4: Schedule ── */}
+          {/* ── Step 4: Verification ── */}
           {step === 4 && (
+            <>
+              {/* Info banner */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+                <ShieldCheck className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-800 mb-1">যাচাইকরণ কেন করবেন?</p>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    যাচাইকৃত দোকানগুলো বেশি বিশ্বাসযোগ্য ও অনুসন্ধানে এগিয়ে থাকে।
+                    আপনার পরিচয় নথি আপলোড করুন — অ্যাডমিন যাচাই করবেন।
+                  </p>
+                  <p className="text-xs text-blue-500 mt-1 font-medium">এই ধাপটি ঐচ্ছিক। আপলোড না করলেও দোকান তৈরি হবে।</p>
+                </div>
+              </div>
+
+              {/* Doc type selector + file picker */}
+              <div className="space-y-3">
+                <Label className="text-xs mb-1.5 block">নথির ধরন বেছে নিন</Label>
+                <div className="flex gap-2">
+                  <select
+                    value={newDocType}
+                    onChange={e => setNewDocType(e.target.value)}
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    {DOC_TYPES.map(d => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => verificationFileRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>ফাইল যোগ করুন</span>
+                  </button>
+                  <input
+                    ref={verificationFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,application/pdf"
+                    className="hidden"
+                    onChange={handleVerificationFileChange}
+                  />
+                </div>
+                <p className="text-xs text-gray-400">JPG, PNG বা PDF — সর্বোচ্চ ৫MB</p>
+              </div>
+
+              {/* Uploaded docs list */}
+              {verificationDocs.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs block text-gray-500">যোগ করা নথিসমূহ ({verificationDocs.length}টি)</Label>
+                  {verificationDocs.map((doc, idx) => {
+                    const typeLabel = DOC_TYPES.find(d => d.value === doc.docType)?.label || doc.docType
+                    const isPdf = doc.file.type === 'application/pdf'
+                    return (
+                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        {/* Preview */}
+                        {isPdf ? (
+                          <div className="w-12 h-12 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-5 w-5 text-red-400" />
+                          </div>
+                        ) : (
+                          <img
+                            src={doc.previewUrl}
+                            alt={typeLabel}
+                            className="w-12 h-12 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-gray-700 truncate">{typeLabel}</p>
+                          <p className="text-xs text-gray-400 truncate">{doc.file.name}</p>
+                          <p className="text-xs text-gray-400">{(doc.file.size / 1024).toFixed(0)} KB</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeVerificationDoc(idx)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Empty state */}
+              {verificationDocs.length === 0 && (
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                  <ShieldCheck className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-400 mb-1">এখনো কোনো নথি যোগ করা হয়নি</p>
+                  <p className="text-xs text-gray-300">উপরের বাটন থেকে নথি যোগ করুন অথবা এই ধাপটি এড়িয়ে যান</p>
+                </div>
+              )}
+
+              {/* Skip note */}
+              <p className="text-xs text-center text-gray-400 pt-1">
+                নথি না দিয়ে "পরবর্তী" বাটন চাপলে এই ধাপ এড়িয়ে যাওয়া হবে
+              </p>
+            </>
+          )}
+
+          {/* ── Step 5: Schedule ── */}
+          {step === 5 && (
             <>
               <div>
                 <Label className="text-xs mb-1.5 block">খোলার সময়</Label>
@@ -491,6 +692,13 @@ export default function AddShop() {
                 <p className="text-xs text-blue-700"><strong>নাম:</strong> {shopName}</p>
                 <p className="text-xs text-blue-700"><strong>ফোন:</strong> {phone}</p>
                 <p className="text-xs text-blue-700"><strong>ঠিকানা:</strong> {address}</p>
+                <p className="text-xs text-blue-700">
+                  <strong>নথি:</strong>{' '}
+                  {verificationDocs.length > 0
+                    ? <span className="text-green-700">{verificationDocs.length}টি নথি আপলোড হবে ✅</span>
+                    : <span className="text-gray-400">কোনো নথি নেই (ঐচ্ছিক)</span>
+                  }
+                </p>
                 <p className="text-xs text-blue-600 mt-2 italic">দোকান জমা দেওয়ার পর অ্যাডমিন অনুমোদন করলে এটি সক্রিয় হবে।</p>
               </div>
 
@@ -505,7 +713,7 @@ export default function AddShop() {
           ? <Button variant="outline" onClick={() => setStep(s => s - 1)}><ArrowLeft className="h-4 w-4" /> আগে</Button>
           : <div />
         }
-        {step < 4
+        {step < 5
           ? <Button onClick={nextStep}>পরবর্তী <ArrowRight className="h-4 w-4" /></Button>
           : <Button onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'জমা হচ্ছে...' : <><CheckCircle className="h-4 w-4" /> দোকান জমা দিন</>}

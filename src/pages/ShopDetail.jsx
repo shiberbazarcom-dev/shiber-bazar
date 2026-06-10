@@ -334,6 +334,11 @@ export default function ShopDetail() {
             <div className="flex-1 min-w-0 pt-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{shop.shop_name}</h1>
+                {shop.verification_status === 'verified' && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full flex-shrink-0">
+                    ✅ যাচাইকৃত
+                  </span>
+                )}
                 {shop.is_featured && (
                   <span className="text-xs font-bold text-white px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ background: '#d69e2e' }}>★ ফিচার্ড</span>
