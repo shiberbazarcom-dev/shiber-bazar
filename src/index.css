@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Tokens ── */
+:root {
+  --green:       #2563EB;
+  --green-dark:  #1d4ed8;
+  --green-light: #eff6ff;
+  --red:         #e53e3e;
+  --red-light:   #fff5f5;
+  --gold:        #d69e2e;
+  --bg:          #f5f5f5;
+  --white:       #ffffff;
+  --dark:        #1a1a2e;
+  --text:        #2d3748;
+  --muted:       #718096;
+  --border:      #e2e8f0;
+  --radius:      8px;
+  --shadow:      0 1px 4px rgba(0,0,0,.10);
+  --shadow-md:   0 4px 20px rgba(0,0,0,.12);
+}
+
+* { box-sizing: border-box; font-family: 'Noto Sans Bengali', Arial, sans-serif; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Utility layer ── */
+@layer components {
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 font-semibold
+           cursor-pointer select-none whitespace-nowrap transition-all duration-150;
+  }
+  .btn-sm  { @apply btn text-xs  px-3   py-1.5 rounded-md; }
+  .btn-md  { @apply btn text-sm  px-4   py-2   rounded-lg; }
+  .btn-lg  { @apply btn text-base px-6  py-2.5 rounded-lg; }
+  .btn-xl  { @apply btn text-lg  px-8   py-3   rounded-xl; }
+
+  .btn-primary {
+    background: var(--green);
+    @apply text-white hover:opacity-90 active:opacity-80 shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50;
+  }
+  .btn-red   { background: var(--red); @apply text-white hover:opacity-90; }
+  .btn-ghost { @apply bg-transparent hover:bg-gray-100 text-gray-600; }
+  .btn-outline {
+    border: 1.5px solid var(--green);
+    color: var(--green);
+    @apply bg-white hover:bg-green-50;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    @apply bg-white rounded-lg overflow-hidden;
+    box-shadow: var(--shadow);
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:-translate-y-0.5;
+    box-shadow: var(--shadow);
+  }
+  .card-hover:hover { box-shadow: var(--shadow-md); }
+
+  /* ---------- Inputs ---------- */
+  .input {
+    @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5
+           text-gray-800 placeholder:text-gray-400 text-sm
+           focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+           transition duration-150;
+  }
+  .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
+
+  /* ---------- Badges ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+  .badge-green  { background: var(--green-light); color: var(--green); }
+  .badge-red    { background: var(--red-light);   color: var(--red);   }
+  .badge-gray   { @apply bg-gray-100 text-gray-600; }
+  .badge-gold   { @apply bg-amber-100 text-amber-700; }
+
+  /* ---------- Section header ---------- */
+  .section-head {
+    @apply flex items-center justify-between mb-4;
+  }
+  .section-title {
+    @apply text-xl font-bold text-gray-800;
+  }
+
+  /* ---------- Category pill (dokanlink style) ---------- */
+  .cat-pill {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
+           text-sm font-medium border border-gray-200 bg-white text-gray-700
+           hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50
+           transition-all cursor-pointer whitespace-nowrap;
+  }
+  .cat-pill-active {
+    border-color: var(--green) !important;
+    background: var(--green-light) !important;
+    color: var(--green) !important;
+  }
+
+  /* ---------- Section category bar (like screenshot) ---------- */
+  .cat-section-bar {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold text-white mb-3;
+    background: linear-gradient(135deg, #2563EB, #1d4ed8);
+  }
+
+  /* ---------- Price ---------- */
+  .price-current  { @apply text-base font-bold; color: #2563EB; }
+  .price-original { @apply text-xs line-through text-gray-400; }
+
+  /* ---------- Discount tag ---------- */
+  .discount-tag {
+    @apply absolute top-2 left-2 text-white text-xs font-bold px-1.5 py-0.5 rounded;
+    background: var(--red);
+  }
+  .new-tag {
+    @apply absolute top-2 right-2 text-white text-xs font-bold px-1.5 py-0.5 rounded;
+    background: var(--green);
+  }
+
+  /* ---------- Container ---------- */
+  .container-app { @apply max-w-6xl mx-auto px-4 sm:px-6; }
+
+  /* ---------- Divider ---------- */
+  .divider { @apply border-t border-gray-100; }
+
+  /* ---------- Skeleton ---------- */
+  .skeleton { @apply bg-gray-200 rounded-lg animate-pulse; }
+
+  /* ---------- Table ---------- */
+  .tbl-head { @apply bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider; }
+  .tbl-row  { @apply border-b border-gray-100 hover:bg-gray-50 transition-colors; }
+  .tbl-cell { @apply px-4 py-3 text-sm; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp .35s ease both; }
+
+/* ── Smooth Scroll ── */
+html { scroll-behavior: smooth; }
+
+/* ── Gradient Animation ── */
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}
+
+/* ── Slide In Animation ── */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slideInUp 0.5s ease forwards;
+}
+
+/* ── Scale Animation ── */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+/* ── Stagger Animation Delays ── */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+
+/* ── Hover Transitions ── */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Focus Styles ── */
+*:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* ── Border Utilities ── */
+.border-3 {
+  border-width: 3px;
+}
+
+/* ── Glass Effect ── */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ── Shimmer Loading Effect ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "শিবের বাজার",
+  "short_name": "শিবের বাজার",
+  "description": "স্থানীয় বাজারের ডিজিটাল ডিরেক্টরি",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
