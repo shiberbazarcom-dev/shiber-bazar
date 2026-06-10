@@ -422,14 +422,86 @@ export default function Products() {
           </CardContent>
         </Card>
       ) : (
-        <DataTable
-          columns={columns}
-          data={filtered}
-          searchPlaceholder="পণ্যের নাম খুঁজুন..."
-          isLoading={isLoading}
-          pageSize={15}
-          toolbar={toolbar}
-        />
+        <>
+          {/* ── Mobile card list ── */}
+          <div className="md:hidden space-y-3">
+            <div className="flex items-center gap-2 flex-wrap justify-between">
+              <Select value={shopFilter} onChange={e => setShopFilter(e.target.value)} className="h-9 text-xs flex-1">
+                <option value="all">সব দোকান</option>
+                {shops.map((s: any) => <option key={s.id} value={s.id}>{s.shop_name}</option>)}
+              </Select>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => { setBulkShopId(shops[0]?.id || ''); setBulkRows([emptyRow()]); setBulkOpen(true) }}>
+                  <LayoutList className="h-4 w-4 mr-1" />একসাথে
+                </Button>
+                <Button size="sm" onClick={() => setEditProduct({ ...EMPTY_PRODUCT, shop_id: shops[0]?.id || '' })}>
+                  <Plus className="h-4 w-4 mr-1" />নতুন
+                </Button>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <>{Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}</>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">কোনো পণ্য নেই</div>
+            ) : filtered.map((p: Product) => {
+              const imgSrc = p.image_url || (Array.isArray(p.images) ? p.images[0] : null)
+              return (
+                <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 border overflow-hidden flex items-center justify-center flex-shrink-0">
+                      {imgSrc ? <img src={imgSrc} alt="" className="w-full h-full object-cover" /> : <Package className="h-4 w-4 text-gray-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-800 truncate">{p.name}</p>
+                      {p.shops?.shop_name && <p className="text-xs text-gray-400 truncate">{p.shops.shop_name}</p>}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-sm font-bold text-blue-700">৳{p.price.toLocaleString()}</span>
+                        {p.original_price && <span className="text-xs text-gray-400 line-through">৳{p.original_price.toLocaleString()}</span>}
+                        <Badge variant={p.is_active ? 'success' : 'secondary'} className="text-xs">{p.is_active ? 'সক্রিয়' : 'বন্ধ'}</Badge>
+                        {p.stock === 0 && <span className="text-xs text-red-500 font-medium">স্টক শেষ</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button size="xs" variant="outline"
+                        onClick={() => toggleAvailable.mutate({ id: p.id, val: !p.is_active })}
+                        title={p.is_active ? 'বন্ধ করুন' : 'সক্রিয় করুন'}>
+                        {p.is_active ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => setEditProduct({
+                        ...p,
+                        price: String(p.price),
+                        original_price: p.original_price ? String(p.original_price) : '',
+                        stock: p.stock !== null ? String(p.stock) : '',
+                        description: p.description || '',
+                        features: p.features || '',
+                        images: Array.isArray(p.images) ? [...p.images] : p.image_url ? [p.image_url] : [],
+                      })}>
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                      <Button size="xs" variant="destructive" onClick={() => setDeleteProduct(p)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* ── Desktop table ── */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={filtered}
+              searchPlaceholder="পণ্যের নাম খুঁজুন..."
+              isLoading={isLoading}
+              pageSize={15}
+              toolbar={toolbar}
+            />
+          </div>
+        </>
       )}
 
       {/* ═══ Single Product Dialog ═══ */}

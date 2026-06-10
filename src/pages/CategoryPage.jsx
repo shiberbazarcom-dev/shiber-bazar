@@ -70,14 +70,14 @@ export default function CategoryPage() {
         </div>
       </section>
 
-      <div className="container-app py-6">
-        {/* Filter bar */}
-        <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+      <div className="container-app py-4 sm:py-6 pb-24 md:pb-10">
+        {/* Filter bar — sticky on mobile */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm -mx-4 px-4 py-3 mb-4 border-b border-gray-100 sm:static sm:bg-transparent sm:backdrop-blur-none sm:mx-0 sm:px-0 sm:py-0 sm:mb-5 sm:border-0 flex items-center justify-between gap-3">
           <p className="text-sm text-gray-500">
             {isLoading ? 'লোড হচ্ছে...' : `${shops.length} টি দোকান`}
           </p>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            className="input text-sm sm:w-40">
+            className="input text-sm w-32 sm:w-40">
             <option value="newest">নতুন আগে</option>
             <option value="rating">রেটিং</option>
             <option value="popular">জনপ্রিয়</option>
@@ -86,7 +86,7 @@ export default function CategoryPage() {
 
         {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {Array(8).fill(0).map((_, i) => <ShopCardSkeleton key={i} />)}
           </div>
         ) : shops.length === 0 ? (
@@ -100,7 +100,7 @@ export default function CategoryPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {shops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
           </div>
         )}

@@ -20,10 +20,10 @@ export default function CategoriesPage() {
         </div>
       </section>
 
-      <div className="container-app py-8">
+      <div className="container-app py-6 pb-24 md:pb-10">
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array(15).fill(0).map((_, i) => <Skeleton key={i} className="h-32" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {Array(15).fill(0).map((_, i) => <Skeleton key={i} className="h-28 sm:h-32" />)}
           </div>
         ) : categories.length === 0 ? (
           <div className="text-center py-20">
@@ -31,19 +31,19 @@ export default function CategoriesPage() {
             <p className="text-gray-400">কোনো ক্যাটাগরি নেই</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {categories.map(cat => (
               <Link key={cat.id} to={`/category/${cat.slug}`}
-                className="bg-white rounded-xl shadow-card p-5 flex flex-col items-center gap-3 text-center hover:shadow-md hover:border-blue-200 border border-transparent transition-all group">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-110"
+                className="bg-white rounded-xl shadow-sm p-4 sm:p-5 flex flex-col items-center gap-2.5 sm:gap-3 text-center hover:shadow-md hover:border-blue-200 border border-gray-100 transition-all group active:scale-95 min-h-[110px] sm:min-h-[120px] justify-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-transform group-hover:scale-110"
                   style={{ background: '#eff6ff' }}>
                   {cat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-gray-700 group-hover:text-blue-700 transition-colors leading-tight">
+                  <p className="font-semibold text-xs sm:text-sm text-gray-700 group-hover:text-blue-700 transition-colors leading-tight">
                     {cat.name}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{cat.shop_count || 0} দোকান</p>
+                  <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{cat.shop_count || 0} দোকান</p>
                 </div>
               </Link>
             ))}

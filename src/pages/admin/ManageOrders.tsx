@@ -239,25 +239,76 @@ export default function ManageOrders() {
     return []
   }
 
+  const bnTabs = [
+    { value: 'all',        label: 'সব' },
+    { value: 'pending',    label: 'পেন্ডিং' },
+    { value: 'confirmed',  label: 'কনফার্ম' },
+    { value: 'processing', label: 'প্রসেস' },
+    { value: 'shipped',    label: 'পাঠানো' },
+    { value: 'delivered',  label: 'ডেলিভারি' },
+    { value: 'cancelled',  label: 'বাতিল' },
+  ]
+
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><ShoppingCart className="h-6 w-6" /> Manage Orders</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Track and update all customer orders</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2"><ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" /> অর্ডার ব্যবস্থাপনা</h1>
+        <p className="text-sm text-gray-500 mt-0.5">সব অর্ডার ট্র্যাক ও আপডেট করুন</p>
       </div>
 
-      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as OrderStatus)}>
-        <TabsList className="flex-wrap h-auto gap-1">
-          {tabs.map(t => <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>)}
-        </TabsList>
-      </Tabs>
+      {/* Status filter tabs — scrollable on mobile */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex gap-1.5 min-w-max pb-1">
+          {bnTabs.map(t => (
+            <button key={t.value} onClick={() => setStatusFilter(t.value as OrderStatus)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                statusFilter === t.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <DataTable
-        columns={columns}
-        data={orders}
-        isLoading={isLoading}
-        searchPlaceholder="Search by name, order#..."
-      />
+      {/* Mobile card list */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)
+        ) : orders.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 text-sm">কোনো অর্ডার নেই</div>
+        ) : orders.map((o: Order) => {
+          const cfg = STATUS_CONFIG[o.status]
+          return (
+            <div key={o.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <button className="text-blue-600 font-bold text-sm hover:underline text-left"
+                  onClick={() => { setSelectedOrder(o); setAssignShopId((o as any).shop_id || '') }}>
+                  {o.order_number}
+                </button>
+                <Badge variant={cfg?.variant ?? 'secondary'} className="text-xs shrink-0">{cfg?.label ?? o.status}</Badge>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-700 truncate max-w-[60%]">{o.customer_name}</span>
+                <span className="font-bold text-gray-800">৳{(o.total_amount ?? 0).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <span>{(o.shops as any)?.shop_name || <span className="text-amber-500">অ্যাসাইন নেই</span>}</span>
+                <span>{new Date(o.created_at).toLocaleDateString('bn-BD')}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <DataTable
+          columns={columns}
+          data={orders}
+          isLoading={isLoading}
+          searchPlaceholder="নাম বা অর্ডার নম্বর খুঁজুন..."
+        />
+      </div>
 
       {/* Order Detail Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => { setSelectedOrder(null); setAssignShopId('') }}>

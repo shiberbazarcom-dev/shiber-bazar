@@ -209,36 +209,93 @@ export default function ManageShops() {
     },
   ]
 
-  const tabs = [
-    { value: 'all',              label: 'All' },
-    { value: 'pending_approval', label: 'Pending' },
-    { value: 'approved',         label: 'Approved' },
-    { value: 'rejected',         label: 'Rejected' },
-    { value: 'suspended',        label: 'Suspended' },
+  const bnTabs = [
+    { value: 'all',              label: 'সব' },
+    { value: 'pending_approval', label: 'পেন্ডিং' },
+    { value: 'approved',         label: 'অনুমোদিত' },
+    { value: 'rejected',         label: 'প্রত্যাখ্যাত' },
+    { value: 'suspended',        label: 'স্থগিত' },
   ]
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Store className="h-6 w-6" /> Manage Shops</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Approve, reject, and manage all shops</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2"><Store className="h-5 w-5 sm:h-6 sm:w-6" /> দোকান ব্যবস্থাপনা</h1>
+        <p className="text-sm text-gray-500 mt-0.5">দোকান অনুমোদন, প্রত্যাখ্যান ও পরিচালনা</p>
       </div>
 
-      {/* Status tabs */}
-      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as ShopStatus)}>
-        <TabsList className="flex-wrap h-auto gap-1">
-          {tabs.map(t => <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>)}
-        </TabsList>
-      </Tabs>
+      {/* Status tabs — scrollable on mobile */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex gap-1.5 min-w-max pb-1">
+          {bnTabs.map(t => (
+            <button key={t.value} onClick={() => setStatusFilter(t.value as ShopStatus)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                statusFilter === t.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={shops}
-        isLoading={isLoading}
-        searchPlaceholder="Search shops..."
-      />
+      {/* Mobile card list */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)
+        ) : shops.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 text-sm">কোনো দোকান নেই</div>
+        ) : shops.map((shop: Shop) => {
+          const sc = STATUS_CONFIG[shop.status] ?? { label: shop.status, variant: 'secondary' }
+          return (
+            <div key={shop.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+                  {shop.logo_url
+                    ? <img src={shop.logo_url} alt="" className="w-full h-full object-cover rounded-lg" />
+                    : <Store className="h-4 w-4 text-blue-600" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-800 truncate">{shop.shop_name}</p>
+                  <p className="text-xs text-gray-400">{(shop.profiles as any)?.full_name}</p>
+                </div>
+                <Badge variant={sc.variant} className="text-xs shrink-0">{sc.label}</Badge>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{(shop.categories as any)?.name || '—'}</span>
+                <div className="flex gap-1.5">
+                  <button onClick={() => setDetailShop(shop)}
+                    className="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium">
+                    দেখুন
+                  </button>
+                  {shop.status !== 'approved' && (
+                    <button onClick={() => handleStatus(shop.id, 'approved')}
+                      className="px-2 py-1 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium">
+                      অনুমোদন
+                    </button>
+                  )}
+                  {shop.status !== 'rejected' && (
+                    <button onClick={() => handleStatus(shop.id, 'rejected')}
+                      className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 font-medium">
+                      প্রত্যাখ্যান
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <DataTable
+          columns={columns}
+          data={shops}
+          isLoading={isLoading}
+          searchPlaceholder="দোকান খুঁজুন..."
+        />
+      </div>
 
       {/* Detail Dialog */}
       <Dialog open={!!detailShop} onOpenChange={() => setDetailShop(null)}>

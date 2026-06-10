@@ -46,35 +46,41 @@ export default function MyShops() {
           {shops.map(shop => {
             const fallback = getAvatarUrl(shop.shop_name)
             return (
-              <div key={shop.id} className="card p-4 flex items-center gap-4 hover:shadow-card-hover transition-shadow">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex-shrink-0">
-                  <img src={shop.cover_image || fallback} alt={shop.shop_name}
-                    className="w-full h-full object-cover" onError={e => { e.target.src = fallback }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-slate-800 dark:text-white">{shop.shop_name}</h3>
-                    <Badge variant={shop.is_approved ? 'green' : 'gold'} dot>
-                      {shop.is_approved ? 'অনুমোদিত' : 'অপেক্ষমান'}
-                    </Badge>
-                    {shop.is_featured && <Badge variant="gold">⭐ বিশেষ</Badge>}
+              <div key={shop.id} className="card p-3 sm:p-4 hover:shadow-card-hover transition-shadow">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex-shrink-0">
+                    <img src={shop.cover_image || fallback} alt={shop.shop_name}
+                      className="w-full h-full object-cover" onError={e => { e.target.src = fallback }} />
                   </div>
-                  <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    {shop.categories && <Badge variant="gray">{shop.categories.icon} {shop.categories.name}</Badge>}
-                    {shop.review_count > 0 && <RatingDisplay rating={shop.avg_rating} count={shop.review_count} />}
-                    <span className="text-xs text-slate-400">👁️ {shop.view_count || 0} ভিউ</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white truncate">{shop.shop_name}</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <Badge variant={shop.is_approved ? 'green' : 'gold'} dot>
+                            {shop.is_approved ? 'অনুমোদিত' : 'অপেক্ষমান'}
+                          </Badge>
+                          {shop.is_featured && <Badge variant="gold">⭐ বিশেষ</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        {shop.is_approved && (
+                          <Link to={`/shop/${shop.slug || shop.id}`} target="_blank">
+                            <Button size="xs" variant="secondary">👁️</Button>
+                          </Link>
+                        )}
+                        <Button size="xs" variant="danger" onClick={() => handleDelete(shop.id, shop.shop_name)}>
+                          🗑️
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {shop.categories && <Badge variant="gray">{shop.categories.icon} {shop.categories.name}</Badge>}
+                      {shop.review_count > 0 && <RatingDisplay rating={shop.avg_rating} count={shop.review_count} />}
+                      <span className="text-xs text-slate-400">👁️ {shop.view_count || 0} ভিউ</span>
+                    </div>
+                    {shop.address && <p className="text-xs text-slate-400 mt-1 truncate">📍 {shop.address}</p>}
                   </div>
-                  {shop.address && <p className="text-xs text-slate-400 mt-1 truncate">📍 {shop.address}</p>}
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  {shop.is_approved && (
-                    <Link to={`/shop/${shop.slug || shop.id}`} target="_blank">
-                      <Button size="xs" variant="secondary">👁️ দেখুন</Button>
-                    </Link>
-                  )}
-                  <Button size="xs" variant="danger" onClick={() => handleDelete(shop.id, shop.shop_name)}>
-                    🗑️
-                  </Button>
                 </div>
               </div>
             )

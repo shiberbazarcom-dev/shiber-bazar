@@ -138,16 +138,16 @@ function CategoryPill({ category }) {
   return (
     <Link
       to={`/category/${category.slug}`}
-      className="group relative flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+      className="group relative flex flex-col items-center gap-2 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 min-w-[76px] sm:min-w-0 flex-shrink-0 sm:flex-shrink"
     >
       {/* Background Glow Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300" />
-      
+
       <div className="relative z-10 flex flex-col items-center">
-        <span className="text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+        <span className="text-2xl sm:text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
           {category.icon}
         </span>
-        <span className="text-xs font-medium text-gray-700 group-hover:text-brand-600 transition-colors mt-2 text-center leading-tight">
+        <span className="text-[11px] sm:text-xs font-medium text-gray-700 group-hover:text-brand-600 transition-colors mt-1.5 sm:mt-2 text-center leading-tight">
           {category.name}
         </span>
         <span className="text-[10px] text-gray-400 group-hover:text-brand-400 transition-colors mt-0.5">
@@ -378,7 +378,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+          <div className="flex overflow-x-auto -mx-4 px-4 pb-2 gap-2.5 sm:grid sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:overflow-visible sm:pb-0 sm:gap-4 sm:mx-0 sm:px-0">
             {categories.map(cat => (
               <CategoryPill key={cat.id} category={cat} />
             ))}
