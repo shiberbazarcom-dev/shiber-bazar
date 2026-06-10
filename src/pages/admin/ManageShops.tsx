@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { supabase } from '@/lib/supabase'
@@ -85,11 +85,11 @@ function DocViewer({ path, onClose }: { path: string; onClose: () => void }) {
   const isPdf = path.toLowerCase().endsWith('.pdf')
 
   // load on mount
-  useState(() => {
+  useEffect(() => {
     getSignedUrl(path)
       .then(u => { setUrl(u); setLoading(false) })
       .catch(() => setLoading(false))
-  })
+  }, [path])
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
