@@ -561,7 +561,7 @@ export default function Products() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-[2fr_1fr_1fr_80px_32px] gap-2 text-xs font-medium text-gray-500 px-1">
+            <div className="hidden sm:grid sm:grid-cols-[2fr_1fr_1fr_80px_32px] gap-2 text-xs font-medium text-gray-500 px-1">
               <span>পণ্যের নাম *</span>
               <span>দাম (৳) *</span>
               <span>স্টক</span>
@@ -571,52 +571,54 @@ export default function Products() {
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {bulkRows.map((row, idx) => (
-                <div key={row._key} className="grid grid-cols-[2fr_1fr_1fr_80px_32px] gap-2 items-center">
+                <div key={row._key} className="sm:grid sm:grid-cols-[2fr_1fr_1fr_80px_32px] sm:gap-2 sm:items-center space-y-2 sm:space-y-0 border sm:border-0 rounded-lg sm:rounded-none p-2 sm:p-0 bg-gray-50 sm:bg-transparent">
                   <Input
                     placeholder="পণ্যের নাম"
                     value={row.name}
                     onChange={e => setBulkRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r))}
                     className="h-8 text-sm"
                   />
-                  <Input
-                    type="number"
-                    placeholder="দাম"
-                    value={row.price}
-                    onChange={e => setBulkRows(rows => rows.map((r, i) => i === idx ? { ...r, price: e.target.value } : r))}
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="স্টক"
-                    value={row.stock}
-                    onChange={e => setBulkRows(rows => rows.map((r, i) => i === idx ? { ...r, stock: e.target.value } : r))}
-                    className="h-8 text-sm"
-                  />
-                  <div className="relative">
-                    <input
-                      type="file" accept="image/*" className="hidden"
-                      id={`bulk-img-${idx}`}
-                      onChange={e => handleBulkImageUpload(e, idx)}
+                  <div className="flex items-center gap-2 sm:contents">
+                    <Input
+                      type="number"
+                      placeholder="দাম"
+                      value={row.price}
+                      onChange={e => setBulkRows(rows => rows.map((r, i) => i === idx ? { ...r, price: e.target.value } : r))}
+                      className="flex-1 sm:flex-none h-8 text-sm"
                     />
-                    <label htmlFor={`bulk-img-${idx}`}
-                      className="flex items-center justify-center w-full h-8 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:border-blue-400 bg-gray-50 overflow-hidden">
-                      {row._uploading ? (
-                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      ) : row.image_url ? (
-                        <img src={row.image_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Upload className="h-3.5 w-3.5 text-gray-400" />
-                      )}
-                    </label>
+                    <Input
+                      type="number"
+                      placeholder="স্টক"
+                      value={row.stock}
+                      onChange={e => setBulkRows(rows => rows.map((r, i) => i === idx ? { ...r, stock: e.target.value } : r))}
+                      className="flex-1 sm:flex-none h-8 text-sm"
+                    />
+                    <div className="relative w-16 sm:w-auto flex-shrink-0">
+                      <input
+                        type="file" accept="image/*" className="hidden"
+                        id={`bulk-img-${idx}`}
+                        onChange={e => handleBulkImageUpload(e, idx)}
+                      />
+                      <label htmlFor={`bulk-img-${idx}`}
+                        className="flex items-center justify-center w-full h-8 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:border-blue-400 bg-gray-50 overflow-hidden">
+                        {row._uploading ? (
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        ) : row.image_url ? (
+                          <img src={row.image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5 text-gray-400" />
+                        )}
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30"
+                      onClick={() => bulkRows.length > 1 && setBulkRows(rows => rows.filter((_, i) => i !== idx))}
+                      disabled={bulkRows.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30"
-                    onClick={() => bulkRows.length > 1 && setBulkRows(rows => rows.filter((_, i) => i !== idx))}
-                    disabled={bulkRows.length === 1}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
               ))}
             </div>

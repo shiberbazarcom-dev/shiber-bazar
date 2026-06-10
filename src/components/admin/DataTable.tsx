@@ -72,6 +72,7 @@ export function DataTable<TData>({
 
       {/* Table */}
       <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -127,6 +128,7 @@ export function DataTable<TData>({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}
