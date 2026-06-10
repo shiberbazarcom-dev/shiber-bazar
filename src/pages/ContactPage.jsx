@@ -261,7 +261,7 @@ export default function ContactPage() {
       </section>
 
       {/* Back to Home */}
-      <section className="py-8 text-center">
+      <section className="py-8 pb-28 md:pb-8 text-center">
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium"

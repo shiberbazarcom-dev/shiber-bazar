@@ -111,7 +111,7 @@ export default function TrackOrder() {
   }
 
   return (
-    <div className="container-app py-8 px-4" style={{ maxWidth: 600 }}>
+    <div className="container-app py-8 pb-28 md:pb-10 px-4" style={{ maxWidth: 600 }}>
       {/* Header */}
       <div className="text-center mb-6">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3"

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { usePlaceOrder } from '../hooks/useOrders'
 import { useAdminWhatsapp } from '../hooks/useSettings'
+import { useAuth } from '../context/AuthContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
 
@@ -30,9 +31,11 @@ export default function OrderPage() {
     ? String(cartTotal)
     : (priceParam > 0 ? String(priceParam) : '')
 
+  const { profile } = useAuth()
+
   const [form, setForm] = useState({
-    customer_name:    '',
-    customer_phone:   '',
+    customer_name:    profile?.full_name || '',
+    customer_phone:   profile?.phone || '',
     customer_address: '',
     product_name:     defaultProductName,
     price:            defaultPrice,
@@ -43,6 +46,17 @@ export default function OrderPage() {
   const [success, setSuccess] = useState(null)
   const placeOrder     = usePlaceOrder()
   const adminWhatsapp  = useAdminWhatsapp()
+
+  // If profile loads after initial render, fill in name/phone if still empty
+  useEffect(() => {
+    if (profile) {
+      setForm(f => ({
+        ...f,
+        customer_name:  f.customer_name  || profile.full_name || '',
+        customer_phone: f.customer_phone || profile.phone     || '',
+      }))
+    }
+  }, [profile])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -132,7 +146,7 @@ export default function OrderPage() {
 
   /* ── Order form ── */
   return (
-    <div className="container-app py-8 px-4" style={{ maxWidth: 560 }}>
+    <div className="container-app py-8 pb-28 md:pb-10 px-4" style={{ maxWidth: 560 }}>
       {/* Header */}
       <div className="text-center mb-6">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3"

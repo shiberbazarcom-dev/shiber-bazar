@@ -177,7 +177,7 @@ export default function SearchPage() {
       </section>
 
       {/* ── Results ── */}
-      <div className="container-app py-6">
+      <div className="container-app py-6 pb-28 md:pb-6">
         {query && (
           <div className="flex items-center gap-2 flex-wrap mb-5">
             <p className="text-sm text-gray-500">

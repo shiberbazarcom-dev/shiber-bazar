@@ -52,7 +52,6 @@ function ReviewCard({ review }) {
 
 /* ─── Product Card ─── */
 function ProductCard({ product, shop, onOrder }) {
-  const { addItem } = useCart()
   const discount = product.original_price && product.original_price > product.price
     ? Math.round((1 - product.price / product.original_price) * 100) : 0
 
@@ -86,10 +85,7 @@ function ProductCard({ product, shop, onOrder }) {
           )}
         </div>
         <button
-          onClick={() => {
-            addItem({ ...product, shops: shop })
-            toast.success('কার্টে যোগ হয়েছে')
-          }}
+          onClick={() => onOrder(product)}
           className="mt-auto w-full py-1.5 text-xs font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
           style={{ background: GREEN }}>
           অর্ডার করুন
@@ -106,6 +102,7 @@ export default function ShopDetail() {
   const { idOrSlug } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { totalCount: cartCount } = useCart()
 
   const { data: shop, isLoading, error } = useShop(idOrSlug)
   const { data: reviews = [] }   = useReviews(shop?.id)
@@ -120,8 +117,18 @@ export default function ShopDetail() {
   const [chip, setChip]           = useState('all')
   const [productSearch, setProductSearch] = useState('')
 
-  function goOrder() {
-    navigate(`/order/${shop.id}?shop=${encodeURIComponent(shop.shop_name)}`)
+  function goOrder(product) {
+    if (product) {
+      navigate(`/order/${shop.id}`, {
+        state: {
+          shopName: shop.shop_name,
+          cartItems: [{ ...product, shops: shop, qty: 1 }],
+          totalAmount: Number(product.price || 0),
+        }
+      })
+    } else {
+      navigate(`/order/${shop.id}?shop=${encodeURIComponent(shop.shop_name)}`)
+    }
   }
 
   const isFav = favorites.some(f => f.shop_id === shop?.id)
@@ -202,6 +209,7 @@ export default function ShopDetail() {
               className="w-14 h-14 rounded-full object-cover border-2 border-gray-100 flex-shrink-0"
               onError={e => { e.target.src = logoUrl }} />
             <div className="flex-1 min-w-0">
+
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h1 className="text-base font-bold text-gray-900 leading-tight">{shop.shop_name}</h1>
                 {shop.verification_status === 'verified' && (
@@ -224,6 +232,18 @@ export default function ShopDetail() {
                 {avgRating && <span>⭐ {avgRating}</span>}
               </div>
             </div>
+
+            {/* Cart icon */}
+            <Link to="/cart" className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+              <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: BLUE }}>
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
           </div>
 
           {/* Action buttons */}

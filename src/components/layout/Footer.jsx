@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-gray-100 py-4">
+      <div className="border-t border-gray-100 pt-4 pb-20 md:pb-4">
         <div className="container-app flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-400">© ২০২৪ শিবের বাজার। সর্বস্বত্ব সংরক্ষিত।</p>
           <div className="flex gap-4">

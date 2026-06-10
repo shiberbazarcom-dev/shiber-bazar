@@ -51,7 +51,7 @@ export default function ShopsPage() {
   const hasFilters = !!(categoryId || search)
 
   return (
-    <div className="container-app py-6">
+    <div className="container-app py-6 pb-28 md:pb-6">
 
       {/* ── Page header ── */}
       <div className="mb-5">
