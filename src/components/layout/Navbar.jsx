@@ -45,12 +45,8 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
 
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0 flex items-center gap-2">
+          <Link to="/" className="flex-shrink-0">
             <img src="/logo.png" alt="শিবের বাজার" className="h-9 w-auto object-contain" />
-            <div className="hidden sm:block">
-              <p className="font-bold text-gray-800 text-base leading-tight">শিবের বাজার</p>
-              <p className="text-xs text-gray-400 leading-tight">দোকান ডিরেক্টরি</p>
-            </div>
           </Link>
 
           {/* Search */}
