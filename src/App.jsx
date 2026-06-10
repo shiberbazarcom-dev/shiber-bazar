@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -15,6 +16,7 @@ const CategoriesPage   = lazy(() => import('./pages/CategoriesPage'))
 const CategoryPage     = lazy(() => import('./pages/CategoryPage'))
 const SearchPage       = lazy(() => import('./pages/SearchPage'))
 const ProductDetails   = lazy(() => import('./pages/ProductDetails'))
+const CartPage         = lazy(() => import('./pages/CartPage'))
 const ContactPage      = lazy(() => import('./pages/ContactPage'))
 const Login            = lazy(() => import('./pages/auth/Login'))
 const Register         = lazy(() => import('./pages/auth/Register'))
@@ -108,6 +110,7 @@ function PublicLayout({ children }) {
 export default function App() {
   return (
     <AuthProvider>
+      <CartProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -129,6 +132,7 @@ export default function App() {
             <Route path="/track-order"    element={<PublicLayout><TrackOrder /></PublicLayout>} />
             <Route path="/product/:id"    element={<PublicLayout><ProductDetails /></PublicLayout>} />
             <Route path="/contact"        element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
             {/* ══════════════════════════════════
                 CUSTOMER /account  (any auth user)
@@ -221,6 +225,7 @@ export default function App() {
           }}
         />
       </BrowserRouter>
+      </CartProvider>
     </AuthProvider>
   )
 }

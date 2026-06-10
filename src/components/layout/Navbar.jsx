@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
 import { getAvatarUrl } from '../../lib/utils'
 import NotificationBell from '../NotificationBell'
 
 export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
+  const { totalCount: cartCount } = useCart()
   const { data: categories = [] } = useCategories()
   const navigate  = useNavigate()
   const location  = useLocation()
@@ -132,6 +134,18 @@ export default function Navbar() {
               </NavLink>
             </nav>
 
+            {/* Cart icon — desktop */}
+            <Link to="/cart" className="relative flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors text-gray-600">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: '#2563EB' }}>
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
+
             {/* Auth / Profile */}
             <div className="flex-shrink-0 flex items-center gap-2">
               {user ? (
@@ -236,16 +250,23 @@ export default function Navbar() {
             {pathActive('/categor') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
-          {/* অর্ডার */}
-          <Link to="/track-order"
+          {/* কার্ট */}
+          <Link to="/cart"
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
-              pathActive('/track-order') ? 'text-blue-600' : 'text-gray-500'
+              pathActive('/cart') ? 'text-blue-600' : 'text-gray-500'
             }`}>
-            <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/track-order') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <span className="text-[10px] font-semibold leading-none">অর্ডার</span>
-            {pathActive('/track-order') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
+            <div className="relative">
+              <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/cart') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white flex items-center justify-center bg-blue-600">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-semibold leading-none">কার্ট</span>
+            {pathActive('/cart') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
           {/* আমার / লগইন — opens popup */}
