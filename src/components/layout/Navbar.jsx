@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCategories } from '../../hooks/useCategories'
 import { getAvatarUrl } from '../../lib/utils'
@@ -8,24 +8,31 @@ import NotificationBell from '../NotificationBell'
 export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
   const { data: categories = [] } = useCategories()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
-  const [query, setQuery] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [catOpen, setCatOpen]   = useState(false)
+  const [query, setQuery]             = useState('')
+  const [menuOpen, setMenuOpen]       = useState(false)
+  const [catOpen, setCatOpen]         = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [moreOpen, setMoreOpen]       = useState(false)
 
   const catRef     = useRef(null)
   const profileRef = useRef(null)
+  const moreRef    = useRef(null)
 
   useEffect(() => {
     const handler = (e) => {
-      if (catRef.current && !catRef.current.contains(e.target)) setCatOpen(false)
+      if (catRef.current     && !catRef.current.contains(e.target))     setCatOpen(false)
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
+      if (moreRef.current    && !moreRef.current.contains(e.target))    setMoreOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Close overlays on route change
+  useEffect(() => { setMenuOpen(false); setMoreOpen(false) }, [location.pathname])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -34,207 +41,293 @@ export default function Navbar() {
 
   const avatar = profile?.avatar_url || getAvatarUrl(profile?.full_name || user?.email || 'U', '1a9e3f')
 
+  const pathActive = (path) => {
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
+  }
+
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      {/* Top strip */}
-      <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
-        📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
-      </div>
+    <>
+      {/* ══════════════════════════════════════════════
+          TOP NAVBAR
+      ══════════════════════════════════════════════ */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
 
-      <div className="container-app py-2.5">
-        <div className="flex items-center gap-3">
+        {/* Announcement strip — desktop */}
+        <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
+          📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
+        </div>
 
-          {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <img src="/logo.png" alt="শিবের বাজার" className="h-9 w-auto object-contain" />
-          </Link>
+        <div className="container-app py-2.5">
+          <div className="flex items-center gap-2 sm:gap-3">
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-2">
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-gray-50">
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="দোকান খুঁজুন..."
-                className="flex-1 bg-transparent px-3.5 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-              />
-              <button type="submit"
-                className="px-4 text-white text-sm flex-shrink-0"
-                style={{ background: '#2563EB' }}>
-                🔍
-              </button>
-            </div>
-          </form>
+            {/* Logo */}
+            <Link to="/" className="flex-shrink-0">
+              <img src="/logo.png" alt="শিবের বাজার" className="h-8 sm:h-9 w-auto object-contain" />
+            </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            <NavLink to="/" end className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-              হোম
-            </NavLink>
-
-            {/* Categories dropdown */}
-            <div className="relative" ref={catRef}>
-              <button onClick={() => setCatOpen(o => !o)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                ক্যাটাগরি <span className="text-xs">{catOpen ? '▲' : '▼'}</span>
-              </button>
-              {catOpen && (
-                <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-card-hover border border-gray-100 py-2 z-50">
-                  {categories.slice(0, 12).map(cat => (
-                    <Link key={cat.id} to={`/category/${cat.slug}`}
-                      onClick={() => setCatOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-700 transition-colors">
-                      <span className="text-lg">{cat.icon}</span>
-                      {cat.name}
-                    </Link>
-                  ))}
-                  <div className="border-t border-gray-100 mt-1 pt-1">
-                    <Link to="/categories" onClick={() => setCatOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors">
-                      সব বিভাগ দেখুন →
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <NavLink to="/shops" className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-              সব দোকান
-            </NavLink>
-
-            <NavLink to="/track-order" className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-              📦 অর্ডার ট্র্যাক
-            </NavLink>
-
-            <NavLink to="/contact" className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-              📞 যোগাযোগ
-            </NavLink>
-          </nav>
-
-          {/* Auth / Profile */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-            {user ? (
-              <>
-                <NotificationBell />
-                <div className="relative" ref={profileRef}>
-                  <button onClick={() => setProfileOpen(o => !o)}
-                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
-                  <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
-                    onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
-                  <span className="hidden md:block text-sm font-medium text-gray-700 max-w-[100px] truncate">
-                    {profile?.full_name || 'প্রোফাইল'}
-                  </span>
+            {/* Search bar */}
+            <form onSubmit={handleSearch} className="flex-1 min-w-0 mx-1 sm:mx-2">
+              <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-gray-50">
+                <input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="দোকান খুঁজুন..."
+                  className="flex-1 min-w-0 bg-transparent px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                />
+                <button type="submit"
+                  className="px-3 sm:px-4 text-white text-sm flex-shrink-0 flex items-center justify-center"
+                  style={{ background: '#2563EB' }}>
+                  🔍
                 </button>
-                {profileOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-card-hover border border-gray-100 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100 mb-1">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{profile?.full_name || 'ব্যবহারকারী'}</p>
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    </div>
-                    <Link to="/dashboard" onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      📊 ড্যাশবোর্ড
-                    </Link>
-                    <Link to="/dashboard/add-shop" onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      ➕ দোকান যোগ করুন
-                    </Link>
-                    <Link to="/account" onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      👤 আমার অ্যাকাউন্ট
-                    </Link>
-                    <Link to="/track-order" onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      📦 অর্ডার ট্র্যাক
-                    </Link>
-                    <Link to="/dashboard/favorites" onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                      ❤️ পছন্দের দোকান
-                    </Link>
-                    {isAdmin && (
-                      <Link to="/admin" onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">
-                        ⚙️ অ্যাডমিন প্যানেল
+              </div>
+            </form>
+
+            {/* ── Desktop nav ── */}
+            <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
+              <NavLink to="/" end className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                হোম
+              </NavLink>
+
+              {/* Categories dropdown */}
+              <div className="relative" ref={catRef}>
+                <button onClick={() => setCatOpen(o => !o)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  ক্যাটাগরি <span className="text-xs">{catOpen ? '▲' : '▼'}</span>
+                </button>
+                {catOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                    {categories.slice(0, 12).map(cat => (
+                      <Link key={cat.id} to={`/category/${cat.slug}`}
+                        onClick={() => setCatOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-700 transition-colors">
+                        <span className="text-lg">{cat.icon}</span>
+                        {cat.name}
                       </Link>
-                    )}
+                    ))}
                     <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button onClick={() => { signOut(); setProfileOpen(false) }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                        🚪 লগআউট
-                      </button>
+                      <Link to="/categories" onClick={() => setCatOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors">
+                        সব বিভাগ দেখুন →
+                      </Link>
                     </div>
                   </div>
                 )}
               </div>
-            </>
-          ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login"
-                  className="hidden sm:block text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                  লগইন
-                </Link>
-                <Link to="/register"
-                  className="text-sm font-medium text-white px-3.5 py-1.5 rounded-lg"
-                  style={{ background: '#2563EB' }}>
-                  রেজিস্ট্রেশন
-                </Link>
-              </div>
-            )}
 
-            {/* Mobile hamburger */}
-            <button onClick={() => setMenuOpen(o => !o)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600">
-              {menuOpen ? '✕' : '☰'}
-            </button>
+              <NavLink to="/shops" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                সব দোকান
+              </NavLink>
+
+              <NavLink to="/track-order" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                📦 অর্ডার ট্র্যাক
+              </NavLink>
+
+              <NavLink to="/contact" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                📞 যোগাযোগ
+              </NavLink>
+            </nav>
+
+            {/* Auth / Profile */}
+            <div className="flex-shrink-0 flex items-center gap-2">
+              {user ? (
+                <>
+                  <NotificationBell />
+                  <div className="relative" ref={profileRef}>
+                    <button onClick={() => setProfileOpen(o => !o)}
+                      className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                      <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+                        onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
+                      <span className="hidden md:block text-sm font-medium text-gray-700 max-w-[80px] truncate">
+                        {profile?.full_name || 'প্রোফাইল'}
+                      </span>
+                    </button>
+                    {profileOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                        <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{profile?.full_name || 'ব্যবহারকারী'}</p>
+                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        </div>
+                        <Link to="/dashboard" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">📊 ড্যাশবোর্ড</Link>
+                        <Link to="/dashboard/add-shop" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">➕ দোকান যোগ করুন</Link>
+                        <Link to="/account" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">👤 আমার অ্যাকাউন্ট</Link>
+                        <Link to="/track-order" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">📦 অর্ডার ট্র্যাক</Link>
+                        <Link to="/dashboard/favorites" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">❤️ পছন্দের দোকান</Link>
+                        {isAdmin && (
+                          <Link to="/admin" onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">⚙️ অ্যাডমিন প্যানেল</Link>
+                        )}
+                        <div className="border-t border-gray-100 mt-1 pt-1">
+                          <button onClick={() => { signOut(); setProfileOpen(false) }}
+                            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                            🚪 লগআউট
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="hidden sm:flex items-center gap-2">
+                  <Link to="/login"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    লগইন
+                  </Link>
+                  <Link to="/register"
+                    className="text-sm font-medium text-white px-3.5 py-1.5 rounded-lg whitespace-nowrap"
+                    style={{ background: '#2563EB' }}>
+                    রেজিস্ট্রেশন
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-2 pb-2 border-t border-gray-100 pt-2 space-y-1">
-            <NavLink to="/" end onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              🏠 হোম
-            </NavLink>
-            <NavLink to="/shops" onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              🏪 সব দোকান
-            </NavLink>
-            <NavLink to="/categories" onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              📋 বিভাগসমূহ
-            </NavLink>
-            <NavLink to="/track-order" onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              📦 অর্ডার ট্র্যাক
-            </NavLink>
-            <NavLink to="/contact" onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              📞 যোগাযোগ
-            </NavLink>
-            <NavLink to="/order" onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              🛒 অর্ডার করুন
-            </NavLink>
-            {!user && (
-              <>
-                <Link to="/login" onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-                  🔑 লগইন
-                </Link>
-                <Link to="/register" onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50">
-                  ✍️ রেজিস্ট্রেশন
-                </Link>
-              </>
+      {/* ══════════════════════════════════════════════
+          MOBILE STICKY BOTTOM NAVIGATION BAR
+      ══════════════════════════════════════════════ */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-stretch" style={{ height: '60px' }}>
+
+          {/* হোম */}
+          <Link to="/"
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              pathActive('/') ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="text-[10px] font-semibold leading-none">হোম</span>
+            {pathActive('/') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
+          </Link>
+
+          {/* দোকান */}
+          <Link to="/shops"
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
+              pathActive('/shops') || pathActive('/shop/') ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/shops') || pathActive('/shop/') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className="text-[10px] font-semibold leading-none">দোকান</span>
+            {(pathActive('/shops') || pathActive('/shop/')) && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
+          </Link>
+
+          {/* ক্যাটাগরি */}
+          <Link to="/categories"
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
+              pathActive('/categor') ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/categor') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className="text-[10px] font-semibold leading-none">ক্যাটাগরি</span>
+            {pathActive('/categor') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
+          </Link>
+
+          {/* অর্ডার */}
+          <Link to="/track-order"
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
+              pathActive('/track-order') ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/track-order') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <span className="text-[10px] font-semibold leading-none">অর্ডার</span>
+            {pathActive('/track-order') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
+          </Link>
+
+          {/* আমার / লগইন — opens popup */}
+          <div className="flex-1 relative" ref={moreRef}>
+            <button
+              onClick={() => setMoreOpen(o => !o)}
+              className={`w-full h-full flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                moreOpen || pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')
+                  ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+              {user
+                ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-current flex-shrink-0"
+                    onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
+                : <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+              }
+              <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
+            </button>
+
+            {/* Popup menu */}
+            {moreOpen && (
+              <div className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50"
+                style={{ right: '0px' }}>
+                {user ? (
+                  <>
+                    <div className="px-4 py-2.5 border-b border-gray-100 mb-1">
+                      <p className="text-sm font-bold text-gray-800 truncate">{profile?.full_name || 'ব্যবহারকারী'}</p>
+                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    </div>
+                    {[
+                      { to: '/dashboard', icon: '📊', label: 'ড্যাশবোর্ড' },
+                      { to: '/dashboard/add-shop', icon: '➕', label: 'দোকান যোগ করুন' },
+                      { to: '/account', icon: '👤', label: 'আমার অ্যাকাউন্ট' },
+                      { to: '/dashboard/favorites', icon: '❤️', label: 'পছন্দের দোকান' },
+                      { to: '/contact', icon: '📞', label: 'যোগাযোগ' },
+                    ].map(item => (
+                      <Link key={item.to} to={item.to} onClick={() => setMoreOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                        <span>{item.icon}</span> {item.label}
+                      </Link>
+                    ))}
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setMoreOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+                        <span>⚙️</span> অ্যাডমিন প্যানেল
+                      </Link>
+                    )}
+                    <div className="border-t border-gray-100 mt-1 pt-1">
+                      <button onClick={() => { signOut(); setMoreOpen(false) }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
+                        <span>🚪</span> লগআউট
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setMoreOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50">
+                      🔑 লগইন করুন
+                    </Link>
+                    <Link to="/register" onClick={() => setMoreOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+                      ✍️ রেজিস্ট্রেশন করুন
+                    </Link>
+                    <div className="border-t border-gray-100 mt-1 pt-1">
+                      <Link to="/contact" onClick={() => setMoreOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                        📞 যোগাযোগ
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
-    </header>
+
+        </div>
+      </nav>
+
+      {/* Spacer — pushes page content above mobile bottom nav */}
+      <div className="md:hidden h-[60px]" aria-hidden="true" />
+    </>
   )
 }
