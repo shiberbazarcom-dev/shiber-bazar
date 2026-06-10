@@ -10,9 +10,59 @@ import { Input, Textarea, Select } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Store, Plus, Edit2, Trash2, Upload, Phone, MapPin, Package, AlertCircle } from 'lucide-react'
+import { Store, Plus, Edit2, Trash2, Upload, Phone, MapPin, Package, AlertCircle, ShieldCheck, FileText, X } from 'lucide-react'
 import ShopStatusBadge from '@/components/shop/ShopStatusBadge'
 import toast from 'react-hot-toast'
+
+// ── Verification helpers ───────────────────────────────────────────────
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  nid_front:       'জাতীয় পরিচয়পত্র — সামনের দিক',
+  nid_back:        'জাতীয় পরিচয়পত্র — পেছনের দিক',
+  trade_license:   'ট্রেড লাইসেন্স',
+  driving_license: 'ড্রাইভিং লাইসেন্স',
+  passport:        'পাসপোর্ট',
+  other:           'অন্যান্য',
+}
+
+const DOC_TYPE_OPTIONS = Object.entries(DOC_TYPE_LABELS)
+
+const VER_STATUS_CLS: Record<string, string> = {
+  pending_review: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  verified:       'bg-green-50 text-green-700 border-green-200',
+  rejected:       'bg-red-50 text-red-700 border-red-200',
+}
+const VER_STATUS_LABEL: Record<string, string> = {
+  pending_review: '⏳ পর্যালোচনাধীন',
+  verified:       '✅ যাচাইকৃত',
+  rejected:       '❌ প্রত্যাখ্যাত',
+}
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024
+
+type NewDoc = { docType: string; file: File; previewUrl: string }
+
+async function uploadVerificationDoc(userId: string, shopId: string, docType: string, file: File) {
+  const ext = file.name.split('.').pop()
+  const path = `${userId}/${shopId}/${docType}-${Date.now()}.${ext}`
+  const { error: upErr } = await supabase.storage
+    .from('verification-docs')
+    .upload(path, file, { upsert: false })
+  if (upErr) throw upErr
+  const { error: dbErr } = await supabase.from('shop_verifications').insert({
+    shop_id: shopId,
+    user_id: userId,
+    document_type: docType,
+    document_url: path,
+    status: 'pending_review',
+  })
+  if (dbErr) throw dbErr
+  // Update shop verification_status if not already verified
+  await supabase.from('shops')
+    .update({ verification_status: 'pending_review' })
+    .eq('id', shopId)
+    .neq('verification_status', 'verified')
+}
 
 const MAX_SHOPS = 3
 
@@ -60,6 +110,28 @@ export default function MyShops() {
   const [uploadingCover, setUploadingCover] = useState(false)
   const logoRef = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
+
+  // Verification doc upload state
+  const [newDocType, setNewDocType] = useState('nid_front')
+  const [pendingDocs, setPendingDocs] = useState<NewDoc[]>([])
+  const [uploadingDocs, setUploadingDocs] = useState(false)
+  const verDocRef = useRef<HTMLInputElement>(null)
+
+  // Fetch existing verification docs for the shop being edited
+  const { data: existingVerDocs = [], refetch: refetchVerDocs } = useQuery({
+    queryKey: ['my-shop-verdocs', editShop?.id],
+    queryFn: async () => {
+      if (!editShop?.id) return []
+      const { data, error } = await supabase
+        .from('shop_verifications')
+        .select('*')
+        .eq('shop_id', editShop.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!editShop?.id,
+  })
 
   const { data: shops = [], isLoading } = useQuery({
     queryKey: ['my-shops', user?.id],
@@ -115,6 +187,25 @@ export default function MyShops() {
     } finally { setUploadingCover(false) }
   }
 
+  function handleVerDocPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return
+    e.target.value = ''
+    if (file.size > MAX_FILE_BYTES) { toast.error('ফাইল ৫MB-এর বেশি'); return }
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf']
+    if (!allowed.includes(file.type)) { toast.error('শুধু JPG, PNG বা PDF'); return }
+    const previewUrl = file.type === 'application/pdf' ? '' : URL.createObjectURL(file)
+    setPendingDocs(prev => [...prev, { docType: newDocType, file, previewUrl }])
+  }
+
+  function removePendingDoc(idx: number) {
+    setPendingDocs(prev => {
+      const next = [...prev]
+      if (next[idx].previewUrl) URL.revokeObjectURL(next[idx].previewUrl)
+      next.splice(idx, 1)
+      return next
+    })
+  }
+
   async function handleSave() {
     if (!editShop) return
     setSaving(true)
@@ -122,10 +213,26 @@ export default function MyShops() {
       const { id, categories: _, subcategories: __, owner_id: ___, ...fields } = editShop
       const { error } = await supabase.from('shops').update(fields).eq('id', id)
       if (error) throw error
+
+      // Upload any new verification docs
+      if (pendingDocs.length > 0) {
+        setUploadingDocs(true)
+        for (const d of pendingDocs) {
+          try {
+            await uploadVerificationDoc(user!.id, id, d.docType, d.file)
+          } catch (err: any) {
+            toast.error('নথি আপলোড ব্যর্থ: ' + (err.message || ''))
+          }
+        }
+        setPendingDocs([])
+        setUploadingDocs(false)
+        toast.success(`${pendingDocs.length}টি নথি জমা দেওয়া হয়েছে ✅`)
+      }
+
       qc.invalidateQueries({ queryKey: ['my-shops'] })
       qc.invalidateQueries({ queryKey: ['owner-stats'] })
       setEditShop(null)
-    } finally { setSaving(false) }
+    } finally { setSaving(false); setUploadingDocs(false) }
   }
 
   if (isLoading) return (
@@ -249,7 +356,7 @@ export default function MyShops() {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={!!editShop} onOpenChange={open => !open && setEditShop(null)}>
+      <Dialog open={!!editShop} onOpenChange={open => { if (!open) { setEditShop(null); setPendingDocs([]) } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>✏️ দোকান সম্পাদনা</DialogTitle>
@@ -333,12 +440,103 @@ export default function MyShops() {
                 <Label className="text-xs mb-1.5 block">খোলার সময়</Label>
                 <Input value={editShop.opening_hours || ''} onChange={e => setEditShop((s: any) => ({...s, opening_hours: e.target.value}))} placeholder="সকাল ৯টা - রাত ১০টা" />
               </div>
+
+              {/* ── Verification Documents ── */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  <p className="text-sm font-semibold text-gray-700">যাচাইকরণ নথি</p>
+                  <span className="text-[10px] text-gray-400 font-normal">(ঐচ্ছিক)</span>
+                </div>
+
+                {/* Existing docs */}
+                {existingVerDocs.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <p className="text-xs text-gray-500 font-medium">জমা দেওয়া নথিসমূহ:</p>
+                    {existingVerDocs.map((doc: any) => {
+                      const cls = VER_STATUS_CLS[doc.status] || VER_STATUS_CLS.pending_review
+                      const lbl = VER_STATUS_LABEL[doc.status] || '⏳ পর্যালোচনাধীন'
+                      return (
+                        <div key={doc.id} className="flex items-start gap-2.5 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                          <FileText className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-700 truncate">
+                              {DOC_TYPE_LABELS[doc.document_type] || doc.document_type}
+                            </p>
+                            <span className={`inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-full border mt-0.5 ${cls}`}>
+                              {lbl}
+                            </span>
+                            {doc.rejection_reason && (
+                              <p className="text-[10px] text-red-600 mt-1 leading-tight">
+                                কারণ: {doc.rejection_reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* New doc picker */}
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2">
+                  {(editShop.verification_status === 'rejected' || !editShop.verification_status || editShop.verification_status === 'unverified') && (
+                    <p className="text-xs text-blue-700 font-medium">
+                      {editShop.verification_status === 'rejected'
+                        ? '⚠️ আপনার নথি প্রত্যাখ্যাত হয়েছে। নতুন নথি আপলোড করুন।'
+                        : '📎 নথি আপলোড করলে দোকানের বিশ্বাসযোগ্যতা বাড়বে।'}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <select
+                      value={newDocType}
+                      onChange={e => setNewDocType(e.target.value)}
+                      className="flex-1 border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    >
+                      {DOC_TYPE_OPTIONS.map(([val, lbl]) => (
+                        <option key={val} value={val}>{lbl}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => verDocRef.current?.click()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 flex-shrink-0"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> যোগ করুন
+                    </button>
+                    <input ref={verDocRef} type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={handleVerDocPick} />
+                  </div>
+                  <p className="text-[10px] text-blue-500">JPG, PNG বা PDF — সর্বোচ্চ ৫MB</p>
+                </div>
+
+                {/* Pending (not yet saved) docs preview */}
+                {pendingDocs.length > 0 && (
+                  <div className="space-y-1.5 mt-2">
+                    <p className="text-xs text-gray-500 font-medium">নতুন নথি ({pendingDocs.length}টি — সংরক্ষণে আপলোড হবে):</p>
+                    {pendingDocs.map((d, i) => (
+                      <div key={i} className="flex items-center gap-2.5 p-2 bg-green-50 rounded-xl border border-green-100">
+                        {d.previewUrl
+                          ? <img src={d.previewUrl} alt="" className="w-8 h-8 rounded-lg object-cover border flex-shrink-0" />
+                          : <FileText className="h-4 w-4 text-red-400 flex-shrink-0" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-700 truncate">{DOC_TYPE_LABELS[d.docType]}</p>
+                          <p className="text-[10px] text-gray-400 truncate">{d.file.name}</p>
+                        </div>
+                        <button onClick={() => removePendingDoc(i)} className="p-1 text-gray-400 hover:text-red-500">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditShop(null)}>বাতিল</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ করুন'}
+            <Button onClick={handleSave} disabled={saving || uploadingDocs}>
+              {uploadingDocs ? 'নথি আপলোড হচ্ছে...' : saving ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ করুন'}
             </Button>
           </DialogFooter>
         </DialogContent>

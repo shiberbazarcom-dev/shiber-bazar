@@ -9,8 +9,221 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Store, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Star } from 'lucide-react'
+import { Store, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Star, ShieldCheck, FileText, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+// ── Verification helpers ──────────────────────────────────────────────
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  nid_front:       'NID — সামনের দিক',
+  nid_back:        'NID — পেছনের দিক',
+  trade_license:   'ট্রেড লাইসেন্স',
+  driving_license: 'ড্রাইভিং লাইসেন্স',
+  passport:        'পাসপোর্ট',
+  other:           'অন্যান্য',
+}
+
+const VER_STATUS: Record<string, { label: string; cls: string }> = {
+  pending_review: { label: '⏳ পর্যালোচনাধীন', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  verified:       { label: '✅ যাচাইকৃত',      cls: 'bg-green-50 text-green-700 border-green-200' },
+  rejected:       { label: '❌ প্রত্যাখ্যাত',  cls: 'bg-red-50 text-red-700 border-red-200' },
+}
+
+function useShopVerifications(shopId: string | null) {
+  return useQuery({
+    queryKey: ['shop-verifications-admin', shopId],
+    queryFn: async () => {
+      if (!shopId) return []
+      const { data, error } = await supabase
+        .from('shop_verifications')
+        .select('*')
+        .eq('shop_id', shopId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!shopId,
+  })
+}
+
+function useReviewDoc() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, shopId, status, rejectionReason }: {
+      id: string; shopId: string; status: string; rejectionReason?: string
+    }) => {
+      const { error } = await supabase.from('shop_verifications').update({
+        status,
+        rejection_reason: rejectionReason || null,
+        verified_by: status === 'verified' ? (await supabase.auth.getUser()).data.user?.id : null,
+        verified_at: status === 'verified' ? new Date().toISOString() : null,
+      }).eq('id', id)
+      if (error) throw error
+      // Update shop's aggregate verification_status
+      const { data: allDocs } = await supabase.from('shop_verifications').select('status').eq('shop_id', shopId)
+      const statuses = (allDocs || []).map((d: any) => d.status)
+      const shopVerStatus = statuses.includes('verified') ? 'verified'
+        : statuses.includes('rejected') ? 'rejected' : 'pending_review'
+      await supabase.from('shops').update({ verification_status: shopVerStatus }).eq('id', shopId)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['shop-verifications-admin', vars.shopId] })
+      qc.invalidateQueries({ queryKey: ['admin-shops'] })
+    },
+  })
+}
+
+async function getSignedUrl(path: string) {
+  const { data, error } = await supabase.storage.from('verification-docs').createSignedUrl(path, 300)
+  if (error) throw error
+  return data.signedUrl
+}
+
+function DocViewer({ path, onClose }: { path: string; onClose: () => void }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const isPdf = path.toLowerCase().endsWith('.pdf')
+
+  // load on mount
+  useState(() => {
+    getSignedUrl(path)
+      .then(u => { setUrl(u); setLoading(false) })
+      .catch(() => setLoading(false))
+  })
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <p className="text-sm font-semibold text-gray-800">নথি দেখুন</p>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="p-3 bg-gray-50 flex items-center justify-center min-h-[280px]">
+          {loading && <div className="w-7 h-7 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />}
+          {!loading && !url && <p className="text-sm text-red-500">লোড হয়নি — storage bucket বা RLS চেক করুন</p>}
+          {url && (isPdf
+            ? <iframe src={url} className="w-full h-[50vh] rounded border" title="doc" />
+            : <img src={url} alt="doc" className="max-w-full max-h-[50vh] object-contain rounded shadow" />
+          )}
+        </div>
+        {url && (
+          <div className="px-4 py-2 border-t text-right">
+            <a href={url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">নতুন ট্যাবে খুলুন ↗</a>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function RejectDocModal({ onConfirm, onClose }: { onConfirm: (r: string) => void; onClose: () => void }) {
+  const [reason, setReason] = useState('')
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
+        <p className="font-bold text-gray-800 mb-3">প্রত্যাখ্যানের কারণ লিখুন</p>
+        <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder="যেমন: ছবি অস্পষ্ট..."
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none mb-3" />
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50">বাতিল</button>
+          <button onClick={() => reason.trim() && onConfirm(reason.trim())} disabled={!reason.trim()}
+            className="px-4 py-2 text-sm text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-40">প্রত্যাখ্যান</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShopVerificationDocs({ shopId }: { shopId: string }) {
+  const { data: docs = [], isLoading } = useShopVerifications(shopId)
+  const reviewDoc = useReviewDoc()
+  const [viewingPath, setViewingPath] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+
+  if (isLoading) return (
+    <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+      <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" /> লোড হচ্ছে...
+    </div>
+  )
+
+  if (docs.length === 0) return (
+    <p className="text-xs text-gray-400 py-2 italic">কোনো নথি জমা দেওয়া হয়নি</p>
+  )
+
+  return (
+    <>
+      {viewingPath && <DocViewer path={viewingPath} onClose={() => setViewingPath(null)} />}
+      {rejectingId && (
+        <RejectDocModal
+          onClose={() => setRejectingId(null)}
+          onConfirm={(reason) => {
+            const doc = docs.find((d: any) => d.id === rejectingId)!
+            reviewDoc.mutate(
+              { id: rejectingId, shopId, status: 'rejected', rejectionReason: reason },
+              { onSuccess: () => { toast.success('নথি প্রত্যাখ্যান করা হয়েছে'); setRejectingId(null) } },
+            )
+          }}
+        />
+      )}
+      <div className="space-y-2">
+        {docs.map((doc: any) => {
+          const vs = VER_STATUS[doc.status] || VER_STATUS.pending_review
+          const isPdf = doc.document_url?.toLowerCase().endsWith('.pdf')
+          return (
+            <div key={doc.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                {isPdf ? <FileText className="h-4 w-4 text-red-400" /> : <ShieldCheck className="h-4 w-4 text-blue-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-700 truncate">
+                  {DOC_TYPE_LABELS[doc.document_type] || doc.document_type}
+                </p>
+                <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${vs.cls}`}>
+                  {vs.label}
+                </span>
+                {doc.rejection_reason && (
+                  <p className="text-[10px] text-red-500 mt-0.5 truncate">{doc.rejection_reason}</p>
+                )}
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => setViewingPath(doc.document_url)}
+                  className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600"
+                  title="দেখুন"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </button>
+                {doc.status !== 'verified' && (
+                  <button
+                    onClick={() => reviewDoc.mutate(
+                      { id: doc.id, shopId, status: 'verified' },
+                      { onSuccess: () => toast.success('✅ অনুমোদিত') },
+                    )}
+                    disabled={reviewDoc.isPending}
+                    className="p-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 disabled:opacity-50"
+                    title="অনুমোদন"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {doc.status !== 'rejected' && (
+                  <button
+                    onClick={() => setRejectingId(doc.id)}
+                    disabled={reviewDoc.isPending}
+                    className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
+                    title="প্রত্যাখ্যান"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
 
 type ShopStatus = 'all' | 'pending_approval' | 'approved' | 'rejected' | 'suspended'
 
@@ -306,13 +519,13 @@ export default function ManageShops() {
           {detailShop && (
             <div className="space-y-3 text-sm">
               {[
-                ['Owner',    (detailShop.profiles as any)?.full_name],
-                ['Phone',    detailShop.phone],
-                ['WhatsApp', detailShop.whatsapp],
-                ['Address',  detailShop.address],
-                ['Category', (detailShop.categories as any)?.name],
-                ['Status',   detailShop.status],
-                ['Rating',   `${detailShop.rating} (${detailShop.review_count} reviews)`],
+                ['মালিক',     (detailShop.profiles as any)?.full_name],
+                ['ফোন',       detailShop.phone],
+                ['WhatsApp',  detailShop.whatsapp],
+                ['ঠিকানা',   detailShop.address],
+                ['বিভাগ',    (detailShop.categories as any)?.name],
+                ['স্ট্যাটাস', detailShop.status],
+                ['রেটিং',    `${detailShop.rating ?? 'N/A'} (${detailShop.review_count ?? 0} reviews)`],
               ].map(([label, value]) => value && (
                 <div key={label} className="flex gap-2">
                   <span className="text-gray-400 w-20 flex-shrink-0">{label}:</span>
@@ -321,10 +534,19 @@ export default function ManageShops() {
               ))}
               {detailShop.description && (
                 <div>
-                  <p className="text-gray-400 mb-1">Description:</p>
+                  <p className="text-gray-400 mb-1">বিবরণ:</p>
                   <p className="text-gray-700 bg-gray-50 rounded-lg p-3">{detailShop.description}</p>
                 </div>
               )}
+
+              {/* ── Verification Documents ── */}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                  যাচাইকরণ নথি
+                </p>
+                <ShopVerificationDocs shopId={detailShop.id} />
+              </div>
             </div>
           )}
           <DialogFooter className="gap-2">

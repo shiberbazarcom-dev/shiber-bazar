@@ -378,7 +378,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="flex overflow-x-auto -mx-4 px-4 pb-2 gap-2.5 sm:grid sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:overflow-visible sm:pb-0 sm:gap-4 sm:mx-0 sm:px-0">
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
             {categories.map(cat => (
               <CategoryPill key={cat.id} category={cat} />
             ))}
