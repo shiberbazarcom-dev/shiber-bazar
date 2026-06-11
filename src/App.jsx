@@ -104,6 +104,8 @@ function PublicLayout({ children }) {
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
+      {/* Spacer so content clears the fixed mobile bottom nav (60px) */}
+      <div className="md:hidden h-[60px]" aria-hidden="true" />
       <WhatsAppButton />
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
@@ -19,6 +19,10 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [moreOpen, setMoreOpen]       = useState(false)
 
+  // PWA Install banner
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [showInstall, setShowInstall]     = useState(false)
+
   const catRef     = useRef(null)
   const profileRef = useRef(null)
   const moreRef    = useRef(null)
@@ -35,6 +39,33 @@ export default function Navbar() {
 
   // Close overlays on route change
   useEffect(() => { setMenuOpen(false); setMoreOpen(false) }, [location.pathname])
+
+  // PWA install prompt
+  useEffect(() => {
+    if (localStorage.getItem('pwa-dismissed')) return
+    const handler = (e) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+      setShowInstall(true)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = useCallback(async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') {
+      setShowInstall(false)
+      setInstallPrompt(null)
+    }
+  }, [installPrompt])
+
+  const dismissInstall = useCallback(() => {
+    setShowInstall(false)
+    localStorage.setItem('pwa-dismissed', '1')
+  }, [])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -55,12 +86,31 @@ export default function Navbar() {
       ══════════════════════════════════════════════ */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
 
+        {/* PWA Install Banner — mobile only */}
+        {showInstall && (
+          <div className="md:hidden flex items-center gap-2 px-3 py-2" style={{ background: '#1d4ed8' }}>
+            <span className="text-xl flex-shrink-0">📲</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold leading-tight">শিবের বাজার অ্যাপ ইন্সটল করুন</p>
+              <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+            </div>
+            <button
+              onClick={handleInstall}
+              className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
+              ইন্সটল
+            </button>
+            <button onClick={dismissInstall} className="text-blue-200 hover:text-white text-base leading-none flex-shrink-0 p-1">
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Announcement strip — desktop */}
         <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
           📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
         </div>
 
-        <div className="container-app py-2.5">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5">
           <div className="flex items-center gap-2 sm:gap-3">
 
             {/* Logo */}
@@ -347,8 +397,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Spacer — pushes page content above mobile bottom nav */}
-      <div className="md:hidden h-[60px]" aria-hidden="true" />
+      {/* Spacer removed — now handled in PublicLayout (App.jsx) */}
     </>
   )
 }
