@@ -61,6 +61,7 @@ const ManageVerifications  = lazy(() => import('./pages/admin/ManageVerification
 const ManageShopRequests   = lazy(() => import('./pages/admin/ManageShopRequests'))
 const Analytics            = lazy(() => import('./pages/admin/Analytics'))
 const Settings             = lazy(() => import('./pages/admin/Settings'))
+const ErrorLogs            = lazy(() => import('./pages/admin/ErrorLogs'))
 
 /* Loading fallback */
 function PageLoader() {
@@ -234,6 +235,7 @@ export default function App() {
               <Route path="analytics"    element={<Analytics />} />
               <Route path="settings"     element={<Settings />} />
               <Route path="services"     element={<ManageServices />} />
+              <Route path="error-logs"   element={<ErrorLogs />} />
             </Route>
 
             {/* Fallback */}

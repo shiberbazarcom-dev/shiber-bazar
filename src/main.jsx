@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import * as Sentry from '@sentry/react'
 import App from './App.jsx'
 import { queryClient } from './lib/queryClient.js'
+import { logError, installGlobalErrorHandlers } from './lib/errorLogger.js'
 import './index.css'
 
 // ── Sentry error monitoring ──
@@ -57,6 +58,14 @@ class ErrorBoundary extends React.Component {
     if (import.meta.env.VITE_SENTRY_DSN) {
       Sentry.captureException(error, { extra: errorInfo })
     }
+    // Admin panel-এ error log করো
+    logError({
+      severity: 'crash',
+      message: error?.message || String(error),
+      stack: error?.stack || null,
+      component: errorInfo?.componentStack?.split('\n')[1]?.trim() || 'ErrorBoundary',
+      extra: { componentStack: errorInfo?.componentStack },
+    })
     console.error('[App crash]', error, errorInfo)
   }
   render() {
@@ -96,6 +105,9 @@ class ErrorBoundary extends React.Component {
     return this.props.children
   }
 }
+
+// Install global error handlers (window.onerror + unhandledrejection)
+installGlobalErrorHandlers()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
