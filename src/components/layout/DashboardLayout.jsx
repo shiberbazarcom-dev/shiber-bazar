@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,11 +8,12 @@ import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
 /* ── Sidebar link with optional badge ── */
-function SidebarLink({ to, icon, label, end, badge }) {
+function SidebarLink({ to, icon, label, end, badge, onClose }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onClose}
       className={({ isActive }) => cn(
         'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
         isActive
@@ -129,9 +130,15 @@ function NewShopToast({ t, shop }) {
 
 export default function DashboardLayout({ type = 'user' }) {
   const { user, profile, isAdmin, loading, role, signOut } = useAuth()
-  const navigate = useNavigate()
-  const qc       = useQueryClient()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const qc        = useQueryClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Auto-close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
 
   const isShopOwner = ['shop_owner', 'market_manager', 'super_admin'].includes(role)
 
@@ -329,6 +336,7 @@ export default function DashboardLayout({ type = 'user' }) {
             key={link.to}
             {...link}
             badge={getBadge(link.to)}
+            onClose={() => setSidebarOpen(false)}
           />
         ))}
       </nav>
@@ -336,17 +344,17 @@ export default function DashboardLayout({ type = 'user' }) {
       {/* Footer */}
       <div className="p-4 border-t border-slate-100 space-y-1">
         {type === 'admin' && (
-          <SidebarLink to="/dashboard" icon="👤" label="User Dashboard" />
+          <SidebarLink to="/dashboard" icon="👤" label="User Dashboard" onClose={() => setSidebarOpen(false)} />
         )}
         {type !== 'admin' && isAdmin && (
-          <SidebarLink to="/admin" icon="⚙️" label="অ্যাডমিন প্যানেল" />
+          <SidebarLink to="/admin" icon="⚙️" label="অ্যাডমিন প্যানেল" onClose={() => setSidebarOpen(false)} />
         )}
-        <NavLink to="/" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-all">
+        <NavLink to="/" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-all">
           <span className="text-lg w-6 text-center">🏠</span>
           <span>মূল সাইট</span>
         </NavLink>
         <button
-          onClick={() => signOut()}
+          onClick={() => { setSidebarOpen(false); signOut() }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
           <span className="text-lg w-6 text-center">🚪</span>
           <span>লগআউট</span>
