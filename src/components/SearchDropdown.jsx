@@ -206,7 +206,13 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
           {/* View All Results */}
           <div className="border-t border-gray-100 mt-2 pt-2 px-4 pb-2">
             <Link
-              to={`/search?q=${encodeURIComponent(query)}&tab=${searchTab}`}
+              to={`/search?q=${encodeURIComponent(query)}&tab=${
+                results?.products?.length > 0 && !results?.shops?.length
+                  ? 'products'
+                  : results?.shops?.length > 0 && !results?.products?.length
+                  ? 'shops'
+                  : searchTab
+              }`}
               onClick={onClose}
               className="flex items-center justify-center gap-2 text-brand-600 font-medium text-sm py-2 hover:bg-brand-50 rounded-lg transition-colors"
             >
