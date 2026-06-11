@@ -19,15 +19,19 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
   
   const { data: results, isLoading } = useGlobalSearch(debouncedQuery)
   
-  // Handle click outside
+  // Handle click/touch outside (mousedown for desktop, touchstart for mobile)
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         onClose()
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
   }, [onClose])
   
   // Handle keyboard navigation

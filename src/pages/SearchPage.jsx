@@ -145,7 +145,6 @@ export default function SearchPage() {
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 placeholder={tab === 'shops' ? 'দোকান খুঁজুন — বাংলা বা Banglish (murgi, chal, alu)...' : 'পণ্য খুঁজুন — বাংলা বা Banglish (rice, kapor, dim)...'}
-                autoFocus
                 className="flex-1 px-4 py-3 text-gray-700 placeholder:text-gray-400 text-sm focus:outline-none"
               />
               {inputVal && (

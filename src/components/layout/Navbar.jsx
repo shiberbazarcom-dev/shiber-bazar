@@ -196,15 +196,13 @@ export default function Navbar() {
                   🔍
                 </button>
               </div>
-              {/* Autocomplete dropdown — desktop only; on mobile search navigates to /search page */}
-              {showSuggest && query.trim().length > 0 && (
-                <div className="hidden sm:block">
-                  <SearchDropdown
-                    query={query}
-                    onClose={() => { setShowSuggest(false); setQuery('') }}
-                    searchTab="shops"
-                  />
-                </div>
+              {/* Autocomplete dropdown — shows on all screen sizes */}
+              {showSuggest && query.trim().length > 1 && (
+                <SearchDropdown
+                  query={query}
+                  onClose={() => { setShowSuggest(false); setQuery('') }}
+                  searchTab="shops"
+                />
               )}
             </form>
 
