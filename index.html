@@ -94,6 +94,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Capture PWA install prompt ASAP before React mounts -->
+    <script>
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaInstallPrompt = e;
+      });
+      window.addEventListener('appinstalled', function() {
+        window.__pwaInstallPrompt = null;
+        window.__pwaInstalled = true;
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

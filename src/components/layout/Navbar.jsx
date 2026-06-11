@@ -42,29 +42,37 @@ export default function Navbar() {
 
   // PWA install prompt
   useEffect(() => {
-    // Don't show if already installed (standalone mode)
+    // Already installed in standalone mode → never show
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true
-    if (isStandalone) return
+    if (isStandalone || window.__pwaInstalled) return
 
-    // iOS Safari — no beforeinstallprompt, show manual guide
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream
+
     if (ios) {
       setIsIOS(true)
       setShowInstall(true)
       return
     }
 
-    // Android / Chrome — use native prompt
+    // Pick up event captured in index.html BEFORE React mounted
+    if (window.__pwaInstallPrompt) {
+      setInstallPrompt(window.__pwaInstallPrompt)
+      setShowInstall(true)
+    }
+
+    // Also listen for future fires (e.g. after uninstall / revisit)
     const handler = (e) => {
       e.preventDefault()
+      window.__pwaInstallPrompt = e
       setInstallPrompt(e)
       setShowInstall(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
 
-    // Also re-show if app was uninstalled (appinstalled fires on install)
     const onInstalled = () => {
+      window.__pwaInstalled = true
+      window.__pwaInstallPrompt = null
       setShowInstall(false)
       setInstallPrompt(null)
     }
@@ -77,17 +85,18 @@ export default function Navbar() {
   }, [])
 
   const handleInstall = useCallback(async () => {
-    if (!installPrompt) return
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
+    const prompt = installPrompt || window.__pwaInstallPrompt
+    if (!prompt) return
+    prompt.prompt()
+    const { outcome } = await prompt.userChoice
     if (outcome === 'accepted') {
       setShowInstall(false)
       setInstallPrompt(null)
+      window.__pwaInstallPrompt = null
     }
   }, [installPrompt])
 
   const dismissInstall = useCallback(() => {
-    // Session-only dismiss — banner comes back on next visit or after uninstall
     setShowInstall(false)
   }, [])
 
