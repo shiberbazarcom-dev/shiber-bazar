@@ -115,9 +115,10 @@ export default function Navbar() {
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5">
           <div className="flex items-center gap-2 sm:gap-3">
 
-            {/* Logo */}
+            {/* Logo — favicon on mobile, full logo on desktop */}
             <Link to="/" className="flex-shrink-0">
-              <img src="/logo.png" alt="শিবের বাজার" className="h-8 sm:h-9 w-auto object-contain" />
+              <img src="/favicon.svg" alt="শিবের বাজার" className="h-8 w-8 object-contain sm:hidden" />
+              <img src="/logo.png"    alt="শিবের বাজার" className="h-9 w-auto object-contain hidden sm:block" />
             </Link>
 
             {/* Search bar */}
