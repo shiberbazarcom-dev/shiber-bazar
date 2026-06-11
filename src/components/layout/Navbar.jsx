@@ -23,6 +23,7 @@ export default function Navbar() {
   // PWA Install banner
   const [installPrompt, setInstallPrompt] = useState(null)
   const [showInstall, setShowInstall]     = useState(false)
+  const [isIOS, setIsIOS]                 = useState(false)
 
   const catRef     = useRef(null)
   const profileRef = useRef(null)
@@ -41,14 +42,38 @@ export default function Navbar() {
 
   // PWA install prompt
   useEffect(() => {
-    if (localStorage.getItem('pwa-dismissed')) return
+    // Don't show if already installed (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+    if (isStandalone) return
+
+    // iOS Safari — no beforeinstallprompt, show manual guide
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream
+    if (ios) {
+      setIsIOS(true)
+      setShowInstall(true)
+      return
+    }
+
+    // Android / Chrome — use native prompt
     const handler = (e) => {
       e.preventDefault()
       setInstallPrompt(e)
       setShowInstall(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
+
+    // Also re-show if app was uninstalled (appinstalled fires on install)
+    const onInstalled = () => {
+      setShowInstall(false)
+      setInstallPrompt(null)
+    }
+    window.addEventListener('appinstalled', onInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
   }, [])
 
   const handleInstall = useCallback(async () => {
@@ -62,8 +87,8 @@ export default function Navbar() {
   }, [installPrompt])
 
   const dismissInstall = useCallback(() => {
+    // Session-only dismiss — banner comes back on next visit or after uninstall
     setShowInstall(false)
-    localStorage.setItem('pwa-dismissed', '1')
   }, [])
 
   const handleSearch = (e) => {
@@ -94,13 +119,18 @@ export default function Navbar() {
             <span className="text-xl flex-shrink-0">📲</span>
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-bold leading-tight">শিবের বাজার অ্যাপ ইন্সটল করুন</p>
-              <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+              {isIOS
+                ? <p className="text-blue-200 text-[10px] leading-tight">Safari: Share ⬆️ → "Add to Home Screen"</p>
+                : <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+              }
             </div>
-            <button
-              onClick={handleInstall}
-              className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
-              ইন্সটল
-            </button>
+            {!isIOS && (
+              <button
+                onClick={handleInstall}
+                className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
+                ইন্সটল
+              </button>
+            )}
             <button onClick={dismissInstall} className="text-blue-200 hover:text-white text-base leading-none flex-shrink-0 p-1">
               ✕
             </button>

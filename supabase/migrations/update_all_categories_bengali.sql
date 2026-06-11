@@ -68,8 +68,8 @@ UPDATE categories SET name = 'মোবাইল সেবা', icon = '🔌'
   WHERE slug IN ('mobile-service', 'mobile_service', 'mobile', 'mobileservice')
      OR name ILIKE '%mobile service%' OR name ILIKE '%mobile serv%';
 
--- বইয়ের দোকান
-UPDATE categories SET name = 'বইয়ের দোকান', icon = '📚'
+-- লাইব্রেরি
+UPDATE categories SET name = 'লাইব্রেরি', icon = '📚'
   WHERE slug IN ('books', 'book', 'boier-dokan', 'stationery')
      OR name ILIKE '%book%' OR name ILIKE '%boi%';
 
@@ -96,7 +96,7 @@ UPDATE categories SET name = 'অন্যান্য', icon = '🏪'
 -- নতুন ৩টি category (upsert — আগে থেকে থাকলেও safe)
 INSERT INTO categories (name, slug, icon, description, sort_order, is_active)
 VALUES
-  ('প্রসাধনী',   'cosmetics',  '💄', 'মেকআপ, স্কিনকেয়ার ও সৌন্দর্য পণ্য',           9,  true),
+  ('কসমেটিকস',   'cosmetics',  '💄', 'মেকআপ, স্কিনকেয়ার ও সৌন্দর্য পণ্য',           9,  true),
   ('স্যানিটারি', 'sanitary',   '🚿', 'বাথরুম, পাইপ ও স্যানিটারি সামগ্রী',           10, true),
   ('বৈদ্যুতিক',  'electrical', '⚡', 'বৈদ্যুতিক তার, সুইচ ও আনুষাঙ্গিক সরঞ্জাম',   11, true)
 ON CONFLICT (slug) DO UPDATE

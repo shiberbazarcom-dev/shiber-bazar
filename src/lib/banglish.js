@@ -247,7 +247,7 @@ export const WORD_MAP = {
   'furniture shop':'আসবাবপত্র',
   'electronics shop':'ইলেকট্রনিক্স',
   'sanitary':     'স্যানিটারি','plumbing':   'পাইপলাইন',
-  'cosmetics':    'প্রসাধনী', 'beauty':      'সৌন্দর্য',
+  'cosmetics':    'কসমেটিকস', 'beauty':      'সৌন্দর্য',
   'electrical':   'বৈদ্যুতিক','electric':    'বৈদ্যুতিক',
   'mobile service':'মোবাইল সেবা','mobile shop':'মোবাইল শপ',
   'clothing store':'পোশাকের দোকান',

@@ -989,7 +989,7 @@ const CATEGORY_MAP = [
   { keywords: ['pharmacy', 'medicine', 'ফার্মেসি', 'ওষুধ', 'মেডিসিন', 'স্বাস্থ্য', 'health'], templates: pharmacy },
   { keywords: ['electronics', 'ইলেকট্রনিক', 'digital', 'tech', 'technology'], templates: electronics },
   { keywords: ['restaurant', 'food', 'খাবার', 'রেস্তোরাঁ', 'রেস্টুরেন্ট', 'হোটেল', 'ক্যাফে', 'cafe', 'snacks'], templates: restaurant },
-  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'প্রসাধনী', 'বিউটি', 'makeup', 'skincare'], templates: cosmetics },
+  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'কসমেটিকস', 'বিউটি', 'makeup', 'skincare'], templates: cosmetics },
   { keywords: ['stationery', 'stationary', 'স্টেশনারি', 'office', 'অফিস', 'book', 'বই', 'education', 'school'], templates: stationery },
   { keywords: ['hardware', 'হার্ডওয়্যার', 'নির্মাণ', 'construction', 'tools', 'building'], templates: hardware },
   { keywords: ['sanitary', 'স্যানিটারি', 'bathroom', 'plumbing', 'bath', 'পাইপ', 'ফিটিংস'], templates: sanitary },
