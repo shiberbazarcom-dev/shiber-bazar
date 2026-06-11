@@ -50,6 +50,27 @@ function playBeep(freq1 = 880, freq2 = 660) {
   } catch (_) { /* audio blocked */ }
 }
 
+/* ── Service notification sound — 3-note chime (different feel) ── */
+function playServiceChime() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)()
+    const gain = ctx.createGain()
+    gain.connect(ctx.destination)
+    // Three ascending notes: C5 → E5 → G5
+    const notes = [523, 659, 784]
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      osc.type = 'sine'
+      osc.connect(gain)
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18)
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.18)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.35)
+      osc.start(ctx.currentTime + i * 0.18)
+      osc.stop(ctx.currentTime + i * 0.18 + 0.35)
+    })
+  } catch (_) { /* audio blocked */ }
+}
+
 /* ── Admin: new order toast ── */
 function NewOrderToast({ t, order }) {
   return (
@@ -96,6 +117,30 @@ function ForwardedOrderToast({ t, order }) {
           className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           অর্ডার দেখুন →
+        </a>
+      </div>
+      <button onClick={() => toast.dismiss(t.id)}
+        className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0">✕</button>
+    </div>
+  )
+}
+
+/* ── Admin: new service toast ── */
+function NewServiceToast({ t, service }) {
+  return (
+    <div className={cn(
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-purple-200 p-4 max-w-sm w-full',
+      t.visible ? 'opacity-100' : 'opacity-0'
+    )}>
+      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">🛠️</div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-800 text-sm">নতুন সেবা আবেদন!</p>
+        <p className="text-xs text-gray-700 font-medium mt-0.5 truncate">{service.name}</p>
+        <p className="text-xs text-gray-400 truncate">{service.phone}</p>
+        <a href="/admin/services"
+          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
+          onClick={() => toast.dismiss(t.id)}>
+          সেবা অনুমোদন করুন →
         </a>
       </div>
       <button onClick={() => toast.dismiss(t.id)}
@@ -177,6 +222,20 @@ export default function DashboardLayout({ type = 'user' }) {
     refetchInterval: 30000,
   })
 
+  /* ── Pending services count (admin only) ── */
+  const { data: pendingServicesCount = 0 } = useQuery({
+    queryKey: ['pending-services-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('services')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      return count || 0
+    },
+    enabled: type === 'admin',
+    refetchInterval: 30000,
+  })
+
   /* ── Shop IDs ref (for filtering owner realtime events) ── */
   const shopIdsRef = useRef([])
   useEffect(() => {
@@ -218,6 +277,25 @@ export default function DashboardLayout({ type = 'user' }) {
           playBeep(520, 780)
           qc.invalidateQueries({ queryKey: ['pending-shops-count'] })
           qc.invalidateQueries({ queryKey: ['admin-shops'] })
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [type, user]) // eslint-disable-line
+
+  /* ── Realtime: admin listens for new service submissions (INSERT) ── */
+  useEffect(() => {
+    if (type !== 'admin' || !user) return
+    const ch = supabase
+      .channel('admin-new-services')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'services' },
+        (payload) => {
+          toast.custom(t => <NewServiceToast t={t} service={payload.new} />, {
+            duration: 12000, position: 'top-right',
+          })
+          playServiceChime()
+          qc.invalidateQueries({ queryKey: ['pending-services-count'] })
+          qc.invalidateQueries({ queryKey: ['admin-services'] })
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
@@ -306,6 +384,7 @@ export default function DashboardLayout({ type = 'user' }) {
     if (to === '/admin/orders')         return adminBadge
     if (to === '/admin/shops')          return pendingShopsCount
     if (to === '/admin/shop-requests')  return pendingRequestsCount
+    if (to === '/admin/services')       return pendingServicesCount
     if (to === '/dashboard/orders')     return ownerBadge
     return 0
   }
