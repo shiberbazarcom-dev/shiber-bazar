@@ -24,9 +24,13 @@ export default function ErrorLogs() {
   const [expanded, setExpanded] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [stats, setStats]       = useState({ crash: 0, error: 0, warning: 0 })
+  const [tableError, setTableError] = useState(null)
+  const [testSending, setTestSending] = useState(false)
+  const [testMsg, setTestMsg]   = useState(null)
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
+    setTableError(null)
     let q = supabase
       .from('error_logs')
       .select('*')
@@ -34,20 +38,41 @@ export default function ErrorLogs() {
       .limit(200)
     if (filter !== 'all') q = q.eq('severity', filter)
     const { data, error } = await q
-    if (!error && data) {
-      setLogs(data)
-      // recalculate stats from ALL logs (not just filtered)
-      const { data: all } = await supabase
-        .from('error_logs')
-        .select('severity')
-      if (all) {
-        const s = { crash: 0, error: 0, warning: 0 }
-        all.forEach(r => { if (s[r.severity] !== undefined) s[r.severity]++ })
-        setStats(s)
-      }
+    if (error) {
+      setTableError(error.message)
+      setLoading(false)
+      return
+    }
+    setLogs(data || [])
+    // recalculate stats from ALL logs (not just filtered)
+    const { data: all } = await supabase.from('error_logs').select('severity')
+    if (all) {
+      const s = { crash: 0, error: 0, warning: 0 }
+      all.forEach(r => { if (s[r.severity] !== undefined) s[r.severity]++ })
+      setStats(s)
     }
     setLoading(false)
   }, [filter])
+
+  async function sendTestError() {
+    setTestSending(true)
+    setTestMsg(null)
+    const { error } = await supabase.from('error_logs').insert({
+      severity: 'error',
+      message: '✅ এটি একটি Test Error — system কাজ করছে',
+      stack: 'Test stack trace\n  at sendTestError (ErrorLogs.jsx)\n  at onClick',
+      url: window.location.href,
+      component: 'ErrorLogs (Test)',
+      user_agent: navigator.userAgent,
+    })
+    setTestSending(false)
+    if (error) {
+      setTestMsg({ ok: false, text: `❌ ব্যর্থ: ${error.message}` })
+    } else {
+      setTestMsg({ ok: true, text: '✅ Test error পাঠানো হয়েছে!' })
+      setTimeout(() => { fetchLogs(); setTestMsg(null) }, 1000)
+    }
+  }
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
@@ -84,7 +109,14 @@ export default function ErrorLogs() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">🐛 Error Logs</h1>
           <p className="text-sm text-gray-500 mt-0.5">App-এর সব crash, error ও warning এখানে দেখা যাবে</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={sendTestError}
+            disabled={testSending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-200 text-sm font-medium text-blue-600 hover:bg-blue-50 transition disabled:opacity-50"
+          >
+            {testSending ? '⏳' : '🧪'} Test করুন
+          </button>
           <button
             onClick={fetchLogs}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
@@ -116,6 +148,24 @@ export default function ErrorLogs() {
           </div>
         ))}
       </div>
+
+      {/* Table error banner */}
+      {tableError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <p className="font-semibold mb-1">⚠️ Database Error — error_logs table পাওয়া যাচ্ছে না</p>
+          <p className="text-xs text-red-500 font-mono">{tableError}</p>
+          <p className="text-xs mt-2 text-red-600">
+            Supabase Dashboard → SQL Editor → <code className="bg-red-100 px-1 rounded">supabase/migrations/add_error_logs.sql</code> ফাইলটি run করুন
+          </p>
+        </div>
+      )}
+
+      {/* Test result feedback */}
+      {testMsg && (
+        <div className={`mb-4 p-3 rounded-xl text-sm font-medium ${testMsg.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          {testMsg.text}
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-4 flex-wrap">
