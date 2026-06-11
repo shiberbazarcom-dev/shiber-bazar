@@ -39,21 +39,30 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
 
   const [form, setForm] = useState({
     full_name:     profile?.full_name || '',
-    phone:         profile?.phone || '',
+    phone:         profile?.phone     || '',
     business_type: '',
     shop_name:     '',
     location:      '',
     notes:         '',
   })
 
+  // Re-fill if profile arrives after modal mounts
+  useEffect(() => {
+    if (profile) {
+      setForm(f => ({
+        ...f,
+        full_name: f.full_name || profile.full_name || '',
+        phone:     f.phone     || profile.phone     || '',
+      }))
+    }
+  }, [profile])
+
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.full_name.trim())     return toast.error('পূর্ণ নাম দিন')
-    if (!form.phone.trim())         return toast.error('মোবাইল নম্বর দিন')
-    if (!form.business_type.trim()) return toast.error('ব্যবসার ধরন দিন')
-    if (!form.location.trim())      return toast.error('এলাকা / জেলা দিন')
+    if (!form.full_name.trim()) return toast.error('পূর্ণ নাম দিন')
+    if (!form.phone.trim())     return toast.error('মোবাইল নম্বর দিন')
 
     try {
       await submit.mutateAsync(form as any)
@@ -62,9 +71,9 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
           `নতুন দোকান খোলার আবেদন।\n` +
           `নাম: ${form.full_name}\n` +
           `মোবাইল: ${form.phone}\n` +
-          `ব্যবসার ধরন: ${form.business_type}\n` +
-          `দোকানের নাম: ${form.shop_name || 'উল্লেখ নেই'}\n` +
-          `এলাকা: ${form.location}\n` +
+          (form.business_type ? `ব্যবসার ধরন: ${form.business_type}\n` : '') +
+          (form.shop_name     ? `দোকানের নাম: ${form.shop_name}\n`     : '') +
+          (form.location      ? `এলাকা: ${form.location}\n`             : '') +
           `অনুগ্রহ করে ব্যবহারকারীর সাথে যোগাযোগ করুন।`
         window.open(whatsappUrl(adminPhone, msg), '_blank', 'noopener')
       }
@@ -86,34 +95,75 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-lg">✕</button>
         </div>
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
-          {([
-            ['full_name',     'পূর্ণ নাম *',              'আপনার পুরো নাম লিখুন',          'text'],
-            ['phone',         'মোবাইল নম্বর *',            '01XXXXXXXXX',                    'tel'],
-            ['business_type', 'ব্যবসার ধরন *',             'যেমন: কাপড়, মুদিখানা...',       'text'],
-            ['shop_name',     'দোকানের নাম (ঐচ্ছিক)',    'দোকানের নাম থাকলে লিখুন',        'text'],
-            ['location',      'এলাকা / জেলা *',            'যেমন: সিলেট, রাজশাহী...',        'text'],
-          ] as [string, string, string, string][]).map(([key, label, placeholder, type]) => (
-            <div key={key}>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
-              <input
-                type={type}
-                value={(form as any)[key]}
-                onChange={e => set(key, e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder={placeholder}
-              />
-            </div>
-          ))}
+
+          {/* Name — required, auto-filled */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">অতিরিক্ত তথ্য (ঐচ্ছিক)</label>
-            <textarea
-              value={form.notes}
-              onChange={e => set('notes', e.target.value)}
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
-              placeholder="যেকোনো অতিরিক্ত তথ্য..."
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">পূর্ণ নাম *</label>
+            <input
+              required
+              type="text"
+              value={form.full_name}
+              onChange={e => set('full_name', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="আপনার পুরো নাম"
             />
           </div>
+
+          {/* Phone — required, auto-filled */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">মোবাইল নম্বর *</label>
+            <input
+              required
+              type="tel"
+              value={form.phone}
+              onChange={e => set('phone', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="01XXXXXXXXX"
+            />
+          </div>
+
+          {/* Business type — optional */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              ব্যবসার ধরন <span className="font-normal text-gray-400">(ঐচ্ছিক)</span>
+            </label>
+            <input
+              type="text"
+              value={form.business_type}
+              onChange={e => set('business_type', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="যেমন: কাপড়, মুদিখানা, ইলেকট্রনিক্স..."
+            />
+          </div>
+
+          {/* Shop name — optional */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              দোকানের নাম <span className="font-normal text-gray-400">(ঐচ্ছিক)</span>
+            </label>
+            <input
+              type="text"
+              value={form.shop_name}
+              onChange={e => set('shop_name', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="দোকানের নাম থাকলে লিখুন"
+            />
+          </div>
+
+          {/* Location — optional */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              এলাকা / জেলা <span className="font-normal text-gray-400">(ঐচ্ছিক)</span>
+            </label>
+            <input
+              type="text"
+              value={form.location}
+              onChange={e => set('location', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="যেমন: সিলেট, রাজশাহী..."
+            />
+          </div>
+
           <div className="pt-2">
             <button
               type="submit"

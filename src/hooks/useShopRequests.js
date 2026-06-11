@@ -31,9 +31,11 @@ export function useSubmitShopRequest() {
 
   return useMutation({
     mutationFn: async (formData) => {
+      // Ensure location is never null (DB constraint)
+      const payload = { location: '', ...formData, user_id: user.id, status: 'pending' }
       const { data, error } = await supabase
         .from(TABLE)
-        .insert({ ...formData, user_id: user.id, status: 'pending' })
+        .insert(payload)
         .select()
         .single()
       if (error) throw error
