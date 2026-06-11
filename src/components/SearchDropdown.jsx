@@ -82,7 +82,7 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[200] max-h-[60vh] overflow-y-auto"
+      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[500] max-h-[60vh] overflow-y-auto"
     >
       {isLoading ? (
         <div className="p-8 text-center">
