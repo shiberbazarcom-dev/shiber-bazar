@@ -110,10 +110,9 @@ export default function Navbar() {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`)
-      setShowSuggest(false)
-    }
+    const q = query.trim()
+    navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search')
+    setShowSuggest(false)
   }
 
   const avatar = profile?.avatar_url || getAvatarUrl(profile?.full_name || user?.email || 'U', '1a9e3f')
@@ -192,7 +191,7 @@ export default function Navbar() {
                   </button>
                 )}
                 <button type="submit"
-                  className="hidden sm:flex px-4 text-white text-sm flex-shrink-0 items-center justify-center"
+                  className="flex px-3 sm:px-4 text-white text-sm flex-shrink-0 items-center justify-center"
                   style={{ background: '#2563EB' }}>
                   🔍
                 </button>
