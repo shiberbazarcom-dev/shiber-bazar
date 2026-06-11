@@ -55,7 +55,7 @@ export function useAllShopRequests(status = 'all') {
     queryFn: async () => {
       let q = supabase
         .from(TABLE)
-        .select('*, profiles(full_name, email, role, avatar_url)')
+        .select('*')
         .order('created_at', { ascending: false })
       if (status !== 'all') q = q.eq('status', status)
       const { data, error } = await q

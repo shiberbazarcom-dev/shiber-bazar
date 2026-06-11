@@ -82,13 +82,7 @@ function RequestModal({ req, onClose }) {
             </div>
           ))}
 
-          {/* User email */}
-          {req.profiles?.email && (
-            <div className="flex gap-3">
-              <span className="text-sm text-gray-400 w-28 flex-shrink-0">ইমেইল</span>
-              <span className="text-sm font-medium text-gray-700 flex-1">{req.profiles.email}</span>
-            </div>
-          )}
+          {/* nothing here — email not in request table */}
 
           {/* Contact button */}
           <button
