@@ -21,14 +21,16 @@ export default function ManageShops() {
   const del      = useDeleteShop()
 
   const filtered = shops.filter(s => {
-    const matchCat  = !catFilter || s.category_id === catFilter
-    const matchSearch = !search  || s.shop_name.toLowerCase().includes(search.toLowerCase())
+    const matchCat    = !catFilter || s.category_id === catFilter
+    const name        = (s.shop_name || '').toLowerCase()
+    const matchSearch = !search || name.includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
   const toggleApprove = async (shop) => {
-    await approve.mutateAsync({ id: shop.id, approve: !shop.is_approved })
-    toast.success(shop.is_approved ? 'অনুমোদন বাতিল' : 'অনুমোদন দেওয়া হয়েছে ✅')
+    const isApproved = shop.status === 'approved'
+    await approve.mutateAsync({ id: shop.id, approve: !isApproved })
+    toast.success(isApproved ? 'অনুমোদন বাতিল' : 'অনুমোদন দেওয়া হয়েছে ✅')
   }
 
   const toggleFeat = async (shop) => {
@@ -102,7 +104,7 @@ export default function ManageShops() {
               </thead>
               <tbody>
                 {filtered.map(shop => {
-                  const fallback = getAvatarUrl(shop.shop_name)
+                  const fallback = getAvatarUrl(shop.shop_name || '?')
                   return (
                     <tr key={shop.id} className="table-row">
                       <td className="table-cell">
@@ -131,8 +133,8 @@ export default function ManageShops() {
                       </td>
                       <td className="table-cell text-center">
                         <button onClick={() => toggleApprove(shop)}>
-                          <Badge variant={shop.is_approved ? 'green' : 'gold'} dot className="cursor-pointer hover:opacity-80 transition-opacity">
-                            {shop.is_approved ? 'অনুমোদিত' : 'অপেক্ষমান'}
+                          <Badge variant={shop.status === 'approved' ? 'green' : 'gold'} dot className="cursor-pointer hover:opacity-80 transition-opacity">
+                            {shop.status === 'approved' ? 'অনুমোদিত' : 'অপেক্ষমান'}
                           </Badge>
                         </button>
                       </td>
