@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
 import { getAvatarUrl } from '../../lib/utils'
 import NotificationBell from '../NotificationBell'
+import SearchDropdown from '../SearchDropdown'
 
 export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
@@ -14,6 +15,7 @@ export default function Navbar() {
   const location  = useLocation()
 
   const [query, setQuery]             = useState('')
+  const [showSuggest, setShowSuggest] = useState(false)
   const [menuOpen, setMenuOpen]       = useState(false)
   const [catOpen, setCatOpen]         = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -35,7 +37,7 @@ export default function Navbar() {
   }, [])
 
   // Close overlays on route change
-  useEffect(() => { setMenuOpen(false) }, [location.pathname])
+  useEffect(() => { setMenuOpen(false); setShowSuggest(false) }, [location.pathname])
 
   // PWA install prompt
   useEffect(() => {
@@ -66,7 +68,10 @@ export default function Navbar() {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    if (query.trim()) navigate(`/search?q=${encodeURIComponent(query.trim())}`)
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`)
+      setShowSuggest(false)
+    }
   }
 
   const avatar = profile?.avatar_url || getAvatarUrl(profile?.full_name || user?.email || 'U', '1a9e3f')
@@ -116,20 +121,35 @@ export default function Navbar() {
             </Link>
 
             {/* Search bar */}
-            <form onSubmit={handleSearch} className="flex-1 min-w-0 mx-1 sm:mx-2">
+            <form onSubmit={handleSearch} className="flex-1 min-w-0 mx-1 sm:mx-2 relative">
               <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-gray-50">
                 <input
                   value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="দোকান খুঁজুন..."
+                  onChange={e => { setQuery(e.target.value); setShowSuggest(true) }}
+                  onFocus={() => setShowSuggest(true)}
+                  placeholder="দোকান বা পণ্য খুঁজুন..."
                   className="flex-1 min-w-0 bg-transparent px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
                 />
+                {query && (
+                  <button type="button" onClick={() => { setQuery(''); setShowSuggest(false) }}
+                    className="px-2 text-gray-400 hover:text-gray-600 flex-shrink-0">
+                    ✕
+                  </button>
+                )}
                 <button type="submit"
                   className="px-3 sm:px-4 text-white text-sm flex-shrink-0 flex items-center justify-center"
                   style={{ background: '#2563EB' }}>
                   🔍
                 </button>
               </div>
+              {/* Autocomplete dropdown */}
+              {showSuggest && query.trim().length > 0 && (
+                <SearchDropdown
+                  query={query}
+                  onClose={() => { setShowSuggest(false); setQuery('') }}
+                  searchTab="shops"
+                />
+              )}
             </form>
 
             {/* ── Desktop nav ── */}

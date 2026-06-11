@@ -234,7 +234,7 @@ export default function Home() {
   return (
     <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* ── Hero Section (Reduced Height) ── */}
-      <section className="relative min-h-[320px] sm:min-h-[380px] flex items-center overflow-hidden">
+      <section className="relative min-h-[320px] sm:min-h-[380px] flex items-center">
         {/* Dynamic Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
