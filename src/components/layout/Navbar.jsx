@@ -19,10 +19,23 @@ export default function Navbar() {
   const [catOpen, setCatOpen]         = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  // PWA Install banner
+  // PWA Install banner — check UA immediately on first render (before any effect)
   const [installPrompt, setInstallPrompt] = useState(null)
-  const [showInstall, setShowInstall]     = useState(false)
-  const [isIOS, setIsIOS]                 = useState(false)
+  const [showInstall, setShowInstall] = useState(() => {
+    try {
+      const ua = navigator.userAgent || ''
+      const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches
+        || window.navigator.standalone === true
+      if (isStandalone || window.__pwaInstalled) return false
+      return /iphone|ipad|ipod/i.test(ua) || /android/i.test(ua)
+    } catch { return false }
+  })
+  const [isIOS, setIsIOS] = useState(() => {
+    try {
+      const ua = navigator.userAgent || ''
+      return /iphone|ipad|ipod/i.test(ua) && !window.MSStream
+    } catch { return false }
+  })
 
   const catRef     = useRef(null)
   const profileRef = useRef(null)
@@ -39,37 +52,23 @@ export default function Navbar() {
   // Close overlays on route change
   useEffect(() => { setMenuOpen(false); setShowSuggest(false) }, [location.pathname])
 
-  // PWA install prompt
+  // PWA install prompt — UA already checked in useState above
+  // This effect only handles: standalone check, beforeinstallprompt, appinstalled
   useEffect(() => {
-    // Already installed in standalone mode → never show
+    // If running as installed PWA, hide the banner
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true
-    if (isStandalone || window.__pwaInstalled) return
-
-    const ua = navigator.userAgent
-    const ios     = /iphone|ipad|ipod/i.test(ua) && !window.MSStream
-    const android = /android/i.test(ua)
-
-    // iOS → always show manual instructions
-    if (ios) {
-      setIsIOS(true)
-      setShowInstall(true)
+    if (isStandalone || window.__pwaInstalled) {
+      setShowInstall(false)
       return
     }
 
-    // Any Android browser → always show banner
-    // (install button appears if beforeinstallprompt fires, otherwise shows manual guide)
-    if (android) {
-      setShowInstall(true)
-    }
-
-    // Pick up beforeinstallprompt captured before React mounted
+    // Pick up beforeinstallprompt captured in index.html before React mounted
     if (window.__pwaInstallPrompt) {
       setInstallPrompt(window.__pwaInstallPrompt)
-      setShowInstall(true)
     }
 
-    // Listen for future fires
+    // Listen for future beforeinstallprompt fires
     const handler = (e) => {
       e.preventDefault()
       window.__pwaInstallPrompt = e
@@ -78,6 +77,7 @@ export default function Navbar() {
     }
     window.addEventListener('beforeinstallprompt', handler)
 
+    // Hide banner once installed
     const onInstalled = () => {
       window.__pwaInstalled = true
       window.__pwaInstallPrompt = null
