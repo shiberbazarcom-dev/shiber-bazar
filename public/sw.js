@@ -1,46 +1,57 @@
-const CACHE = 'shiberbazar-v3'
+// Bump this version on EVERY deploy to force SW update
+const CACHE = 'shiberbazar-v5'
 
 self.addEventListener('install', e => {
-  // Don't precache anything — let the network provide fresh HTML on every load
+  // Skip waiting immediately — take over all tabs right away
   e.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', e => {
-  // Delete ALL old caches (v1, v2, etc.)
+  // Nuke ALL old caches unconditionally, then claim all clients
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   )
 })
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return
-  // Never intercept Supabase API calls
-  if (e.request.url.includes('supabase.co')) return
 
-  // HTML navigation requests (page loads / refreshes) → always network-first
-  // This ensures index.html is always fresh after a new Vercel deploy
-  if (e.request.mode === 'navigate') {
+  // Never intercept Supabase or external API calls
+  const url = e.request.url
+  if (url.includes('supabase.co')) return
+  if (url.includes('formsubmit.co')) return
+  if (!url.startsWith(self.location.origin)) return
+
+  // HTML / navigation → ALWAYS network, never cache
+  if (e.request.mode === 'navigate' ||
+      e.request.headers.get('accept')?.includes('text/html')) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('/'))
+      fetch(e.request, { cache: 'no-store' })
+        .catch(() => caches.match('/index.html'))
     )
     return
   }
 
-  // Static assets (JS/CSS/images have content-hash filenames) → cache-first
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached
-      return fetch(e.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone()
-          caches.open(CACHE).then(c => c.put(e.request, clone))
-        }
-        return response
+  // Static assets with content-hash filenames (JS/CSS/fonts) → cache-first
+  // Safe because Vite gives them unique hashes — stale is impossible
+  if (url.includes('/assets/')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached
+        return fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE).then(c => c.put(e.request, clone))
+          }
+          return res
+        })
       })
-    })
-  )
+    )
+    return
+  }
+
+  // Everything else (images, manifests, etc.) → network-first
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)))
 })

@@ -17,11 +17,12 @@ export default function NotificationBell() {
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
 
+  // ALL hooks must be called unconditionally — Rules of Hooks
+  // Subscribe to real-time updates (no-ops gracefully if table missing)
+  useRealtimeNotifications()
+
   // notifications table may not exist yet — render nothing rather than crash
   if (notifError) return null
-  
-  // Subscribe to real-time updates
-  useRealtimeNotifications()
   
   // Close dropdown when clicking outside
   useEffect(() => {
