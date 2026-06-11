@@ -529,6 +529,31 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Contact Info Strip ── */}
+      <section className="bg-white border-t border-gray-100 py-6">
+        <div className="container-app">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>📍</span>
+              <span>শিবের বাজার, সিলেট সদর, সিলেট</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>📞</span>
+              <a href="tel:+8801310012276" className="font-medium text-blue-600 hover:underline">
+                ০১৩১০-০১২২৭৬
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>💬</span>
+              <a href="https://wa.me/8801310012276" target="_blank" rel="noopener noreferrer"
+                 className="font-medium text-green-600 hover:underline">
+                WhatsApp করুন
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

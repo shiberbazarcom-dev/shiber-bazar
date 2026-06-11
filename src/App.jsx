@@ -18,6 +18,7 @@ const SearchPage       = lazy(() => import('./pages/SearchPage'))
 const ProductDetails   = lazy(() => import('./pages/ProductDetails'))
 const CartPage         = lazy(() => import('./pages/CartPage'))
 const ContactPage      = lazy(() => import('./pages/ContactPage'))
+const PolicyPage       = lazy(() => import('./pages/PolicyPage'))
 const Login            = lazy(() => import('./pages/auth/Login'))
 const Register         = lazy(() => import('./pages/auth/Register'))
 const AuthCallback     = lazy(() => import('./pages/auth/AuthCallback'))
@@ -136,6 +137,7 @@ export default function App() {
             <Route path="/track-order"    element={<PublicLayout><TrackOrder /></PublicLayout>} />
             <Route path="/product/:id"    element={<PublicLayout><ProductDetails /></PublicLayout>} />
             <Route path="/contact"        element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
             {/* ══════════════════════════════════
