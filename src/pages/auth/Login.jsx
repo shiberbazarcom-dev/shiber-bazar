@@ -3,36 +3,64 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const BLUE = '#2563EB'
 
 export default function Login() {
-  const { signInEmail, signInGoogle, user } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/'
+  const { signInPhone, signInEmail, signInGoogle, user } = useAuth()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const from      = location.state?.from?.pathname || '/dashboard'
 
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [loading, setLoading] = useState(false)
+  const [form, setForm]           = useState({ phone: '', password: '' })
+  const [loading, setLoading]     = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [showInfo, setShowInfo] = useState(false)
+  // Admin fallback: toggle to email login
+  const [useEmail, setUseEmail]   = useState(false)
+  const [emailForm, setEmailForm] = useState({ email: '', password: '' })
 
   useEffect(() => {
     if (user) navigate(from, { replace: true })
   }, [user]) // eslint-disable-line
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const set      = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const setEmail = (k, v) => setEmailForm(f => ({ ...f, [k]: v }))
 
-  const handleSubmit = async (e) => {
+  /* Phone login */
+  const handlePhoneSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.password) return toast.error('সব তথ্য দিন')
+    const phone = form.phone.trim()
+    if (!phone || !form.password) return toast.error('সব তথ্য দিন')
+    if (!/^01[3-9]\d{8}$/.test(phone)) return toast.error('সঠিক মোবাইল নম্বর দিন')
+
     setLoading(true)
     try {
-      const { error } = await signInEmail(form.email, form.password)
+      const { error } = await signInPhone(phone, form.password)
       if (error) {
-        if (error.message?.includes('Email not confirmed') || error.message?.includes('email_not_confirmed')) {
-          setShowInfo(true)
-          toast.error('ইমেইল যাচাই করা হয়নি। নিচের নির্দেশনা দেখুন।')
-        } else if (error.message?.includes('Invalid login credentials')) {
+        if (error.message?.includes('Invalid login credentials')) {
+          toast.error('মোবাইল নম্বর বা পাসওয়ার্ড ভুল')
+        } else {
+          toast.error(error.message || 'লগইন ব্যর্থ হয়েছে')
+        }
+      } else {
+        toast.success('লগইন সফল! 🎉')
+        navigate(from, { replace: true })
+      }
+    } catch {
+      toast.error('সমস্যা হয়েছে, আবার চেষ্টা করুন')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* Email login (for admins / Google users) */
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault()
+    if (!emailForm.email || !emailForm.password) return toast.error('সব তথ্য দিন')
+    setLoading(true)
+    try {
+      const { error } = await signInEmail(emailForm.email, emailForm.password)
+      if (error) {
+        if (error.message?.includes('Invalid login credentials')) {
           toast.error('ইমেইল বা পাসওয়ার্ড ভুল')
         } else {
           toast.error(error.message || 'লগইন ব্যর্থ হয়েছে')
@@ -41,7 +69,7 @@ export default function Login() {
         toast.success('লগইন সফল! 🎉')
         navigate(from, { replace: true })
       }
-    } catch (err) {
+    } catch {
       toast.error('সমস্যা হয়েছে, আবার চেষ্টা করুন')
     } finally {
       setLoading(false)
@@ -59,14 +87,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+    <div className="min-h-[80vh] flex items-center justify-center py-10 px-4 pb-28 md:pb-10">
       <div className="w-full max-w-md">
 
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                 style={{ background: GREEN }}>শ</div>
+                 style={{ background: BLUE }}>শ</div>
             <span className="font-bold text-gray-800 text-lg">শিবের বাজার</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-800">লগইন করুন</h1>
@@ -75,23 +103,9 @@ export default function Login() {
 
         <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8">
 
-          {/* Email not confirmed info */}
-          {showInfo && (
-            <div className="mb-5 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm">
-              <p className="font-semibold text-yellow-800 mb-2">⚠️ ইমেইল যাচাই প্রয়োজন</p>
-              <p className="text-yellow-700 mb-2">
-                আপনার ইমেইলে একটি যাচাই লিংক পাঠানো হয়েছে। যাচাই করার পর আবার লগইন করুন।
-              </p>
-              <p className="text-yellow-700 text-xs">
-                অথবা, যদি সরাসরি লগইন করতে চান, Supabase Dashboard → Authentication → Email Settings থেকে
-                "Confirm email" অপশনটি বন্ধ করুন।
-              </p>
-            </div>
-          )}
-
           {/* Google OAuth */}
           <button onClick={handleGoogle} disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-5 disabled:opacity-60">
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-5 disabled:opacity-60">
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
             ) : (
@@ -107,35 +121,95 @@ export default function Login() {
 
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400">অথবা</span>
+            <span className="text-xs text-gray-400">অথবা মোবাইল দিয়ে</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
-          {/* Email/Password form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="form-label">ইমেইল</label>
-              <input type="email" required
-                value={form.email} onChange={e => set('email', e.target.value)}
-                className="input" placeholder="example@gmail.com" />
-            </div>
-            <div>
-              <label className="form-label">পাসওয়ার্ড</label>
-              <input type="password" required
-                value={form.password} onChange={e => set('password', e.target.value)}
-                className="input" placeholder="পাসওয়ার্ড" />
-            </div>
+          {/* Phone login form */}
+          {!useEmail && (
+            <form onSubmit={handlePhoneSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">মোবাইল নম্বর</label>
+                <input
+                  required
+                  type="tel"
+                  value={form.phone}
+                  onChange={e => set('phone', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  placeholder="01XXXXXXXXX"
+                  maxLength={11}
+                  autoComplete="tel"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">পাসওয়ার্ড</label>
+                <input
+                  required
+                  type="password"
+                  value={form.password}
+                  onChange={e => set('password', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  placeholder="পাসওয়ার্ড লিখুন"
+                  autoComplete="current-password"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 text-white font-bold rounded-xl text-sm disabled:opacity-60 transition-opacity"
+                style={{ background: BLUE }}>
+                {loading ? '⏳ লগইন হচ্ছে...' : 'লগইন করুন'}
+              </button>
+            </form>
+          )}
 
-            <button type="submit" disabled={loading}
-              className="w-full py-2.5 text-white font-semibold rounded-xl text-sm disabled:opacity-60 transition-opacity"
-              style={{ background: GREEN }}>
-              {loading ? 'লগইন হচ্ছে...' : 'লগইন করুন'}
-            </button>
-          </form>
+          {/* Email login form (admin fallback) */}
+          {useEmail && (
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">ইমেইল</label>
+                <input
+                  required
+                  type="email"
+                  value={emailForm.email}
+                  onChange={e => setEmail('email', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  placeholder="example@gmail.com"
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">পাসওয়ার্ড</label>
+                <input
+                  required
+                  type="password"
+                  value={emailForm.password}
+                  onChange={e => setEmail('password', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  placeholder="পাসওয়ার্ড লিখুন"
+                  autoComplete="current-password"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 text-white font-bold rounded-xl text-sm disabled:opacity-60 transition-opacity"
+                style={{ background: BLUE }}>
+                {loading ? '⏳ লগইন হচ্ছে...' : 'লগইন করুন'}
+              </button>
+            </form>
+          )}
 
-          <p className="text-center text-sm text-gray-500 mt-5">
+          {/* Toggle between phone / email */}
+          <button
+            onClick={() => setUseEmail(v => !v)}
+            className="w-full text-center text-xs text-gray-400 hover:text-gray-600 mt-4 py-1 transition-colors">
+            {useEmail ? '← মোবাইল নম্বর দিয়ে লগইন করুন' : 'অ্যাডমিন? ইমেইল দিয়ে লগইন করুন →'}
+          </button>
+
+          <p className="text-center text-sm text-gray-500 mt-4">
             একাউন্ট নেই?{' '}
-            <Link to="/register" className="font-semibold hover:underline" style={{ color: GREEN }}>
+            <Link to="/register" className="font-bold hover:underline" style={{ color: BLUE }}>
               রেজিস্ট্রেশন করুন
             </Link>
           </p>

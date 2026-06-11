@@ -3,47 +3,49 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const BLUE = '#2563EB'
 
 export default function Register() {
   const { signUp, signInGoogle, user } = useAuth()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ fullName: '', phone: '', password: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [done, setDone] = useState(false)
-  const [emailConfirmNeeded, setEmailConfirmNeeded] = useState(false)
 
   useEffect(() => {
-    if (user) navigate('/', { replace: true })
+    if (user) navigate('/dashboard', { replace: true })
   }, [user]) // eslint-disable-line
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.fullName || !form.email || !form.password) return toast.error('সব তথ্য দিন')
-    if (form.password !== form.confirm) return toast.error('পাসওয়ার্ড মিলছে না')
+    const phone = form.phone.trim()
+    const name  = form.fullName.trim()
+
+    if (!name)   return toast.error('পুরো নাম দিন')
+    if (!phone)  return toast.error('মোবাইল নম্বর দিন')
+    if (!/^01[3-9]\d{8}$/.test(phone)) return toast.error('সঠিক বাংলাদেশি মোবাইল নম্বর দিন')
+    if (!form.password) return toast.error('পাসওয়ার্ড দিন')
     if (form.password.length < 6) return toast.error('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে')
+    if (form.password !== form.confirm) return toast.error('পাসওয়ার্ড মিলছে না')
 
     setLoading(true)
     try {
-      const { error, data } = await signUp(form.email, form.password, {
-        full_name: form.fullName,
-        phone: form.phone,
+      const { error } = await signUp({
+        fullName: name,
+        phone,
+        password: form.password,
       })
       if (error) {
         if (error.message?.includes('already registered') || error.message?.includes('User already registered')) {
-          toast.error('এই ইমেইলে আগেই একাউন্ট আছে')
+          toast.error('এই মোবাইল নম্বরে আগেই একাউন্ট আছে')
         } else {
-          toast.error(error.message || 'রেজিস্ট্রেশন ব্যর্থ')
+          toast.error(error.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে')
         }
       } else {
-        // Check if email confirmation is required
-        if (data?.user?.identities?.length === 0 || !data?.session) {
-          setEmailConfirmNeeded(true)
-        }
         setDone(true)
         toast.success('রেজিস্ট্রেশন সফল! 🎉')
       }
@@ -64,39 +66,22 @@ export default function Register() {
     }
   }
 
-  // Success screen
+  /* ── Success screen ── */
   if (done) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-card p-8 text-center">
             <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"
-                 style={{ background: '#e8f7ed' }}>
-              🎉
-            </div>
+                 style={{ background: '#eff6ff' }}>🎉</div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">রেজিস্ট্রেশন সফল!</h2>
-            {emailConfirmNeeded ? (
-              <>
-                <p className="text-gray-500 text-sm mb-2">
-                  <strong>{form.email}</strong> এ একটি যাচাই লিংক পাঠানো হয়েছে।
-                </p>
-                <p className="text-gray-500 text-sm mb-6">
-                  ইমেইল যাচাই করার পর লগইন করুন।
-                </p>
-                <div className="p-3 bg-yellow-50 rounded-lg text-xs text-yellow-700 mb-4 text-left">
-                  💡 <strong>টিপস:</strong> যদি ইমেইল যাচাই না করে সরাসরি লগইন করতে চান, তাহলে Supabase Dashboard →
-                  Authentication → Providers → Email → "Confirm email" অপশনটি বন্ধ করুন।
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-500 text-sm mb-6">
-                আপনার একাউন্ট তৈরি হয়েছে। এখন লগইন করুন।
-              </p>
-            )}
+            <p className="text-gray-500 text-sm mb-6">
+              আপনার একাউন্ট তৈরি হয়েছে। এখন লগইন করুন।
+            </p>
             <Link to="/login"
-              className="block w-full py-2.5 text-white font-semibold rounded-xl text-sm"
-              style={{ background: GREEN }}>
-              লগইন করুন
+              className="block w-full py-3 text-white font-bold rounded-xl text-sm"
+              style={{ background: BLUE }}>
+              লগইন করুন →
             </Link>
           </div>
         </div>
@@ -104,15 +89,16 @@ export default function Register() {
     )
   }
 
+  /* ── Register form ── */
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+    <div className="min-h-[80vh] flex items-center justify-center py-10 px-4 pb-28 md:pb-10">
       <div className="w-full max-w-md">
 
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                 style={{ background: GREEN }}>শ</div>
+                 style={{ background: BLUE }}>শ</div>
             <span className="font-bold text-gray-800 text-lg">শিবের বাজার</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-800">একাউন্ট খুলুন</h1>
@@ -123,7 +109,7 @@ export default function Register() {
 
           {/* Google OAuth */}
           <button onClick={handleGoogle} disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-5 disabled:opacity-60">
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-5 disabled:opacity-60">
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
             ) : (
@@ -139,47 +125,77 @@ export default function Register() {
 
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400">অথবা</span>
+            <span className="text-xs text-gray-400">অথবা মোবাইল দিয়ে</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name */}
             <div>
-              <label className="form-label">পুরো নাম *</label>
-              <input required value={form.fullName} onChange={e => set('fullName', e.target.value)}
-                className="input" placeholder="আপনার নাম" />
-            </div>
-            <div>
-              <label className="form-label">ইমেইল *</label>
-              <input type="email" required value={form.email} onChange={e => set('email', e.target.value)}
-                className="input" placeholder="example@gmail.com" />
-            </div>
-            <div>
-              <label className="form-label">ফোন নম্বর</label>
-              <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
-                className="input" placeholder="01XXXXXXXXX" />
-            </div>
-            <div>
-              <label className="form-label">পাসওয়ার্ড *</label>
-              <input type="password" required value={form.password} onChange={e => set('password', e.target.value)}
-                className="input" placeholder="কমপক্ষে ৬ অক্ষর" minLength={6} />
-            </div>
-            <div>
-              <label className="form-label">পাসওয়ার্ড নিশ্চিত করুন *</label>
-              <input type="password" required value={form.confirm} onChange={e => set('confirm', e.target.value)}
-                className="input" placeholder="পাসওয়ার্ড আবার লিখুন" />
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">পুরো নাম *</label>
+              <input
+                required
+                value={form.fullName}
+                onChange={e => set('fullName', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="আপনার নাম লিখুন"
+              />
             </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full py-2.5 text-white font-semibold rounded-xl text-sm disabled:opacity-60 transition-opacity"
-              style={{ background: GREEN }}>
-              {loading ? 'রেজিস্ট্রেশন হচ্ছে...' : 'রেজিস্ট্রেশন করুন'}
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">মোবাইল নম্বর *</label>
+              <input
+                required
+                type="tel"
+                value={form.phone}
+                onChange={e => set('phone', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="01XXXXXXXXX"
+                maxLength={11}
+              />
+              <p className="text-xs text-gray-400 mt-1">এই নম্বর দিয়ে পরে লগইন করবেন</p>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">পাসওয়ার্ড *</label>
+              <input
+                required
+                type="password"
+                value={form.password}
+                onChange={e => set('password', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="কমপক্ষে ৬ অক্ষর"
+                minLength={6}
+              />
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">পাসওয়ার্ড নিশ্চিত করুন *</label>
+              <input
+                required
+                type="password"
+                value={form.confirm}
+                onChange={e => set('confirm', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="পাসওয়ার্ড আবার লিখুন"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 text-white font-bold rounded-xl text-sm disabled:opacity-60 transition-opacity mt-2"
+              style={{ background: BLUE }}>
+              {loading ? '⏳ রেজিস্ট্রেশন হচ্ছে...' : 'রেজিস্ট্রেশন করুন'}
             </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-5">
             একাউন্ট আছে?{' '}
-            <Link to="/login" className="font-semibold hover:underline" style={{ color: GREEN }}>
+            <Link to="/login" className="font-bold hover:underline" style={{ color: BLUE }}>
               লগইন করুন
             </Link>
           </p>

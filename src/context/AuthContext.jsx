@@ -31,10 +31,20 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
+  /* ── Helpers ── */
+  // Convert a BD phone number to a synthetic email for Supabase Auth
+  function phoneToEmail(phone) {
+    const digits = String(phone).replace(/\D/g, '')
+    return `${digits}@users.shiberbazar.com`
+  }
+
   /* ── Auth actions ── */
-  async function signUp({ email, password, fullName, phone }) {
+  // Register with phone + password (email is auto-generated internally)
+  async function signUp({ fullName, phone, password }) {
+    const email = phoneToEmail(phone)
     const { data, error } = await supabase.auth.signUp({
-      email, password,
+      email,
+      password,
       options: { data: { full_name: fullName } },
     })
     if (!error && data.user) {
@@ -45,6 +55,13 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
+  // Sign in with phone + password
+  async function signInPhone(phone, password) {
+    const email = phoneToEmail(phone)
+    return await supabase.auth.signInWithPassword({ email, password })
+  }
+
+  // Keep email-based sign-in for admin accounts / Google users
   async function signInEmail(email, password) {
     return await supabase.auth.signInWithPassword({ email, password })
   }
@@ -78,7 +95,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, profile, loading, role,
       isAdmin, isOwner, isSuperAdmin,
-      signUp, signInEmail, signInGoogle,
+      signUp, signInEmail, signInPhone, signInGoogle,
       signOut, logout: signOut,          // alias for components that use `logout`
       updateProfile, loadProfile,
     }}>
