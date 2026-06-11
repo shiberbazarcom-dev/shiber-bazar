@@ -64,15 +64,17 @@ async function fetchSubcategories(categoryId: string) {
   return (data ?? []) as any[]
 }
 
-async function uploadImage(file: File, userId: string, type: string): Promise<string> {
-  // Try to create bucket if it doesn't exist (requires service role in prod)
-  try {
-    await supabase.storage.createBucket('shop-images', { public: true, fileSizeLimit: 5242880 })
-  } catch (_) { /* bucket already exists — OK */ }
+// @ts-ignore
+import { compressImage, validateFileSize } from '@/lib/compressImage'
 
-  const ext = file.name.split('.').pop()
+async function uploadImage(file: File, userId: string, type: string): Promise<string> {
+  // Compress image before upload
+  // @ts-ignore
+  const compressed: File = await compressImage(file)
+
+  const ext = compressed.name.split('.').pop()
   const path = `${userId}/${type}-${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true })
+  const { error } = await supabase.storage.from('shop-images').upload(path, compressed, { upsert: true })
   if (error) throw error
   const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path)
   return publicUrl

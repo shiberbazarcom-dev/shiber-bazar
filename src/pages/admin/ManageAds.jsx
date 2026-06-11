@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAllAds, useCreateAd, useUpdateAd, useDeleteAd } from '../../hooks/useAds'
 import { uploadImage } from '../../lib/supabase'
+import { compressImage, validateFileSize } from '../../lib/compressImage'
 import toast from 'react-hot-toast'
 
 const GREEN = '#2563EB'
@@ -64,13 +65,15 @@ export default function ManageAds() {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) return toast.error('ছবি ৫ MB-এর বেশি হবে না')
+    const check = validateFileSize(file, 5)
+    if (!check.ok) return toast.error(check.message)
+    const compressed = await compressImage(file)
 
     // local preview instantly
-    setPreviewUrl(URL.createObjectURL(file))
+    setPreviewUrl(URL.createObjectURL(compressed))
     setUploading(true)
     try {
-      const url = await uploadImage(file, 'ads')
+      const url = await uploadImage(compressed, 'ads')
       set('image_url', url)
       toast.success('ছবি আপলোড হয়েছে ✅')
     } catch {

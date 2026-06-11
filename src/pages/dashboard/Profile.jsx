@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { compressImage, validateFileSize } from '../../lib/compressImage'
 import toast from 'react-hot-toast'
 
 const GREEN = '#2563EB'
@@ -35,15 +36,17 @@ export default function Profile() {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) { toast.error('ছবি ২MB-এর বেশি হওয়া যাবে না'); return }
+    const check = validateFileSize(file, 5)
+    if (!check.ok) { toast.error(check.message); return }
+    const compressed = await compressImage(file)
 
     setUploading(true)
     try {
-      const ext  = file.name.split('.').pop()
+      const ext  = compressed.name.split('.').pop()
       const path = `avatars/${user.id}.${ext}`
       const { error: upErr } = await supabase.storage
         .from('shop-images')
-        .upload(path, file, { cacheControl: '3600', upsert: true })
+        .upload(path, compressed, { cacheControl: '3600', upsert: true })
       if (upErr) throw upErr
 
       const { data } = supabase.storage.from('shop-images').getPublicUrl(path)

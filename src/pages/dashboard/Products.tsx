@@ -2,6 +2,8 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+// @ts-ignore
+import { compressImage } from '@/lib/compressImage'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,11 +47,13 @@ async function fetchMyProducts(userId: string) {
   return { products: (data ?? []) as Product[], shops: shops ?? [] }
 }
 
-/* ── Upload a single image — path starts with userId so RLS passes ── */
+/* ── Upload a single image — compress first, then upload ── */
 async function uploadOneImage(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  // @ts-ignore
+  const compressed: File = await compressImage(file)
+  const ext = compressed.name.split('.').pop()?.toLowerCase() || 'jpg'
   const path = `${userId}/product-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`
-  const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true })
+  const { error } = await supabase.storage.from('shop-images').upload(path, compressed, { upsert: true })
   if (error) throw new Error(`আপলোড ব্যর্থ: ${error.message}`)
   const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path)
   return publicUrl

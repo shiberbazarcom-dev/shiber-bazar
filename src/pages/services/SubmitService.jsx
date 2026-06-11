@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useServiceCategories, useSubmitService } from '../../hooks/useServices'
 import { SERVICE_CATEGORIES, CATEGORY_EXTRA_FIELDS } from '../../data/serviceCategories'
 import { supabase } from '../../lib/supabase'
+import { compressImage, validateFileSize } from '../../lib/compressImage'
 import toast from 'react-hot-toast'
 import SEO from '../../components/SEO'
 
@@ -33,11 +34,14 @@ export default function SubmitService() {
   const selectedCat = cats.find(c => c.id === form.category_id || c.slug === form.category_id)
   const extraFields = selectedCat ? (CATEGORY_EXTRA_FIELDS[selectedCat.slug] || []) : []
 
-  const handleImage = (e) => {
+  const handleImage = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    const check = validateFileSize(file)
+    if (!check.ok) { toast.error(check.message); return }
+    const compressed = await compressImage(file)
+    setImageFile(compressed)
+    setImagePreview(URL.createObjectURL(compressed))
   }
 
   const handleSubmit = async (e) => {

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+// @ts-ignore
+import { compressImage, validateFileSize } from '@/lib/compressImage'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -92,9 +94,11 @@ async function fetchCategories() {
 }
 
 async function uploadShopImage(file: File, shopId: string, type: 'logo' | 'cover') {
-  const ext = file.name.split('.').pop()
+  // @ts-ignore
+  const compressed: File = await compressImage(file)
+  const ext = compressed.name.split('.').pop()
   const path = `${shopId}/${type}-${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true })
+  const { error } = await supabase.storage.from('shop-images').upload(path, compressed, { upsert: true })
   if (error) throw error
   const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path)
   return publicUrl
