@@ -193,6 +193,27 @@ export function useAdminServices(statusFilter = 'pending') {
 }
 
 /* ─────────────────────────────────────────────────────────────────
+   PUBLIC — service provider profile (all approved services by user)
+───────────────────────────────────────────────────────────────── */
+export function useProviderProfile(userId) {
+  return useQuery({
+    queryKey: ['provider-profile', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('services')
+        .select(`*, service_categories ( id, name_bn, icon, slug )`)
+        .eq('user_id', userId)
+        .eq('status', 'approved')
+        .order('is_verified', { ascending: false })
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!userId,
+  })
+}
+
+/* ─────────────────────────────────────────────────────────────────
    ADMIN — update service status (approve / reject / verify)
 ───────────────────────────────────────────────────────────────── */
 export function useAdminUpdateService() {

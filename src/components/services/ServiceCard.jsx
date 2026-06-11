@@ -6,55 +6,88 @@ export default function ServiceCard({ service }) {
   const {
     id, name, phone, description, location,
     image_url, is_verified, service_categories: cat,
+    extra = {},
   } = service
 
   const whatsappUrl = `https://wa.me/88${phone.replace(/^0/, '')}?text=${encodeURIComponent(
     `আসসালামু আলাইকুম, আমি শিবের বাজার থেকে আপনার "${name}" সেবা সম্পর্কে জানতে চাই।`
   )}`
 
+  // Pick a highlight extra field per category to show on card
+  const highlightExtra = extra?.speciality || extra?.subjects || extra?.blood_group ||
+    extra?.vehicle_type || extra?.rent_amount || null
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {/* Photo */}
-      {image_url ? (
-        <img
-          src={image_url}
-          alt={name}
-          className="w-full h-36 object-cover"
-          onError={e => { e.target.style.display = 'none' }}
-        />
-      ) : (
-        <div className="w-full h-20 flex items-center justify-center text-4xl"
-          style={{ background: '#eff6ff' }}>
-          {cat?.icon || '🔧'}
-        </div>
-      )}
-
-      <div className="p-4">
-        {/* Name + verified badge */}
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-bold text-gray-800 text-sm leading-tight flex-1">{name}</h3>
+      {/* Top section: circular avatar + name */}
+      <div className="flex flex-col items-center pt-5 pb-3 px-4">
+        {/* Circular profile photo */}
+        <div className="relative mb-3">
+          {image_url ? (
+            <img
+              src={image_url}
+              alt={name}
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-100 shadow"
+              onError={e => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'flex'
+              }}
+            />
+          ) : null}
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center text-4xl border-2 border-gray-100 shadow"
+            style={{
+              background: '#eff6ff',
+              display: image_url ? 'none' : 'flex',
+            }}
+          >
+            {cat?.icon || '🔧'}
+          </div>
           {is_verified && (
-            <span className="flex-shrink-0 text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-              ✓ বিশ্বস্ত
+            <span className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow border-2 border-white"
+              title="বিশ্বস্ত সেবা প্রদানকারী">
+              ✓
             </span>
           )}
         </div>
 
-        {/* Category */}
+        {/* Name */}
+        <h3 className="font-bold text-gray-800 text-sm leading-tight text-center">{name}</h3>
+
+        {/* Category badge */}
         {cat && (
-          <p className="text-[11px] text-blue-600 font-medium mb-1.5">
+          <span className="mt-1 text-[11px] text-blue-600 font-medium">
             {cat.icon} {cat.name_bn}
-          </p>
+          </span>
         )}
 
+        {/* Verified label */}
+        {is_verified && (
+          <span className="mt-1 text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+            ✓ বিশ্বস্ত
+          </span>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="h-px bg-gray-50 mx-4" />
+
+      <div className="p-4 pt-3">
         {/* Description */}
         {description && (
-          <p className="text-xs text-gray-500 line-clamp-2 mb-2">{description}</p>
+          <p className="text-xs text-gray-500 line-clamp-2 mb-2 text-center">{description}</p>
+        )}
+
+        {/* Highlight extra field */}
+        {highlightExtra && (
+          <p className="text-xs text-center text-indigo-600 font-medium mb-2 bg-indigo-50 rounded-lg py-1 px-2">
+            {highlightExtra}
+          </p>
         )}
 
         {/* Location */}
         {location && (
-          <p className="text-xs text-gray-400 mb-3">📍 {location}</p>
+          <p className="text-xs text-gray-400 mb-3 text-center">📍 {location}</p>
         )}
 
         {/* Action buttons */}
@@ -77,12 +110,22 @@ export default function ServiceCard({ service }) {
         </div>
 
         {/* Details link */}
-        <Link
-          to={`/services/detail/${id}`}
-          className="mt-2 block text-center text-xs text-blue-600 hover:underline"
-        >
-          বিস্তারিত দেখুন →
-        </Link>
+        <div className="mt-2 flex gap-3 justify-center">
+          <Link
+            to={`/services/detail/${id}`}
+            className="text-xs text-blue-600 hover:underline font-medium"
+          >
+            বিস্তারিত দেখুন →
+          </Link>
+          {service.user_id && (
+            <Link
+              to={`/services/provider/${service.user_id}`}
+              className="text-xs text-purple-600 hover:underline font-medium"
+            >
+              প্রোফাইল দেখুন →
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   )

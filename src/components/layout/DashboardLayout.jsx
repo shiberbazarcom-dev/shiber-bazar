@@ -248,7 +248,7 @@ export default function DashboardLayout({ type = 'user' }) {
   useEffect(() => {
     if (type !== 'admin' || !user) return
     const ch = supabase
-      .channel('admin-new-orders')
+      .channel(`admin-new-orders-${user.id}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
@@ -267,7 +267,7 @@ export default function DashboardLayout({ type = 'user' }) {
   useEffect(() => {
     if (type !== 'admin' || !user) return
     const ch = supabase
-      .channel('admin-new-shops')
+      .channel(`admin-new-shops-${user.id}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'shops' },
         (payload) => {
@@ -286,7 +286,7 @@ export default function DashboardLayout({ type = 'user' }) {
   useEffect(() => {
     if (type !== 'admin' || !user) return
     const ch = supabase
-      .channel('admin-new-services')
+      .channel(`admin-new-services-${user.id}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'services' },
         (payload) => {
@@ -297,16 +297,21 @@ export default function DashboardLayout({ type = 'user' }) {
           qc.invalidateQueries({ queryKey: ['pending-services-count'] })
           qc.invalidateQueries({ queryKey: ['admin-services'] })
         })
-      .subscribe()
+      .subscribe((status) => {
+        // If subscription fails, refetch count as fallback
+        if (status === 'CHANNEL_ERROR') {
+          qc.invalidateQueries({ queryKey: ['pending-services-count'] })
+        }
+      })
     return () => supabase.removeChannel(ch)
-  }, [type, user]) // eslint-disable-line
+  }, [type, user?.id]) // eslint-disable-line
 
   /* ── Realtime: shop owner listens for confirmed orders (UPDATE) ── */
   // ManageOrders.tsx sets status='confirmed' when admin assigns order to a shop
   useEffect(() => {
     if (type === 'admin' || !isShopOwner || !user) return
     const ch = supabase
-      .channel('shopowner-confirmed-orders')
+      .channel(`shopowner-confirmed-orders-${user.id}`)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'orders',
           filter: 'status=eq.confirmed' },

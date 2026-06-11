@@ -4,6 +4,23 @@ import SEO from '../../components/SEO'
 
 const BLUE = '#2563EB'
 
+const extraLabels = {
+  subjects:     { label: 'বিষয়সমূহ',             icon: '📚' },
+  classes:      { label: 'শ্রেণি',                 icon: '🎓' },
+  education:    { label: 'শিক্ষাগত যোগ্যতা',      icon: '🎓' },
+  speciality:   { label: 'বিশেষজ্ঞতা',            icon: '🩺' },
+  chamber_time: { label: 'চেম্বারের সময়',          icon: '🕐' },
+  vehicle_type: { label: 'গাড়ির ধরন',             icon: '🚗' },
+  routes:       { label: 'রুট',                    icon: '🗺️' },
+  blood_group:  { label: 'রক্তের গ্রুপ',           icon: '🩸' },
+  rent_amount:  { label: 'ভাড়া (মাসিক)',           icon: '💰' },
+  experience:   { label: 'অভিজ্ঞতা',               icon: '⭐' },
+  available_time: { label: 'সময়সূচি',             icon: '📅' },
+  service_area: { label: 'সেবা এলাকা',             icon: '📍' },
+  fee:          { label: 'ফি / চার্জ',              icon: '💵' },
+  qualification: { label: 'যোগ্যতা',               icon: '📋' },
+}
+
 export default function ServiceDetail() {
   const { id } = useParams()
   const { data: service, isLoading, isError } = useServiceDetail(id)
@@ -36,20 +53,10 @@ export default function ServiceDetail() {
     `আসসালামু আলাইকুম, আমি শিবের বাজার থেকে আপনার "${name}" সেবা সম্পর্কে জানতে চাই।`
   )}`
 
-  const extraLabels = {
-    subjects:     'বিষয়সমূহ',
-    classes:      'শ্রেণি',
-    education:    'শিক্ষাগত যোগ্যতা',
-    speciality:   'বিশেষজ্ঞতা',
-    chamber_time: 'চেম্বারের সময়',
-    vehicle_type: 'গাড়ির ধরন',
-    routes:       'রুট',
-    blood_group:  'রক্তের গ্রুপ',
-    rent_amount:  'ভাড়া (মাসিক)',
-  }
+  const extraEntries = Object.entries(extra || {}).filter(([, val]) => val)
 
   return (
-    <div className="container-app py-6 pb-28 md:pb-10 max-w-2xl mx-auto">
+    <div className="container-app py-6 pb-36 md:pb-10 max-w-2xl mx-auto">
       <SEO
         title={`${name} — ${cat?.name_bn || 'স্থানীয় সেবা'}`}
         description={description || `${name} — শিবের বাজারে ${cat?.name_bn || 'স্থানীয় সেবা'}`}
@@ -57,73 +64,136 @@ export default function ServiceDetail() {
       />
 
       {/* Back */}
-      <Link to={`/services/${cat?.slug || ''}`} className="flex items-center gap-1 text-sm text-blue-600 hover:underline mb-4">
+      <Link to={`/services/${cat?.slug || ''}`} className="flex items-center gap-1 text-sm text-blue-600 hover:underline mb-5">
         ← {cat?.name_bn || 'সেবাসমূহ'}
       </Link>
 
-      {/* Card */}
+      {/* Profile Card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-        {/* Photo */}
-        {image_url ? (
-          <img src={image_url} alt={name} className="w-full h-52 object-cover" />
-        ) : (
-          <div className="w-full h-32 flex items-center justify-center text-6xl"
-            style={{ background: '#eff6ff' }}>
-            {cat?.icon || '🔧'}
-          </div>
-        )}
-
-        <div className="p-5">
-          {/* Name + badges */}
-          <div className="flex items-start gap-3 mb-3">
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-800 leading-tight">{name}</h1>
-              {cat && (
-                <p className="text-sm text-blue-600 font-medium mt-0.5">{cat.icon} {cat.name_bn}</p>
-              )}
+        {/* Header with gradient */}
+        <div className="h-24 relative" style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }}>
+          {/* Category badge */}
+          {cat && (
+            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full">
+              {cat.icon} {cat.name_bn}
             </div>
+          )}
+        </div>
+
+        {/* Avatar — overlapping the gradient */}
+        <div className="flex flex-col items-center -mt-12 pb-4 px-5">
+          <div className="relative mb-3">
+            {image_url ? (
+              <img
+                src={image_url}
+                alt={name}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              />
+            ) : (
+              <div
+                className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-5xl"
+                style={{ background: '#eff6ff' }}
+              >
+                {cat?.icon || '🔧'}
+              </div>
+            )}
             {is_verified && (
-              <span className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-1">
-                ✓ বিশ্বস্ত সেবা প্রদানকারী
+              <span className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow border-2 border-white"
+                title="বিশ্বস্ত সেবা প্রদানকারী">
+                ✓
               </span>
             )}
           </div>
 
+          {/* Name */}
+          <h1 className="text-xl font-bold text-gray-800 text-center leading-tight">{name}</h1>
+
+          {/* Verified badge */}
+          {is_verified && (
+            <span className="mt-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-0.5">
+              ✓ বিশ্বস্ত সেবা প্রদানকারী
+            </span>
+          )}
+
           {/* Location */}
           {location && (
-            <p className="flex items-center gap-1.5 text-sm text-gray-500 mb-3">
+            <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-2">
               <span>📍</span> {location}
             </p>
           )}
 
+          {/* Stats row */}
+          <div className="flex items-center gap-4 text-xs text-gray-400 mt-2">
+            <span>👁️ {views || 0} বার দেখা হয়েছে</span>
+            <span>📅 {new Date(created_at).toLocaleDateString('bn-BD')}</span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-gray-100 mx-5" />
+
+        <div className="p-5 space-y-4">
+
           {/* Description */}
           {description && (
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 bg-gray-50 rounded-xl p-3">
-              {description}
-            </p>
-          )}
-
-          {/* Extra fields */}
-          {Object.keys(extra).length > 0 && (
-            <div className="mb-4 space-y-2">
-              {Object.entries(extra).map(([key, val]) => val ? (
-                <div key={key} className="flex items-start gap-2 text-sm">
-                  <span className="text-gray-400 w-32 flex-shrink-0">{extraLabels[key] || key}:</span>
-                  <span className="text-gray-700 font-medium">{val}</span>
-                </div>
-              ) : null)}
+            <div>
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">📝 পরিচিতি</h2>
+              <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3">
+                {description}
+              </p>
             </div>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-xs text-gray-400 mb-5">
-            <span>👁️ {views} বার দেখা হয়েছে</span>
-            <span>📅 {new Date(created_at).toLocaleDateString('bn-BD')}</span>
+          {/* Extra / specialty fields */}
+          {extraEntries.length > 0 && (
+            <div>
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">ℹ️ বিস্তারিত তথ্য</h2>
+              <div className="rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                {extraEntries.map(([key, val]) => {
+                  const meta = extraLabels[key] || { label: key, icon: '•' }
+                  return (
+                    <div key={key} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50 transition-colors">
+                      <span className="text-base flex-shrink-0 w-6 text-center">{meta.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs text-gray-400 block mb-0.5">{meta.label}</span>
+                        <span className="text-sm text-gray-800 font-medium">{val}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Provider profile link */}
+          {service.user_id && (
+            <Link
+              to={`/services/provider/${service.user_id}`}
+              className="flex items-center gap-2 p-3 bg-purple-50 rounded-xl border border-purple-100 hover:bg-purple-100 transition-colors"
+            >
+              <span className="text-xl">👤</span>
+              <div className="flex-1">
+                <p className="text-xs text-purple-400">সেবা প্রদানকারী</p>
+                <p className="text-sm font-semibold text-purple-700">সম্পূর্ণ প্রোফাইল দেখুন →</p>
+              </div>
+            </Link>
+          )}
+
+          {/* Phone number display */}
+          <div>
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">📞 যোগাযোগ</h2>
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+              <span className="text-2xl">📱</span>
+              <div>
+                <p className="text-xs text-gray-400">ফোন নম্বর</p>
+                <p className="text-base font-bold text-gray-800">{phone}</p>
+              </div>
+            </div>
           </div>
 
-          {/* CTA buttons */}
-          <div className="space-y-2.5">
+          {/* CTA buttons — desktop */}
+          <div className="hidden md:flex flex-col gap-2.5 pt-2">
             <a
               href={`tel:${phone}`}
               className="w-full flex items-center justify-center gap-2 py-3.5 text-white font-bold rounded-xl text-sm transition-opacity active:opacity-80"
@@ -138,15 +208,16 @@ export default function ServiceDetail() {
               💬 WhatsApp-এ মেসেজ দিন
             </a>
           </div>
+
         </div>
       </div>
 
-      {/* Sticky bottom CTA — mobile */}
-      <div className="md:hidden fixed bottom-[60px] left-0 right-0 p-3 bg-white border-t border-gray-200 z-30">
+      {/* Sticky bottom CTA — mobile only */}
+      <div className="md:hidden fixed bottom-[60px] left-0 right-0 p-3 bg-white border-t border-gray-200 z-30 shadow-lg">
         <div className="flex gap-2">
           <a
             href={`tel:${phone}`}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 text-white font-bold rounded-xl text-sm"
+            className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-white font-bold rounded-xl text-sm"
             style={{ background: BLUE }}>
             📞 কল করুন
           </a>
@@ -154,7 +225,7 @@ export default function ServiceDetail() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 text-white font-bold rounded-xl text-sm bg-green-500">
+            className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-white font-bold rounded-xl text-sm bg-green-500">
             💬 WhatsApp
           </a>
         </div>

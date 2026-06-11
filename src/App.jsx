@@ -28,11 +28,12 @@ const OrderPage        = lazy(() => import('./pages/OrderPage'))
 const TrackOrder       = lazy(() => import('./pages/TrackOrder'))
 
 /* ── Services module ── */
-const ServicesPage     = lazy(() => import('./pages/services/ServicesPage'))
-const ServiceDetail    = lazy(() => import('./pages/services/ServiceDetail'))
-const SubmitService    = lazy(() => import('./pages/services/SubmitService'))
-const MyServices       = lazy(() => import('./pages/dashboard/MyServices'))
-const ManageServices   = lazy(() => import('./pages/admin/ManageServices'))
+const ServicesPage       = lazy(() => import('./pages/services/ServicesPage'))
+const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
+const ProviderProfile    = lazy(() => import('./pages/services/ProviderProfile'))
+const SubmitService      = lazy(() => import('./pages/services/SubmitService'))
+const MyServices         = lazy(() => import('./pages/dashboard/MyServices'))
+const ManageServices     = lazy(() => import('./pages/admin/ManageServices'))
 
 /* ── Customer Account ── */
 const AccountPage      = lazy(() => import('./pages/account/AccountPage'))
@@ -148,9 +149,11 @@ export default function App() {
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
             {/* ── Services (public) ── */}
-            <Route path="/services"              element={<PublicLayout><ServicesPage /></PublicLayout>} />
-            <Route path="/services/:slug"        element={<PublicLayout><ServicesPage /></PublicLayout>} />
-            <Route path="/services/detail/:id"   element={<PublicLayout><ServiceDetail /></PublicLayout>} />
+            {/* IMPORTANT: specific routes MUST come before /:slug to avoid slug catching them */}
+            <Route path="/services"                    element={<PublicLayout><ServicesPage /></PublicLayout>} />
+            <Route path="/services/detail/:id"         element={<PublicLayout><ServiceDetail /></PublicLayout>} />
+            <Route path="/services/provider/:userId"   element={<PublicLayout><ProviderProfile /></PublicLayout>} />
+            <Route path="/services/:slug"              element={<PublicLayout><ServicesPage /></PublicLayout>} />
             <Route path="/services/submit"       element={
               <PublicLayout>
                 <ProtectedRoute requireAuth>
