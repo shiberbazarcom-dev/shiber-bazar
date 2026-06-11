@@ -1,0 +1,93 @@
+/**
+ * SEO — zero-dependency per-page meta tag manager.
+ * Uses useEffect to directly update <head> tags on every route change.
+ * Works with React Router v6 BrowserRouter (no SSR needed for Google indexing).
+ */
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+
+export const SITE_URL  = 'https://shiberbazar.vercel.app'
+export const SITE_NAME = 'শিবের বাজার'
+const DEFAULT_DESC = 'সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।'
+const DEFAULT_IMG  = `${SITE_URL}/logo.png`
+
+/* ── helpers ── */
+function setMeta(nameOrProp, content, attr = 'name') {
+  if (!content) return
+  let el = document.querySelector(`meta[${attr}="${nameOrProp}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, nameOrProp)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
+
+function setLink(rel, href) {
+  if (!href) return
+  let el = document.querySelector(`link[rel="${rel}"]`)
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', rel)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('href', href)
+}
+
+function setJsonLd(data) {
+  document.querySelector('script[data-role="jsonld"]')?.remove()
+  if (!data) return
+  const s = document.createElement('script')
+  s.type = 'application/ld+json'
+  s.setAttribute('data-role', 'jsonld')
+  s.textContent = JSON.stringify(data)
+  document.head.appendChild(s)
+}
+
+/* ── component ── */
+export default function SEO({
+  title,                        // page-specific title (site name appended automatically)
+  description = DEFAULT_DESC,
+  image       = DEFAULT_IMG,
+  type        = 'website',
+  noindex     = false,
+  jsonLd      = null,
+}) {
+  const { pathname } = useLocation()
+  const fullTitle = title
+    ? `${title} — ${SITE_NAME}`
+    : `${SITE_NAME} — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা`
+  const canonical = `${SITE_URL}${pathname}`
+
+  useEffect(() => {
+    // Title
+    document.title = fullTitle
+
+    // Standard
+    setMeta('description',     description)
+    setMeta('robots',          noindex ? 'noindex,nofollow' : 'index,follow')
+
+    // Open Graph
+    setMeta('og:title',        fullTitle,  'property')
+    setMeta('og:description',  description, 'property')
+    setMeta('og:url',          canonical,   'property')
+    setMeta('og:image',        image,       'property')
+    setMeta('og:type',         type,        'property')
+    setMeta('og:site_name',    SITE_NAME,   'property')
+    setMeta('og:locale',       'bn_BD',     'property')
+
+    // Twitter Card
+    setMeta('twitter:card',        'summary_large_image')
+    setMeta('twitter:title',       fullTitle)
+    setMeta('twitter:description', description)
+    setMeta('twitter:image',       image)
+
+    // Canonical
+    setLink('canonical', canonical)
+
+    // JSON-LD structured data
+    setJsonLd(jsonLd)
+  }, [fullTitle, description, image, canonical, type, noindex, jsonLd])
+
+  return null
+}

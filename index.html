@@ -2,24 +2,95 @@
 <html lang="bn">
   <head>
     <meta charset="UTF-8" />
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="shortcut icon" type="image/png" href="/logo.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/logo.png" />
+
+    <!-- Viewport & theme -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563EB" />
+
+    <!-- Primary SEO -->
     <title>শিবের বাজার — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা</title>
-    <meta name="description" content="শিবের বাজারের সকল দোকানের তথ্য এক জায়গায়। ক্যাটাগরি অনুযায়ী খুঁজুন, তুলনা করুন, যোগাযোগ করুন।" />
+    <meta name="description" content="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।" />
+    <meta name="keywords" content="শিবের বাজার, সিলেট বাজার, স্থানীয় দোকান, অনলাইন দোকান খোঁজ, সিলেট দোকান, Shiber Bazar, Sylhet market, local shop directory" />
+    <meta name="robots" content="index,follow" />
+    <meta name="author" content="শিবের বাজার" />
+    <link rel="canonical" href="https://shiberbazar.vercel.app/" />
+
     <!-- Open Graph -->
-    <meta property="og:title" content="শিবের বাজার" />
-    <meta property="og:description" content="আপনার স্থানীয় বাজারের ডিজিটাল ডিরেক্টরি" />
-    <meta property="og:image" content="/logo.png" />
+    <meta property="og:title" content="শিবের বাজার — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা" />
+    <meta property="og:description" content="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন।" />
+    <meta property="og:image" content="https://shiberbazar.vercel.app/logo.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://shiberbazar.vercel.app/" />
+    <meta property="og:site_name" content="শিবের বাজার" />
+    <meta property="og:locale" content="bn_BD" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="শিবের বাজার — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা" />
+    <meta name="twitter:description" content="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।" />
+    <meta name="twitter:image" content="https://shiberbazar.vercel.app/logo.png" />
+
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Structured Data: LocalBusiness + WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "LocalBusiness",
+          "@id": "https://shiberbazar.vercel.app/#business",
+          "name": "শিবের বাজার",
+          "alternateName": "Shiber Bazar",
+          "url": "https://shiberbazar.vercel.app",
+          "description": "সিলেটের শিবের বাজারের সকল দোকানের ডিজিটাল ডিরেক্টরি",
+          "telephone": "+8801310012276",
+          "email": "shiberbazar.com@gmail.com",
+          "image": "https://shiberbazar.vercel.app/logo.png",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "শিবের বাজার",
+            "addressLocality": "সিলেট সদর",
+            "addressRegion": "সিলেট",
+            "addressCountry": "BD"
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+            "opens": "09:00",
+            "closes": "21:00"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://shiberbazar.vercel.app/#website",
+          "url": "https://shiberbazar.vercel.app",
+          "name": "শিবের বাজার",
+          "description": "সিলেটের স্থানীয় বাজারের ডিজিটাল ঠিকানা",
+          "inLanguage": "bn",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://shiberbazar.vercel.app/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -4,6 +4,7 @@ import { useShops } from '../hooks/useShops'
 import { useCategories } from '../hooks/useCategories'
 import { ShopCard, ShopListItem } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
+import SEO from '../components/SEO'
 
 const GREEN = '#2563EB'
 
@@ -52,6 +53,10 @@ export default function ShopsPage() {
 
   return (
     <div className="container-app py-6 pb-28 md:pb-6">
+      <SEO
+        title="সব দোকান"
+        description="শিবের বাজারের সকল দোকান এখানে। খাবার, পোশাক, ইলেকট্রনিক্স, ফার্মেসি সহ সব ধরনের দোকান ব্রাউজ করুন। ক্যাটাগরি অনুযায়ী ফিল্টার করে সহজেই খুঁজে নিন।"
+      />
 
       {/* ── Page header ── */}
       <div className="mb-5">

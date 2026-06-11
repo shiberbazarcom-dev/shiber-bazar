@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCategoryWithCount } from '../hooks/useCategories'
+import SEO from '../components/SEO'
 
 function Skeleton({ className }) {
   return <div className={`animate-pulse bg-gray-100 rounded-xl ${className}`} />
@@ -10,6 +11,10 @@ export default function CategoriesPage() {
 
   return (
     <div>
+      <SEO
+        title="সব ক্যাটাগরি"
+        description="শিবের বাজারের সকল দোকানের ক্যাটাগরি। খাবার, পোশাক, ইলেকট্রনিক্স, ফার্মেসি, কসমেটিক্স সহ বিভিন্ন ধরনের দোকান বিভাগ অনুযায়ী খুঁজুন।"
+      />
       {/* Header */}
       <section style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }} className="py-8">
         <div className="container-app text-center">

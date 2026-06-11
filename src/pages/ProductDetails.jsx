@@ -4,6 +4,7 @@ import { useProduct, useShopProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
+import SEO from '../components/SEO'
 
 const GREEN = '#16a34a'
 const BLUE  = '#2563EB'
@@ -130,6 +131,12 @@ export default function ProductDetails() {
 
   return (
     <div className="pb-28 md:pb-10" style={{ background: '#f7f8fa' }}>
+      <SEO
+        title={product.name}
+        description={product.description || `${product.name} — শিবের বাজারে পাওয়া যাচ্ছে। দাম ও বিস্তারিত দেখুন এবং সরাসরি অর্ডার করুন।`}
+        image={product.image_url}
+        url={`https://shiberbazar.vercel.app/product/${product.id}`}
+      />
 
       {/* ── Back button ── */}
       <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">

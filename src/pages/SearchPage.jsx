@@ -6,6 +6,7 @@ import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import { whatsappUrl } from '../lib/utils'
 import { getBengaliMatch } from '../lib/banglish'
+import SEO from '../components/SEO'
 
 const BLUE = '#2563EB'
 const GREEN = '#16a34a'
@@ -125,6 +126,11 @@ export default function SearchPage() {
 
   return (
     <div>
+      <SEO
+        title={query ? `"${query}" — অনুসন্ধান` : 'খুঁজুন'}
+        description={query ? `শিবের বাজারে "${query}" এর ফলাফল — দোকান ও পণ্য।` : 'শিবের বাজারে দোকান ও পণ্য খুঁজুন।'}
+        noindex={true}
+      />
       {/* ── Search hero ── */}
       <section style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }} className="py-8 sm:py-10">
         <div className="container-app">

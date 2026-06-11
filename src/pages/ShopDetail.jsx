@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import toast from 'react-hot-toast'
+import SEO from '../components/SEO'
 
 const BLUE  = '#2563EB'
 const GREEN = '#16a34a'
@@ -210,6 +211,12 @@ export default function ShopDetail() {
 
   return (
     <div className="bg-gray-50 pb-28 lg:pb-10">
+      <SEO
+        title={shop.shop_name}
+        description={shop.description || `${shop.shop_name} — শিবের বাজারের একটি দোকান। পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।`}
+        image={shop.logo || shop.logo_url}
+        url={`https://shiberbazar.vercel.app/shop/${shop.slug || shop.id}`}
+      />
       <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
 
         {/* ══ HEADER ══ */}

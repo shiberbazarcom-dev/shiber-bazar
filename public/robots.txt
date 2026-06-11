@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Private areas — no indexing needed
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /account
+Disallow: /auth/
+Disallow: /cart
+Disallow: /order/
+Disallow: /track-order
+
+Sitemap: https://shiberbazar.vercel.app/sitemap.xml

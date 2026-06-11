@@ -4,6 +4,7 @@ import { useCategory } from '../hooks/useCategories'
 import { useShops } from '../hooks/useShops'
 import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
+import SEO from '../components/SEO'
 
 const BLUE = '#2563EB'
 
@@ -37,6 +38,10 @@ export default function CategoryPage() {
 
   return (
     <div>
+      <SEO
+        title={category ? `${category.icon || ''} ${category.name}` : 'ক্যাটাগরি'}
+        description={category?.description || `শিবের বাজারে ${category?.name || ''} ক্যাটাগরির সকল দোকান দেখুন এবং পছন্দের দোকানে যোগাযোগ করুন।`}
+      />
       {/* Header */}
       <section style={{ background: coverBg }} className="py-8 sm:py-10">
         <div className="container-app">

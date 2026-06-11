@@ -7,6 +7,7 @@ import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import SearchDropdown from '../components/SearchDropdown'
 import { supabase } from '../lib/supabase'
+import SEO from '../components/SEO'
 
 // Animated counter component
 function AnimatedCounter({ value, suffix = '' }) {
@@ -231,8 +232,20 @@ export default function Home() {
     element?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    'name': 'শিবের বাজার — দোকান তালিকা',
+    'description': 'সিলেটের শিবের বাজারের সকল দোকান',
+    'url': 'https://shiberbazar.vercel.app/shops',
+  }
+
   return (
     <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+      <SEO
+        description="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন। স্থানীয় ব্যবসার ডিজিটাল ঠিকানা।"
+        jsonLd={homeJsonLd}
+      />
       {/* ── Hero Section (Reduced Height) ── */}
       <section className="relative z-20 min-h-[320px] sm:min-h-[380px] flex items-center">
         {/* Dynamic Background */}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import SEO from '../components/SEO'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -37,6 +38,11 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="যোগাযোগ"
+        description="শিবের বাজারের সাথে যোগাযোগ করুন। ঠিকানা: শিবের বাজার, সিলেট সদর, সিলেট। ফোন ও হোয়াটসঅ্যাপে সরাসরি কথা বলুন।"
+        url="https://shiberbazar.vercel.app/contact"
+      />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400 py-16 sm:py-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
@@ -90,7 +96,6 @@ export default function ContactPage() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">ঠিকানা</h3>
               <p className="text-gray-600 text-sm">
-                মাইক্রোভেক্স,<br />
                 শিবের বাজার,<br />
                 সিলেট সদর, সিলেট
               </p>
@@ -251,7 +256,7 @@ export default function ContactPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <p className="text-gray-500 text-sm">মাইক্রোভেক্স, শিবের বাজার, সিলেট</p>
+                  <p className="text-gray-500 text-sm">শিবের বাজার, সিলেট সদর, সিলেট</p>
                   <p className="text-gray-400 text-xs mt-1">Google Maps লোড হচ্ছে...</p>
                 </div>
               </div>

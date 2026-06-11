@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import SEO from '../components/SEO'
 
 const YEAR = new Date().getFullYear()
 
@@ -26,6 +27,12 @@ export default function PolicyPage() {
 
   return (
     <div className="min-h-screen pb-28 md:pb-10" style={{ background: '#f5f5f5' }}>
+      <SEO
+        title="গোপনীয়তা ও শর্তাবলী"
+        description="শিবের বাজারের গোপনীয়তা নীতি ও ব্যবহারের শর্তাবলী। আমাদের সেবা ব্যবহার করার আগে এই নীতিমালা পড়ুন।"
+        url="https://shiberbazar.vercel.app/policy"
+        noindex={true}
+      />
       {/* Header */}
       <div className="py-8 px-4" style={{ background: '#2563EB' }}>
         <div className="container-app">
