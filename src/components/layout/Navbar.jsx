@@ -49,7 +49,6 @@ export default function Navbar() {
     const ua = navigator.userAgent
     const ios     = /iphone|ipad|ipod/i.test(ua) && !window.MSStream
     const android = /android/i.test(ua)
-    const isChromeBrowser = /chrome\/\d/i.test(ua) && !/edge\/|opr\/|samsungbrowser\//i.test(ua)
 
     // iOS → always show manual instructions
     if (ios) {
@@ -58,8 +57,9 @@ export default function Navbar() {
       return
     }
 
-    // Android Chrome → always show banner (install button works if beforeinstallprompt fires)
-    if (android && isChromeBrowser) {
+    // Any Android browser → always show banner
+    // (install button appears if beforeinstallprompt fires, otherwise shows manual guide)
+    if (android) {
       setShowInstall(true)
     }
 
