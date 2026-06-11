@@ -150,7 +150,7 @@ export default function Navbar() {
             <div className="flex-shrink-0 flex items-center gap-2">
               {user ? (
                 <>
-                  <NotificationBell />
+                  <span className="hidden md:block"><NotificationBell /></span>
                   <div className="relative" ref={profileRef}>
                     <button onClick={() => setProfileOpen(o => !o)}
                       className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">

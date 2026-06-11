@@ -128,7 +128,7 @@ function NewShopToast({ t, shop }) {
 }
 
 export default function DashboardLayout({ type = 'user' }) {
-  const { user, profile, isAdmin, loading, role } = useAuth()
+  const { user, profile, isAdmin, loading, role, signOut } = useAuth()
   const navigate = useNavigate()
   const qc       = useQueryClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -247,7 +247,6 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/products',  icon: '🛍️', label: 'পণ্য আপলোড' },
     { to: '/dashboard/orders',    icon: '📦', label: 'অর্ডার' },       // ← badge here
     { to: '/dashboard/qr-code',   icon: '🔲', label: 'QR কোড' },
-    { to: '/dashboard/favorites', icon: '❤️', label: 'পছন্দের দোকান' },
     { to: '/dashboard/profile',   icon: '👤', label: 'প্রোফাইল' },
   ]
 
@@ -330,6 +329,12 @@ export default function DashboardLayout({ type = 'user' }) {
           <span className="text-lg w-6 text-center">🏠</span>
           <span>মূল সাইট</span>
         </NavLink>
+        <button
+          onClick={() => signOut()}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all">
+          <span className="text-lg w-6 text-center">🚪</span>
+          <span>লগআউট</span>
+        </button>
       </div>
     </aside>
   )
