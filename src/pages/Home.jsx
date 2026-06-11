@@ -315,13 +315,15 @@ export default function Home() {
                   </button>
                 </div>
                 
-                {/* Live Search Dropdown */}
+                {/* Live Search Dropdown — desktop only; on mobile search navigates to /search page */}
                 {showDropdown && query.trim().length > 0 && (
-                  <SearchDropdown 
-                    query={query} 
-                    onClose={() => setShowDropdown(false)}
-                    searchTab={searchTab}
-                  />
+                  <div className="hidden sm:block">
+                    <SearchDropdown
+                      query={query}
+                      onClose={() => setShowDropdown(false)}
+                      searchTab={searchTab}
+                    />
+                  </div>
                 )}
               </form>
             </div>
