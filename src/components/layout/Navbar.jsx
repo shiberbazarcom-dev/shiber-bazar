@@ -46,21 +46,30 @@ export default function Navbar() {
       || window.navigator.standalone === true
     if (isStandalone || window.__pwaInstalled) return
 
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream
+    const ua = navigator.userAgent
+    const ios     = /iphone|ipad|ipod/i.test(ua) && !window.MSStream
+    const android = /android/i.test(ua)
+    const isChromeBrowser = /chrome\/\d/i.test(ua) && !/edge\/|opr\/|samsungbrowser\//i.test(ua)
 
+    // iOS → always show manual instructions
     if (ios) {
       setIsIOS(true)
       setShowInstall(true)
       return
     }
 
-    // Pick up event captured in index.html BEFORE React mounted
+    // Android Chrome → always show banner (install button works if beforeinstallprompt fires)
+    if (android && isChromeBrowser) {
+      setShowInstall(true)
+    }
+
+    // Pick up beforeinstallprompt captured before React mounted
     if (window.__pwaInstallPrompt) {
       setInstallPrompt(window.__pwaInstallPrompt)
       setShowInstall(true)
     }
 
-    // Also listen for future fires (e.g. after uninstall / revisit)
+    // Listen for future fires
     const handler = (e) => {
       e.preventDefault()
       window.__pwaInstallPrompt = e
@@ -129,10 +138,12 @@ export default function Navbar() {
               <p className="text-white text-xs font-bold leading-tight">শিবের বাজার অ্যাপ ইন্সটল করুন</p>
               {isIOS
                 ? <p className="text-blue-200 text-[10px] leading-tight">Safari: Share ⬆️ → "Add to Home Screen"</p>
-                : <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+                : installPrompt
+                  ? <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+                  : <p className="text-blue-200 text-[10px] leading-tight">Menu ⋮ → "Add to Home Screen" চাপুন</p>
               }
             </div>
-            {!isIOS && (
+            {!isIOS && installPrompt && (
               <button
                 onClick={handleInstall}
                 className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
