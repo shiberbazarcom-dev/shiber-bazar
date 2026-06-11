@@ -29,25 +29,50 @@ export async function logError({ severity = 'error', message, stack, component, 
 export function installGlobalErrorHandlers() {
   // Uncaught JS errors
   window.addEventListener('error', (event) => {
+    const msg = event.message || 'Uncaught error'
+
+    // Stale chunk — auto reload, don't log as error
+    if (/Failed to fetch dynamically imported module/i.test(msg)
+      || /Importing a module script failed/i.test(msg)) {
+      if ('caches' in window) {
+        caches.keys()
+          .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+          .finally(() => window.location.reload())
+      } else {
+        window.location.reload()
+      }
+      return
+    }
+
     logError({
       severity: 'error',
-      message: event.message || 'Uncaught error',
+      message: msg,
       stack: event.error?.stack || null,
       component: 'window.onerror',
-      extra: {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-      },
+      extra: { filename: event.filename, lineno: event.lineno, colno: event.colno },
     })
   })
 
   // Unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason
+    const msg = reason?.message || String(reason) || 'Unhandled promise rejection'
+
+    // Stale chunk via dynamic import() — auto reload
+    if (/Failed to fetch dynamically imported module/i.test(msg)) {
+      if ('caches' in window) {
+        caches.keys()
+          .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+          .finally(() => window.location.reload())
+      } else {
+        window.location.reload()
+      }
+      return
+    }
+
     logError({
       severity: 'error',
-      message: reason?.message || String(reason) || 'Unhandled promise rejection',
+      message: msg,
       stack: reason?.stack || null,
       component: 'unhandledrejection',
     })

@@ -54,6 +54,24 @@ class ErrorBoundary extends React.Component {
     return { hasError: true }
   }
   componentDidCatch(error, errorInfo) {
+    const msg = error?.message || String(error)
+
+    // Stale chunk error — নতুন deploy-এর পর পুরনো JS chunk আর নেই
+    // Solution: cache clear করে page reload করো
+    const isChunkError = /Failed to fetch dynamically imported module/i.test(msg)
+      || /Importing a module script failed/i.test(msg)
+      || /Loading chunk \d+ failed/i.test(msg)
+    if (isChunkError) {
+      if ('caches' in window) {
+        caches.keys()
+          .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+          .finally(() => window.location.reload())
+      } else {
+        window.location.reload()
+      }
+      return
+    }
+
     // Sentry-তে error পাঠাও
     if (import.meta.env.VITE_SENTRY_DSN) {
       Sentry.captureException(error, { extra: errorInfo })
@@ -61,7 +79,7 @@ class ErrorBoundary extends React.Component {
     // Admin panel-এ error log করো
     logError({
       severity: 'crash',
-      message: error?.message || String(error),
+      message: msg,
       stack: error?.stack || null,
       component: errorInfo?.componentStack?.split('\n')[1]?.trim() || 'ErrorBoundary',
       extra: { componentStack: errorInfo?.componentStack },
