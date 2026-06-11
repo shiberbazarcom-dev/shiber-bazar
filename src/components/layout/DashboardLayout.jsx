@@ -156,6 +156,20 @@ export default function DashboardLayout({ type = 'user' }) {
     refetchInterval: 60000,
   })
 
+  /* ── Pending shop owner requests count (admin only) ── */
+  const { data: pendingRequestsCount = 0 } = useQuery({
+    queryKey: ['pending-shop-requests-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('shop_owner_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      return count || 0
+    },
+    enabled: type === 'admin',
+    refetchInterval: 30000,
+  })
+
   /* ── Shop IDs ref (for filtering owner realtime events) ── */
   const shopIdsRef = useRef([])
   useEffect(() => {
@@ -251,17 +265,18 @@ export default function DashboardLayout({ type = 'user' }) {
   ]
 
   const adminLinks = [
-    { to: '/admin',            icon: '📊', label: 'ড্যাশবোর্ড',       end: true },
-    { to: '/admin/analytics',  icon: '📈', label: 'অ্যানালিটিক্স' },
-    { to: '/admin/shops',      icon: '🏪', label: 'দোকান' },
-    { to: '/admin/categories', icon: '📋', label: 'বিভাগ' },
-    { to: '/admin/users',      icon: '👥', label: 'ব্যবহারকারী' },
-    { to: '/admin/roles',      icon: '🛡️', label: 'Role' },
-    { to: '/admin/orders',        icon: '📦', label: 'অর্ডার' },       // ← badge here
-    { to: '/admin/products',      icon: '🛍️', label: 'পণ্য' },
-    { to: '/admin/verifications', icon: '🔏', label: 'যাচাইকরণ' },
-    { to: '/admin/ads',           icon: '📢', label: 'বিজ্ঞাপন' },
-    { to: '/admin/settings',      icon: '⚙️', label: 'সেটিংস' },
+    { to: '/admin',                 icon: '📊', label: 'ড্যাশবোর্ড',       end: true },
+    { to: '/admin/analytics',       icon: '📈', label: 'অ্যানালিটিক্স' },
+    { to: '/admin/shop-requests',   icon: '🏪', label: 'দোকান আবেদন' },   // ← badge here
+    { to: '/admin/shops',           icon: '🏬', label: 'দোকান' },
+    { to: '/admin/categories',      icon: '📋', label: 'বিভাগ' },
+    { to: '/admin/users',           icon: '👥', label: 'ব্যবহারকারী' },
+    { to: '/admin/roles',           icon: '🛡️', label: 'Role' },
+    { to: '/admin/orders',          icon: '📦', label: 'অর্ডার' },        // ← badge here
+    { to: '/admin/products',        icon: '🛍️', label: 'পণ্য' },
+    { to: '/admin/verifications',   icon: '🔏', label: 'যাচাইকরণ' },
+    { to: '/admin/ads',             icon: '📢', label: 'বিজ্ঞাপন' },
+    { to: '/admin/settings',        icon: '⚙️', label: 'সেটিংস' },
   ]
 
   let links
@@ -278,9 +293,10 @@ export default function DashboardLayout({ type = 'user' }) {
 
   /* badge for each link */
   const getBadge = (to) => {
-    if (to === '/admin/orders')     return adminBadge
-    if (to === '/admin/shops')      return pendingShopsCount
-    if (to === '/dashboard/orders') return ownerBadge
+    if (to === '/admin/orders')         return adminBadge
+    if (to === '/admin/shops')          return pendingShopsCount
+    if (to === '/admin/shop-requests')  return pendingRequestsCount
+    if (to === '/dashboard/orders')     return ownerBadge
     return 0
   }
 

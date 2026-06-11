@@ -49,6 +49,7 @@ const ManageProducts   = lazy(() => import('./pages/admin/ManageProducts'))
 const ManageAds        = lazy(() => import('./pages/admin/ManageAds'))
 const ManageRoles          = lazy(() => import('./pages/admin/ManageRoles'))
 const ManageVerifications  = lazy(() => import('./pages/admin/ManageVerifications'))
+const ManageShopRequests   = lazy(() => import('./pages/admin/ManageShopRequests'))
 const Analytics            = lazy(() => import('./pages/admin/Analytics'))
 const Settings             = lazy(() => import('./pages/admin/Settings'))
 
@@ -200,7 +201,8 @@ export default function App() {
               <Route path="products"     element={<ManageProducts />} />
               <Route path="ads"          element={<ManageAds />} />
               <Route path="roles"          element={<ManageRoles />} />
-              <Route path="verifications" element={<ManageVerifications />} />
+              <Route path="verifications"  element={<ManageVerifications />} />
+              <Route path="shop-requests" element={<ManageShopRequests />} />
               <Route path="analytics"    element={<Analytics />} />
               <Route path="settings"     element={<Settings />} />
             </Route>
