@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useShops } from '../hooks/useShops'
 import { useSearchProducts } from '../hooks/useProducts'
+import { useServices } from '../hooks/useServices'
 import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
+import ServiceCard from '../components/services/ServiceCard'
 import { whatsappUrl } from '../lib/utils'
 import { getBengaliMatch } from '../lib/banglish'
 import SEO from '../components/SEO'
@@ -116,10 +118,12 @@ export default function SearchPage() {
   const shops = shopData?.pages?.flatMap(p => p.data) ?? []
 
   const { data: products = [], isLoading: productsLoading } = useSearchProducts(query)
+  const { data: services = [], isLoading: servicesLoading } = useServices(null, query)
 
-  const isLoading = tab === 'shops' ? shopsLoading : productsLoading
+  const isLoading = tab === 'shops' ? shopsLoading : tab === 'products' ? productsLoading : servicesLoading
   const totalShops    = shops.length
   const totalProducts = products.length
+  const totalServices = services.length
 
   // Banglish match hint (e.g. user typed "murgi" → matched "মুরগি")
   const bengaliMatch = query ? getBengaliMatch(query) : null
@@ -158,10 +162,11 @@ export default function SearchPage() {
             </p>
 
             {/* Tabs */}
-            <div className="flex gap-2 mt-4 justify-center">
+            <div className="flex gap-2 mt-4 justify-center flex-wrap">
               {[
                 { key: 'shops',    label: '🏪 দোকান',  count: query ? totalShops    : null },
                 { key: 'products', label: '📦 পণ্য',   count: query ? totalProducts : null },
+                { key: 'services', label: '🛠️ সেবা',  count: query ? totalServices : null },
               ].map(t => (
                 <button key={t.key} onClick={() => setTab(t.key)}
                   className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
@@ -267,6 +272,23 @@ export default function SearchPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {products.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )
+        )}
+
+        {/* Services tab */}
+        {query && !isLoading && tab === 'services' && (
+          services.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
+              <p className="text-4xl mb-3">🛠️</p>
+              <p className="text-gray-500 mb-2">"<strong>{query}</strong>" সম্পর্কিত কোনো সেবা পাওয়া যায়নি</p>
+              <Link to="/services" className="text-sm font-medium mt-2" style={{ color: BLUE }}>
+                সব সেবা দেখুন →
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {services.map(s => <ServiceCard key={s.id} service={s} />)}
             </div>
           )
         )}

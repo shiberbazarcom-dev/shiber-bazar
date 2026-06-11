@@ -8,6 +8,9 @@ import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import SearchDropdown from '../components/SearchDropdown'
 import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
+import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
+import { useServiceCategories } from '../hooks/useServices'
+import { SERVICE_CATEGORIES } from '../data/serviceCategories'
 
 // Animated counter component
 function AnimatedCounter({ value, suffix = '' }) {
@@ -156,6 +159,45 @@ function CategoryPill({ category }) {
         </span>
       </div>
     </Link>
+  )
+}
+
+/* ── Homepage Services Section ─────────────────────────────────── */
+function HomeServicesSection() {
+  const { data: dbCats = [] } = useServiceCategories()
+  const cats = (dbCats.length ? dbCats : SERVICE_CATEGORIES).slice(0, 10)
+
+  return (
+    <section className="py-10 sm:py-14 bg-white">
+      <div className="container-app">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">🛠️ প্রয়োজনীয় সেবাসমূহ</h2>
+            <p className="text-sm text-gray-500 mt-1">শিবের বাজারের বিশ্বস্ত স্থানীয় সেবা প্রদানকারী</p>
+          </div>
+          <Link
+            to="/services"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group flex-shrink-0">
+            সব দেখুন
+            <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+        <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-3">
+          {cats.map(cat => (
+            <ServiceCategoryCard key={cat.slug || cat.id} category={cat} />
+          ))}
+        </div>
+        <div className="mt-5 text-center">
+          <Link
+            to="/services/submit"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-colors">
+            + আপনার সেবা লিস্ট করুন — বিনামূল্যে
+          </Link>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -500,6 +542,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* ── Local Services Section ── */}
+      <HomeServicesSection />
 
       {/* ── Improved CTA Section ── */}
       <section className="relative py-16 pb-28 sm:py-20 sm:pb-20 overflow-hidden">

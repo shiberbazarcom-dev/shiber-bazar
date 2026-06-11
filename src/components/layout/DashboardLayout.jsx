@@ -256,19 +256,21 @@ export default function DashboardLayout({ type = 'user' }) {
 
   /* ── Sidebar link definitions ── */
   const userLinks = [
-    { to: '/dashboard',           icon: '📊', label: 'ওভারভিউ',        end: true },
-    { to: '/dashboard/favorites', icon: '❤️', label: 'পছন্দের দোকান' },
-    { to: '/dashboard/profile',   icon: '👤', label: 'প্রোফাইল' },
+    { to: '/dashboard',              icon: '📊', label: 'ওভারভিউ',        end: true },
+    { to: '/dashboard/favorites',    icon: '❤️', label: 'পছন্দের দোকান' },
+    { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
   ]
 
   const ownerLinks = [
-    { to: '/dashboard',           icon: '📊', label: 'ওভারভিউ',        end: true },
-    { to: '/dashboard/shops',     icon: '🏪', label: 'আমার দোকান' },
-    { to: '/dashboard/add-shop',  icon: '➕', label: 'নতুন দোকান' },
-    { to: '/dashboard/products',  icon: '🛍️', label: 'পণ্য আপলোড' },
-    { to: '/dashboard/orders',    icon: '📦', label: 'অর্ডার' },       // ← badge here
-    { to: '/dashboard/qr-code',   icon: '🔲', label: 'QR কোড' },
-    { to: '/dashboard/profile',   icon: '👤', label: 'প্রোফাইল' },
+    { to: '/dashboard',              icon: '📊', label: 'ওভারভিউ',        end: true },
+    { to: '/dashboard/shops',        icon: '🏪', label: 'আমার দোকান' },
+    { to: '/dashboard/add-shop',     icon: '➕', label: 'নতুন দোকান' },
+    { to: '/dashboard/products',     icon: '🛍️', label: 'পণ্য আপলোড' },
+    { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
+    { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },
+    { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
   ]
 
   const adminLinks = [
@@ -282,6 +284,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin/orders',          icon: '📦', label: 'অর্ডার' },        // ← badge here
     { to: '/admin/products',        icon: '🛍️', label: 'পণ্য' },
     { to: '/admin/verifications',   icon: '🔏', label: 'যাচাইকরণ' },
+    { to: '/admin/services',        icon: '🛠️', label: 'সেবা অনুমোদন' },
     { to: '/admin/ads',             icon: '📢', label: 'বিজ্ঞাপন' },
     { to: '/admin/settings',        icon: '⚙️', label: 'সেটিংস' },
   ]

@@ -27,6 +27,13 @@ const AuthCallback     = lazy(() => import('./pages/auth/AuthCallback'))
 const OrderPage        = lazy(() => import('./pages/OrderPage'))
 const TrackOrder       = lazy(() => import('./pages/TrackOrder'))
 
+/* ── Services module ── */
+const ServicesPage     = lazy(() => import('./pages/services/ServicesPage'))
+const ServiceDetail    = lazy(() => import('./pages/services/ServiceDetail'))
+const SubmitService    = lazy(() => import('./pages/services/SubmitService'))
+const MyServices       = lazy(() => import('./pages/dashboard/MyServices'))
+const ManageServices   = lazy(() => import('./pages/admin/ManageServices'))
+
 /* ── Customer Account ── */
 const AccountPage      = lazy(() => import('./pages/account/AccountPage'))
 
@@ -140,6 +147,18 @@ export default function App() {
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
+            {/* ── Services (public) ── */}
+            <Route path="/services"              element={<PublicLayout><ServicesPage /></PublicLayout>} />
+            <Route path="/services/:slug"        element={<PublicLayout><ServicesPage /></PublicLayout>} />
+            <Route path="/services/detail/:id"   element={<PublicLayout><ServiceDetail /></PublicLayout>} />
+            <Route path="/services/submit"       element={
+              <PublicLayout>
+                <ProtectedRoute requireAuth>
+                  <SubmitService />
+                </ProtectedRoute>
+              </PublicLayout>
+            } />
+
             {/* ══════════════════════════════════
                 CUSTOMER /account  (any auth user)
             ══════════════════════════════════ */}
@@ -186,6 +205,8 @@ export default function App() {
                   <QRCodePage />
                 </ProtectedRoute>
               } />
+              {/* Services — any logged-in user */}
+              <Route path="my-services" element={<MyServices />} />
             </Route>
 
             {/* ══════════════════════════════════
@@ -209,6 +230,7 @@ export default function App() {
               <Route path="shop-requests" element={<ManageShopRequests />} />
               <Route path="analytics"    element={<Analytics />} />
               <Route path="settings"     element={<Settings />} />
+              <Route path="services"     element={<ManageServices />} />
             </Route>
 
             {/* Fallback */}

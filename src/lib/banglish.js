@@ -255,6 +255,27 @@ export const WORD_MAP = {
   /* ── SHOP NAME FRAGMENTS ──────────────────────────────────── */
   'dokan':        'দোকান',   'shop':         'দোকান',   'bazar':       'বাজার',
   'bazaar':       'বাজার',   'market':       'বাজার',   'store':       'স্টোর',
+
+  /* ── LOCAL SERVICES ───────────────────────────────────────── */
+  'cng':          'সিএনজি',  'auto':         'অটোরিকশা', 'autorickshaw': 'অটোরিকশা',
+  'rickshaw':     'রিকশা',   'bhaira':       'ভাড়া',
+  'salon':        'সেলুন',   'saloon':       'সেলুন',   'barber':      'নাপিত',
+  'napit':        'নাপিত',   'haircut':      'চুল কাটা', 'hair':       'চুল',
+  'tutor':        'শিক্ষক',  'teacher':      'শিক্ষক',  'private':     'প্রাইভেট',
+  'shikkhok':     'শিক্ষক',  'coaching':     'কোচিং',   'tution':      'টিউশন',
+  'tuition':      'টিউশন',
+  'doctor':       'ডাক্তার', 'daktar':       'ডাক্তার', 'doc':         'ডাক্তার',
+  'chamber':      'চেম্বার', 'hospital':     'হাসপাতাল','clinic':      'ক্লিনিক',
+  'electrician':  'ইলেকট্রিশিয়ান', 'electric': 'বৈদ্যুতিক', 'bijli': 'বৈদ্যুতিক',
+  'plumber':      'প্লাম্বার', 'plumbing':   'প্লাম্বার', 'pipe':      'পাইপ',
+  'pickup':       'পিকআপ',   'van':          'ভ্যান',   'truck':       'ট্রাক',
+  'blood':        'রক্ত',    'rokto':        'রক্ত',    'donor':       'রক্তদাতা',
+  'roktodan':     'রক্তদান',
+  'rent':         'ভাড়া',   'rental':       'ভাড়া',   'house':       'বাসা',
+  'basha':        'বাসা',    'flat':         'ফ্ল্যাট', 'apartment':   'ফ্ল্যাট',
+  'room':         'রুম',
+  'emergency':    'জরুরি',   'joruri':       'জরুরি',   'helpline':    'হেল্পলাইন',
+  'seva':         'সেবা',    'service':      'সেবা',    'services':    'সেবা',
 }
 
 /* ═══════════════════════════════════════════════════════════════════
