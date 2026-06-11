@@ -130,7 +130,7 @@ export default function ProductDetails() {
   const savings = discount > 0 ? Number(product.original_price) - Number(product.price) : 0
 
   return (
-    <div className="pb-28 md:pb-10" style={{ background: '#f7f8fa' }}>
+    <div className="pb-28 md:pb-10 bg-white">
       <SEO
         title={product.name}
         description={product.description || `${product.name} — শিবের বাজারে পাওয়া যাচ্ছে। দাম ও বিস্তারিত দেখুন এবং সরাসরি অর্ডার করুন।`}
@@ -154,7 +154,7 @@ export default function ProductDetails() {
         {/* ══════════════════════════════════════════
             MAIN PRODUCT SECTION
         ══════════════════════════════════════════ */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
             {/* ─── Left: Image gallery ─── */}
@@ -216,51 +216,57 @@ export default function ProductDetails() {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{product.name}</h1>
 
               {/* Price */}
-              <div className="flex items-baseline gap-3">
-                {product.price && (
-                  <p className="text-3xl font-bold" style={{ color: BLUE }}>
-                    ৳{Number(product.price).toLocaleString('bn-BD')}
+              <div className="py-3 px-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  {product.price && (
+                    <p className="text-3xl sm:text-4xl font-black tracking-tight" style={{ color: BLUE }}>
+                      ৳{Number(product.price).toLocaleString('bn-BD')}
+                    </p>
+                  )}
+                  {discount > 0 && (
+                    <>
+                      <p className="text-base text-gray-400 line-through">
+                        ৳{Number(product.original_price).toLocaleString('bn-BD')}
+                      </p>
+                      <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-red-500">
+                        {discount}% OFF
+                      </span>
+                    </>
+                  )}
+                </div>
+                {savings > 0 && (
+                  <p className="text-xs font-semibold mt-1 text-green-600">
+                    🎉 আপনি ৳{savings.toLocaleString('bn-BD')} সাশ্রয় করছেন!
                   </p>
                 )}
-                {discount > 0 && (
-                  <>
-                    <p className="text-base text-gray-400 line-through">
-                      ৳{Number(product.original_price).toLocaleString('bn-BD')}
-                    </p>
-                    <span className="text-xs font-bold text-white px-2 py-0.5 rounded-full bg-red-500">
-                      {discount}% OFF
-                    </span>
-                  </>
+                {!product.price && (
+                  <p className="text-sm text-gray-500 font-medium">দাম জানতে যোগাযোগ করুন</p>
                 )}
               </div>
-              {savings > 0 && (
-                <p className="text-sm font-semibold -mt-2 text-red-600">
-                  আপনি সাশ্রয় করছেন ৳{savings.toLocaleString('bn-BD')}!
-                </p>
-              )}
 
               {/* Stock */}
               {product.stock !== null && (
-                <div>
+                <div className="flex items-center gap-2">
                   {product.stock > 0
-                    ? <span className="text-xs font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-full">
-                        ✓ স্টকে আছে ({product.stock}টি)
-                      </span>
-                    : <span className="text-xs font-semibold text-red-700 bg-red-50 px-3 py-1.5 rounded-full">
-                        ✕ স্টক শেষ
-                      </span>
+                    ? <>
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                        <span className="text-xs font-semibold text-green-700">স্টকে আছে ({product.stock}টি)</span>
+                      </>
+                    : <>
+                        <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                        <span className="text-xs font-semibold text-red-700">স্টক শেষ</span>
+                      </>
                   }
                 </div>
               )}
 
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-2.5 mt-1">
-                {/* Cart button */}
                 <button
                   onClick={handleAddToCart}
-                  className={`flex-1 py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-2 border-2 transition-all ${
+                  className={`flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
                     inCart
-                      ? 'bg-blue-600 border-blue-600 text-white'
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
                       : 'border-blue-600 text-blue-600 hover:bg-blue-50'
                   }`}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -269,25 +275,27 @@ export default function ProductDetails() {
                   {inCart ? 'কার্টে আছে ✓' : 'কার্টে যোগ করুন'}
                 </button>
 
-                {/* WhatsApp order button */}
                 {(shop?.whatsapp || shop?.phone) && (
                   <a href={whatsappUrl(
                       shop.whatsapp || shop.phone,
                       `"${product.name}" পণ্যটি অর্ডার করতে চাই${product.price ? ` — মূল্য ৳${product.price}` : ''}`
                     )}
                     target="_blank" rel="noreferrer"
-                    className="flex-1 py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-2 text-white transition-all hover:opacity-90"
+                    className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
                     style={{ background: '#25d366' }}>
                     {WA_ICON}
-                    WhatsApp এ অর্ডার করুন
+                    WhatsApp এ অর্ডার
                   </a>
                 )}
               </div>
 
               {/* Order via site button */}
               <button onClick={goOrder}
-                className="w-full py-2.5 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
-                🛒 অর্ডার ফর্ম পূরণ করুন
+                className="w-full h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                অর্ডার ফর্ম পূরণ করুন
               </button>
 
               {/* Description */}
@@ -321,13 +329,16 @@ export default function ProductDetails() {
             RELATED PRODUCTS
         ══════════════════════════════════════════ */}
         {relatedOthers.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-800 text-base sm:text-lg">একই ধরনের পণ্য</h2>
+              <h2 className="font-bold text-gray-900 text-base sm:text-lg">একই ধরনের পণ্য</h2>
               {shop && (
                 <Link to={`/shop/${shop.slug || shop.id}`}
-                  className="text-xs font-semibold hover:underline" style={{ color: BLUE }}>
-                  সব দেখুন →
+                  className="flex items-center gap-1.5 text-xs font-bold hover:opacity-80 transition-opacity"
+                  style={{ color: BLUE }}>
+                  সব দেখুন
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px]"
+                    style={{ background: BLUE }}>→</span>
                 </Link>
               )}
             </div>
@@ -341,23 +352,29 @@ export default function ProductDetails() {
             SHOP FOOTER CARD
         ══════════════════════════════════════════ */}
         {shop && (
-          <div className="bg-white rounded-2xl shadow-sm p-5">
-            <div className="flex items-center gap-3 mb-4">
-              {(shop.logo || shop.logo_url)
-                ? <img src={shop.logo || shop.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0" />
-                : <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: '#eff6ff' }}>🏪</div>
-              }
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 text-sm sm:text-base">{shop.shop_name}</p>
-                {shop.address && <p className="text-xs text-gray-500 truncate">📍 {shop.address}</p>}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Shop header strip */}
+            <div className="h-12 w-full" style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6)' }} />
+            <div className="px-5 pb-5 -mt-6">
+              <div className="flex items-end gap-3 mb-4">
+                <div className="relative flex-shrink-0">
+                  {(shop.logo || shop.logo_url)
+                    ? <img src={shop.logo || shop.logo_url} alt="" className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-sm" />
+                    : <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border-4 border-white shadow-sm" style={{ background: '#eff6ff' }}>🏪</div>
+                  }
+                </div>
+                <div className="flex-1 min-w-0 pb-1">
+                  <p className="font-bold text-gray-900 text-sm sm:text-base leading-tight">{shop.shop_name}</p>
+                  {shop.categories?.name && <p className="text-xs text-blue-600 font-medium mt-0.5">{shop.categories.name}</p>}
+                  {shop.address && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {shop.address}</p>}
+                </div>
+                <Link to={`/shop/${shop.slug || shop.id}`}
+                  className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90 active:scale-95"
+                  style={{ background: BLUE }}>
+                  দোকান →
+                </Link>
               </div>
-              <Link to={`/shop/${shop.slug || shop.id}`}
-                className="flex-shrink-0 text-sm font-semibold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90"
-                style={{ background: BLUE }}>
-                দোকান →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-gray-100 pt-4">
               {shop.phone && (
                 <a href={`tel:${shop.phone}`}
                   className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all">
@@ -400,16 +417,17 @@ export default function ProductDetails() {
           MOBILE STICKY BOTTOM BAR
           Sits above the bottom navbar (60px)
       ══════════════════════════════════════════ */}
-      <div className="md:hidden fixed bottom-[60px] left-0 right-0 z-40 bg-white border-t border-gray-200 px-3 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
-        <div className="flex gap-2 max-w-lg mx-auto">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex gap-2.5 max-w-lg mx-auto">
           <button onClick={handleAddToCart}
-            className={`flex-1 py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-1.5 border-2 transition-all ${
+            className={`flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 border-2 transition-all active:scale-95 ${
               inCart ? 'bg-blue-600 border-blue-600 text-white' : 'border-blue-600 text-blue-600 bg-white'
             }`}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            {inCart ? 'কার্টে আছে' : 'কার্ট'}
+            {inCart ? '✓ কার্টে আছে' : 'কার্টে যোগ'}
           </button>
           {(shop?.whatsapp || shop?.phone) && (
             <a href={whatsappUrl(
@@ -417,7 +435,7 @@ export default function ProductDetails() {
                 `"${product.name}" পণ্যটি অর্ডার করতে চাই${product.price ? ` — মূল্য ৳${product.price}` : ''}`
               )}
               target="_blank" rel="noreferrer"
-              className="flex-[2] py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-1.5 text-white"
+              className="flex-[2] h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
               {WA_ICON}
               WhatsApp অর্ডার
