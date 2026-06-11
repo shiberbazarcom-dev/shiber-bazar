@@ -1,266 +1,291 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/context/AuthContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Store, Package, ShoppingCart, TrendingUp,
-  Plus, ArrowRight, Clock, CheckCircle, XCircle,
-} from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '../../context/AuthContext'
+import { useMyShopRequest, useSubmitShopRequest } from '../../hooks/useShopRequests'
+import { useAdminWhatsapp } from '../../hooks/useSettings'
+import { whatsappUrl } from '../../lib/utils'
+import { supabase } from '../../lib/supabase'
+import toast from 'react-hot-toast'
 
-// @ts-ignore
-const useAuthHook = useAuth
+const BLUE = '#2563EB'
 
-const ORDER_STATUS: Record<string, { label: string; variant: any }> = {
-  pending:    { label: 'Pending',    variant: 'warning' },
-  confirmed:  { label: 'Confirmed',  variant: 'info' },
-  processing: { label: 'Processing', variant: 'info' },
-  shipped:    { label: 'Shipped',    variant: 'purple' },
-  delivered:  { label: 'Delivered',  variant: 'success' },
-  cancelled:  { label: 'Cancelled',  variant: 'destructive' },
-  rejected:   { label: 'Rejected',   variant: 'destructive' },
+/* ─── Pending orders count for shop owner ─── */
+function usePendingOrderCount(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['pending-order-count', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      // Get shop IDs owned by this user
+      const { data: shops } = await supabase
+        .from('shops').select('id').eq('owner_id', userId!)
+      const ids = (shops ?? []).map((s: any) => s.id)
+      if (!ids.length) return 0
+      const { count } = await supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .in('shop_id', ids)
+        .eq('status', 'pending')
+      return count ?? 0
+    },
+  })
 }
 
-const SHOP_STATUS: Record<string, { label: string; variant: any }> = {
-  pending_approval: { label: 'Pending',   variant: 'warning' },
-  approved:         { label: 'Approved',  variant: 'success' },
-  rejected:         { label: 'Rejected',  variant: 'destructive' },
-  suspended:        { label: 'Suspended', variant: 'secondary' },
-}
+/* ─── Shop Request Form Modal ─── */
+function ShopRequestModal({ onClose }: { onClose: () => void }) {
+  const { profile } = useAuth() as any
+  const submit     = useSubmitShopRequest()
+  const adminPhone = useAdminWhatsapp()
 
-async function fetchOwnerStats(userId: string) {
-  // 1. own shops
-  const { data: shops } = await supabase
-    .from('shops')
-    .select('id, shop_name, status, logo, categories(name)')
-    .eq('owner_id', userId)
-    .order('created_at', { ascending: false })
-
-  const shopIds = (shops ?? []).map((s: any) => s.id)
-
-  // 2. orders + products for own shops
-  const [ordersRes, productsRes] = await Promise.all([
-    shopIds.length
-      ? supabase.from('orders').select('id, status, total_amount, customer_name, order_number, created_at, shops(shop_name)').in('shop_id', shopIds).order('created_at', { ascending: false })
-      : { data: [] },
-    shopIds.length
-      ? supabase.from('products').select('id', { count: 'exact' }).in('shop_id', shopIds)
-      : { count: 0 },
-  ])
-
-  const orders = (ordersRes.data ?? []) as any[]
-  const totalRevenue = orders.filter(o => o.status === 'delivered').reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0)
-  const pendingOrders = orders.filter(o => o.status === 'pending').length
-
-  return {
-    shops: shops ?? [],
-    totalOrders: orders.length,
-    pendingOrders,
-    totalRevenue,
-    recentOrders: orders.slice(0, 5),
-    totalProducts: productsRes.count ?? 0,
-  }
-}
-
-function StatCard({ icon: Icon, label, value, sub, color, to }: {
-  icon: any; label: string; value: string | number; sub?: string; color: string; to?: string
-}) {
-  const inner = (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-gray-500 font-medium">{label}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-            {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-          </div>
-          <div className={`p-2.5 rounded-xl ${color}`}>
-            <Icon className="h-5 w-5 text-white" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-  return to ? <Link to={to}>{inner}</Link> : inner
-}
-
-export default function DashboardOverview() {
-  const { user, profile, role } = useAuthHook()
-  const isOwner = ['shop_owner', 'super_admin', 'market_manager'].includes(role)
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['owner-stats', user?.id],
-    queryFn: () => fetchOwnerStats(user!.id),
-    enabled: !!user,
-    refetchInterval: 30_000,
+  const [form, setForm] = useState({
+    full_name:     profile?.full_name || '',
+    phone:         profile?.phone || '',
+    business_type: '',
+    shop_name:     '',
+    location:      '',
+    notes:         '',
   })
 
-  if (isLoading) return (
-    <div className="space-y-6">
-      <Skeleton className="h-10 w-64" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1,2,3,4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {[1,2].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.full_name.trim())     return toast.error('পূর্ণ নাম দিন')
+    if (!form.phone.trim())         return toast.error('মোবাইল নম্বর দিন')
+    if (!form.business_type.trim()) return toast.error('ব্যবসার ধরন দিন')
+    if (!form.location.trim())      return toast.error('এলাকা / জেলা দিন')
+
+    try {
+      await submit.mutateAsync(form as any)
+      if (adminPhone) {
+        const msg =
+          `নতুন দোকান খোলার আবেদন।\n` +
+          `নাম: ${form.full_name}\n` +
+          `মোবাইল: ${form.phone}\n` +
+          `ব্যবসার ধরন: ${form.business_type}\n` +
+          `দোকানের নাম: ${form.shop_name || 'উল্লেখ নেই'}\n` +
+          `এলাকা: ${form.location}\n` +
+          `অনুগ্রহ করে ব্যবহারকারীর সাথে যোগাযোগ করুন।`
+        window.open(whatsappUrl(adminPhone, msg), '_blank', 'noopener')
+      }
+      toast.success('আবেদন সফলভাবে জমা হয়েছে!')
+      onClose()
+    } catch {
+      toast.error('কিছু সমস্যা হয়েছে, আবার চেষ্টা করুন')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-lg font-bold text-gray-800">দোকান খোলার আবেদন</h2>
+            <p className="text-xs text-gray-400 mt-0.5">আমাদের টিম যোগাযোগ করবে</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-lg">✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
+          {([
+            ['full_name',     'পূর্ণ নাম *',              'আপনার পুরো নাম লিখুন',          'text'],
+            ['phone',         'মোবাইল নম্বর *',            '01XXXXXXXXX',                    'tel'],
+            ['business_type', 'ব্যবসার ধরন *',             'যেমন: কাপড়, মুদিখানা...',       'text'],
+            ['shop_name',     'দোকানের নাম (ঐচ্ছিক)',    'দোকানের নাম থাকলে লিখুন',        'text'],
+            ['location',      'এলাকা / জেলা *',            'যেমন: সিলেট, রাজশাহী...',        'text'],
+          ] as [string, string, string, string][]).map(([key, label, placeholder, type]) => (
+            <div key={key}>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
+              <input
+                type={type}
+                value={(form as any)[key]}
+                onChange={e => set(key, e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder={placeholder}
+              />
+            </div>
+          ))}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">অতিরিক্ত তথ্য (ঐচ্ছিক)</label>
+            <textarea
+              value={form.notes}
+              onChange={e => set('notes', e.target.value)}
+              rows={2}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+              placeholder="যেকোনো অতিরিক্ত তথ্য..."
+            />
+          </div>
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={submit.isPending}
+              className="w-full py-4 text-white font-bold rounded-xl text-sm disabled:opacity-60"
+              style={{ background: BLUE }}>
+              {submit.isPending ? '⏳ জমা হচ্ছে...' : '📩 আবেদন জমা করুন'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
+}
 
-  const d = data!
+/* ─── Main Dashboard ─── */
+export default function DashboardOverview() {
+  const { profile, user, role } = useAuth() as any
+  const { data: myRequest, isLoading: requestLoading } = useMyShopRequest()
+  const { data: pendingOrders = 0 } = usePendingOrderCount(user?.id)
+  const [showForm, setShowForm] = useState(false)
+
+  const isShopOwner = ['shop_owner', 'super_admin', 'market_manager'].includes(role)
+  const firstName   = profile?.full_name?.split(' ')[0] || 'ব্যবহারকারী'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 pb-28 md:pb-6">
+
       {/* Welcome */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
+             style={{ background: BLUE }}>
+          {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            স্বাগতম, {profile?.full_name?.split(' ')[0] || 'ব্যবহারকারী'} 👋
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
+          <h1 className="text-xl font-bold text-gray-800">স্বাগতম, {firstName} 👋</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{user?.email}</p>
         </div>
-        {isOwner && (
-          <Link to="/dashboard/add-shop">
-            <Button size="sm"><Plus className="h-4 w-4" /> নতুন দোকান</Button>
-          </Link>
-        )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Store}        label="আমার দোকান"    value={d.shops.length}  color="bg-blue-600"   to="/dashboard/shops" />
-        <StatCard icon={Package}      label="মোট পণ্য"      value={d.totalProducts} color="bg-purple-600" to="/dashboard/products" />
-        <StatCard icon={ShoppingCart} label="মোট অর্ডার"   value={d.totalOrders}   sub={d.pendingOrders ? `${d.pendingOrders} pending` : undefined} color="bg-orange-500" to="/dashboard/orders" />
-        <StatCard icon={TrendingUp}   label="মোট রাজস্ব"   value={`৳${d.totalRevenue.toLocaleString()}`} color="bg-green-600" />
-      </div>
-
-      {/* Pending orders alert */}
-      {d.pendingOrders > 0 && (
-        <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-xl">
-          <div className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-amber-600 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-amber-800">{d.pendingOrders}টি নতুন অর্ডার অপেক্ষা করছে!</p>
-              <p className="text-xs text-amber-600">Accept বা Reject করুন</p>
-            </div>
-          </div>
+      {/* ── SHOP OWNER view ── */}
+      {isShopOwner && (
+        <>
+          {/* Single stat card — অর্ডার */}
           <Link to="/dashboard/orders">
-            <Button size="sm" variant="warning">দেখুন <ArrowRight className="h-4 w-4" /></Button>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-orange-100">
+                📦
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-500 font-medium">অর্ডার</p>
+                <p className="text-2xl font-bold text-gray-800 mt-0.5">{pendingOrders}</p>
+                <p className="text-xs text-gray-400">নতুন অর্ডার অপেক্ষমান</p>
+              </div>
+              {(pendingOrders as number) > 0 && (
+                <span className="flex-shrink-0 bg-red-500 text-white text-xs font-bold rounded-full px-2.5 py-1 animate-pulse">
+                  {pendingOrders as number > 99 ? '99+' : String(pendingOrders)} নতুন
+                </span>
+              )}
+            </div>
           </Link>
-        </div>
+
+          {/* Quick links */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { to: '/dashboard/shops',    icon: '🏪', label: 'আমার দোকান' },
+              { to: '/dashboard/products', icon: '🛍️', label: 'পণ্য আপলোড' },
+              { to: '/dashboard/orders',   icon: '📦', label: 'অর্ডার ম্যানেজ' },
+              { to: '/dashboard/qr-code',  icon: '🔲', label: 'QR কোড' },
+            ].map(item => (
+              <Link key={item.to} to={item.to}
+                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex items-center gap-3">
+                <span className="text-2xl">{item.icon}</span>
+                <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent Orders */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">📦 সাম্প্রতিক অর্ডার</CardTitle>
-              <Link to="/dashboard/orders" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                সব দেখুন <ArrowRight className="h-3 w-3" />
-              </Link>
+      {/* ── REGULAR USER view ── */}
+      {!isShopOwner && !requestLoading && (
+        <>
+          {!myRequest && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-5 pt-5 pb-1">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4" style={{ background: '#eff6ff' }}>🏪</div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1">আপনি কি দোকান খুলতে চান?</h2>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  আপনার দোকান শিবের বাজারে যুক্ত করতে আবেদন করুন। আমাদের টিম আপনার সাথে যোগাযোগ করবে।
+                </p>
+              </div>
+              <div className="px-5 pb-5 pt-4">
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="w-full py-3.5 text-white font-bold rounded-xl text-sm hover:opacity-90 transition-opacity"
+                  style={{ background: BLUE }}>
+                  দোকান খোলার আবেদন করুন
+                </button>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {d.recentOrders.length === 0 ? (
-              <div className="text-center py-10 text-gray-400">
-                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">কোনো অর্ডার নেই</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {d.recentOrders.map((o: any) => {
-                  const s = ORDER_STATUS[o.status] ?? { label: o.status, variant: 'secondary' }
-                  return (
-                    <div key={o.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{o.customer_name}</p>
-                        <p className="text-xs text-gray-400">{o.order_number}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <span className="text-sm font-semibold text-gray-700">৳{(o.total_amount ?? 0).toLocaleString()}</span>
-                        <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
 
-        {/* My Shops */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">🏪 আমার দোকান</CardTitle>
-              <Link to="/dashboard/shops" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                সব দেখুন <ArrowRight className="h-3 w-3" />
-              </Link>
+          {myRequest?.status === 'pending' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-amber-200 px-5 py-4 flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">⏳</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h2 className="font-bold text-gray-800">আবেদন গ্রহণ হয়েছে</h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">🟡 যাচাই চলছে</span>
+                </div>
+                <p className="text-sm text-gray-500">আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে।</p>
+                {myRequest.shop_name && (
+                  <p className="text-xs text-gray-400 mt-1">দোকান: <span className="font-medium text-gray-600">{myRequest.shop_name}</span></p>
+                )}
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {d.shops.length === 0 ? (
-              <div className="text-center py-10 text-gray-400">
-                <Store className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm mb-3">কোনো দোকান নেই</p>
-                <Link to="/dashboard/add-shop">
-                  <Button size="sm"><Plus className="h-4 w-4" /> দোকান যোগ করুন</Button>
-                </Link>
+          )}
+
+          {myRequest?.status === 'approved' && (
+            <div className="bg-green-50 rounded-2xl border border-green-200 px-5 py-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl flex-shrink-0">✅</div>
+              <div>
+                <p className="font-bold text-green-800">আবেদন অনুমোদিত!</p>
+                <p className="text-sm text-green-700 mt-0.5">পেজ রিফ্রেশ করুন — আপনার অ্যাকাউন্ট আপগ্রেড হয়েছে।</p>
               </div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {d.shops.slice(0, 5).map((shop: any) => {
-                  const st = SHOP_STATUS[shop.status] ?? { label: shop.status, variant: 'secondary' }
-                  return (
-                    <div key={shop.id} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {(shop.logo || shop.logo_url)
-                          ? <img src={shop.logo || shop.logo_url} alt="" className="w-full h-full object-cover" />
-                          : <Store className="h-4 w-4 text-blue-400" />
-                        }
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 truncate">{shop.shop_name}</p>
-                        <p className="text-xs text-gray-400">{shop.categories?.name}</p>
-                      </div>
-                      <Badge variant={st.variant} className="text-xs flex-shrink-0">{st.label}</Badge>
-                    </div>
-                  )
-                })}
+            </div>
+          )}
+
+          {myRequest?.status === 'rejected' && (
+            <div className="bg-white rounded-2xl border border-red-200 px-5 py-4">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-2xl flex-shrink-0">❌</div>
+                <div>
+                  <p className="font-bold text-red-700">আবেদন গ্রহণ হয়নি</p>
+                  {myRequest.admin_note && <p className="text-sm text-gray-500 mt-1">{myRequest.admin_note}</p>}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <button onClick={() => setShowForm(true)}
+                className="w-full py-3 font-bold text-sm rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors">
+                আবার আবেদন করুন
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Profile card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h2 className="font-bold text-gray-700 mb-4">আমার প্রোফাইল</h2>
+        <div className="space-y-2 text-sm">
+          {[
+            ['নাম',    profile?.full_name || '—'],
+            ['মোবাইল', profile?.phone || 'দেওয়া নেই'],
+          ].map(([label, value]) => (
+            <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-gray-400">{label}</span>
+              <span className="font-medium text-gray-700">{value}</span>
+            </div>
+          ))}
+          <div className="flex justify-between items-center pt-2">
+            <span className="text-gray-400">একাউন্ট</span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">সক্রিয়</span>
+          </div>
+        </div>
+        <Link to="/dashboard/profile"
+          className="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+          ✏️ প্রোফাইল সম্পাদনা
+        </Link>
       </div>
 
-      {/* Profile summary */}
-      <Card>
-        <CardContent className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt="" className="w-full h-full rounded-xl object-cover" />
-                : (profile?.full_name || 'U')[0].toUpperCase()
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-gray-900">{profile?.full_name || 'নাম নেই'}</p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <Badge variant="info" className="text-xs">{profile?.phone || 'ফোন নেই'}</Badge>
-                <Badge variant="success" className="text-xs capitalize">{role?.replace('_', ' ')}</Badge>
-              </div>
-            </div>
-            <Link to="/dashboard/profile">
-              <Button variant="outline" size="sm">✏️ সম্পাদনা</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      {showForm && <ShopRequestModal onClose={() => setShowForm(false)} />}
     </div>
   )
 }
