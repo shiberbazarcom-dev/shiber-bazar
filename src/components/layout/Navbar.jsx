@@ -121,7 +121,7 @@ export default function Navbar() {
                    style={{ background: '#2563EB' }}>
                 শ
               </div>
-              <span className="font-bold text-gray-800 leading-tight text-sm sm:text-base whitespace-nowrap">
+              <span className="hidden sm:block font-bold text-gray-800 leading-tight text-base whitespace-nowrap">
                 শিবের বাজার
               </span>
             </Link>
