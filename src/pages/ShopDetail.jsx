@@ -52,6 +52,7 @@ function ReviewCard({ review }) {
 
 /* ─── Product Card ─── */
 function ProductCard({ product, shop, onOrder }) {
+  const { addItem } = useCart()
   const discount = product.original_price && product.original_price > product.price
     ? Math.round((1 - product.price / product.original_price) * 100) : 0
 
@@ -84,12 +85,24 @@ function ProductCard({ product, shop, onOrder }) {
             <span className="text-xs text-gray-400 line-through">৳{Number(product.original_price).toLocaleString('bn-BD')}</span>
           )}
         </div>
-        <button
-          onClick={() => onOrder(product)}
-          className="mt-auto w-full py-1.5 text-xs font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
-          style={{ background: GREEN }}>
-          অর্ডার করুন
-        </button>
+        <div className="mt-auto flex gap-1.5">
+          {/* Cart icon */}
+          <button
+            onClick={() => { addItem({ ...product, shops: shop }); toast.success('কার্টে যোগ হয়েছে 🛒', { duration: 1500 }) }}
+            className="flex-shrink-0 w-9 h-[30px] flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+            title="কার্টে যোগ করুন">
+            <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </button>
+          {/* Order button */}
+          <button
+            onClick={() => onOrder(product)}
+            className="flex-1 py-1.5 text-xs font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
+            style={{ background: GREEN }}>
+            অর্ডার করুন
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -102,7 +115,6 @@ export default function ShopDetail() {
   const { idOrSlug } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { totalCount: cartCount } = useCart()
 
   const { data: shop, isLoading, error } = useShop(idOrSlug)
   const { data: reviews = [] }   = useReviews(shop?.id)
@@ -233,17 +245,6 @@ export default function ShopDetail() {
               </div>
             </div>
 
-            {/* Cart icon */}
-            <Link to="/cart" className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
-              <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: BLUE }}>
-                  {cartCount > 9 ? '9+' : cartCount}
-                </span>
-              )}
-            </Link>
           </div>
 
           {/* Action buttons */}
