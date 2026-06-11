@@ -17,7 +17,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen]       = useState(false)
   const [catOpen, setCatOpen]         = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [moreOpen, setMoreOpen]       = useState(false)
 
   // PWA Install banner
   const [installPrompt, setInstallPrompt] = useState(null)
@@ -25,20 +24,18 @@ export default function Navbar() {
 
   const catRef     = useRef(null)
   const profileRef = useRef(null)
-  const moreRef    = useRef(null)
 
   useEffect(() => {
     const handler = (e) => {
       if (catRef.current     && !catRef.current.contains(e.target))     setCatOpen(false)
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
-      if (moreRef.current    && !moreRef.current.contains(e.target))    setMoreOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   // Close overlays on route change
-  useEffect(() => { setMenuOpen(false); setMoreOpen(false) }, [location.pathname])
+  useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
   // PWA install prompt
   useEffect(() => {
@@ -201,12 +198,21 @@ export default function Navbar() {
               {user ? (
                 <>
                   <span className="hidden md:block"><NotificationBell /></span>
-                  <div className="relative" ref={profileRef}>
+
+                  {/* Mobile: avatar → direct link to dashboard */}
+                  <Link to="/dashboard"
+                    className="md:hidden flex items-center p-1 rounded-full active:bg-gray-100 transition-colors">
+                    <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+                      onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
+                  </Link>
+
+                  {/* Desktop: avatar → dropdown */}
+                  <div className="hidden md:block relative" ref={profileRef}>
                     <button onClick={() => setProfileOpen(o => !o)}
                       className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
                       <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
                         onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
-                      <span className="hidden md:block text-sm font-medium text-gray-700 max-w-[80px] truncate">
+                      <span className="text-sm font-medium text-gray-700 max-w-[80px] truncate">
                         {profile?.full_name || 'প্রোফাইল'}
                       </span>
                     </button>
@@ -319,80 +325,25 @@ export default function Navbar() {
             {pathActive('/cart') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
-          {/* আমার / লগইন — opens popup */}
-          <div className="flex-1 relative" ref={moreRef}>
-            <button
-              onClick={() => setMoreOpen(o => !o)}
-              className={`w-full h-full flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                moreOpen || pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')
-                  ? 'text-blue-600' : 'text-gray-500'
-              }`}>
-              {user
-                ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-current flex-shrink-0"
-                    onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
-                : <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-              }
-              <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
-            </button>
-
-            {/* Popup menu */}
-            {moreOpen && (
-              <div className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50"
-                style={{ right: '0px' }}>
-                {user ? (
-                  <>
-                    <div className="px-4 py-2.5 border-b border-gray-100 mb-1">
-                      <p className="text-sm font-bold text-gray-800 truncate">{profile?.full_name || 'ব্যবহারকারী'}</p>
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    </div>
-                    {[
-                      { to: '/dashboard', icon: '📊', label: 'ড্যাশবোর্ড' },
-                      { to: '/dashboard/add-shop', icon: '➕', label: 'দোকান যোগ করুন' },
-                      { to: '/account', icon: '👤', label: 'আমার অ্যাকাউন্ট' },
-                      { to: '/dashboard/favorites', icon: '❤️', label: 'পছন্দের দোকান' },
-                      { to: '/contact', icon: '📞', label: 'যোগাযোগ' },
-                    ].map(item => (
-                      <Link key={item.to} to={item.to} onClick={() => setMoreOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                        <span>{item.icon}</span> {item.label}
-                      </Link>
-                    ))}
-                    {isAdmin && (
-                      <Link to="/admin" onClick={() => setMoreOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50">
-                        <span>⚙️</span> অ্যাডমিন প্যানেল
-                      </Link>
-                    )}
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button onClick={() => { signOut(); setMoreOpen(false) }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
-                        <span>🚪</span> লগআউট
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setMoreOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50">
-                      🔑 লগইন করুন
-                    </Link>
-                    <Link to="/register" onClick={() => setMoreOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50">
-                      ✍️ রেজিস্ট্রেশন করুন
-                    </Link>
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <Link to="/contact" onClick={() => setMoreOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                        📞 যোগাযোগ
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
+          {/* আমার / লগইন — direct link, no popup */}
+          <Link
+            to={user ? '/dashboard' : '/login'}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
+              pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')
+                ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+            {user
+              ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-current flex-shrink-0"
+                  onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
+              : <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            }
+            <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
+            {(pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')) && (
+              <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />
             )}
-          </div>
+          </Link>
 
         </div>
       </nav>
