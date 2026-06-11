@@ -2,9 +2,21 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import * as Sentry from '@sentry/react'
 import App from './App.jsx'
 import { queryClient } from './lib/queryClient.js'
 import './index.css'
+
+// ── Sentry error monitoring ──
+// Activate only when VITE_SENTRY_DSN env var is set (Vercel → Settings → Environment Variables)
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 0.1,       // 10% performance traces (free quota সাশ্রয়)
+    environment: import.meta.env.MODE,  // 'production' বা 'development'
+  })
+}
 
 // ── Service Worker: register + force update on every page load ──
 if ('serviceWorker' in navigator) {
@@ -39,6 +51,13 @@ class ErrorBoundary extends React.Component {
   }
   static getDerivedStateFromError() {
     return { hasError: true }
+  }
+  componentDidCatch(error, errorInfo) {
+    // Sentry-তে error পাঠাও
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(error, { extra: errorInfo })
+    }
+    console.error('[App crash]', error, errorInfo)
   }
   render() {
     if (this.state.hasError) {
