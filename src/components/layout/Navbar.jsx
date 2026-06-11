@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
 import { getAvatarUrl } from '../../lib/utils'
-import NotificationBell from '../NotificationBell'
 import SearchDropdown from '../SearchDropdown'
 
 export default function Navbar() {
@@ -264,8 +263,6 @@ export default function Navbar() {
             <div className="flex-shrink-0 flex items-center gap-2">
               {user ? (
                 <>
-                  <span className="hidden md:block"><NotificationBell /></span>
-
                   {/* Mobile: avatar → direct link to dashboard */}
                   <Link to="/dashboard"
                     className="md:hidden flex items-center p-1 rounded-full active:bg-gray-100 transition-colors">
