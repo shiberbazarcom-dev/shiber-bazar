@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 const BLUE = '#2563EB'
 
 export default function Register() {
-  const { signUp, signInGoogle, user } = useAuth()
+  const { signUp, signInPhone, signInGoogle, user } = useAuth()
   const navigate = useNavigate()
 
   const [form, setForm] = useState({ fullName: '', phone: '', password: '', confirm: '' })
@@ -46,8 +46,15 @@ export default function Register() {
           toast.error(error.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে')
         }
       } else {
-        setDone(true)
+        // Auto sign-in after successful registration
         toast.success('রেজিস্ট্রেশন সফল! 🎉')
+        const { error: loginErr } = await signInPhone(phone, form.password)
+        if (loginErr) {
+          // Sign-in failed — show success screen with login button as fallback
+          setDone(true)
+        }
+        // If sign-in succeeded, AuthContext will update `user` and the
+        // useEffect above will redirect to /dashboard automatically
       }
     } catch {
       toast.error('সমস্যা হয়েছে, আবার চেষ্টা করুন')

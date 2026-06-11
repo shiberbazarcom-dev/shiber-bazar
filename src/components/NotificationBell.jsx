@@ -12,10 +12,13 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
   
-  const { data: notifications = [] } = useNotifications()
+  const { data: notifications = [], isError: notifError } = useNotifications()
   const { data: unreadCount = 0 } = useUnreadNotificationCount()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
+
+  // notifications table may not exist yet — render nothing rather than crash
+  if (notifError) return null
   
   // Subscribe to real-time updates
   useRealtimeNotifications()

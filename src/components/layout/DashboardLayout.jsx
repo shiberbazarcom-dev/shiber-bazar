@@ -241,7 +241,7 @@ export default function DashboardLayout({ type = 'user' }) {
           })
           playBeep(660, 880)
           qc.invalidateQueries({ queryKey: ['shop-order-stats'] })
-          qc.invalidateQueries({ queryKey: ['my-orders'] })   // ShopOrders.tsx uses this key
+          qc.invalidateQueries({ queryKey: ['shop-orders'] })
         })
       .subscribe()
     return () => supabase.removeChannel(ch)

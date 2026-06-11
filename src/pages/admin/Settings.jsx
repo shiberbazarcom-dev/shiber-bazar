@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
@@ -79,8 +79,12 @@ export default function Settings() {
   const [local, setLocal] = useState({})
   const [dirty, setDirty] = useState(new Set())
 
+  const settingsLoaded = useRef(false)
+
   useEffect(() => {
-    if (!isLoading) {
+    // Only initialise local state ONCE when data first arrives — never on refetch
+    if (!isLoading && !settingsLoaded.current && Object.keys(settings).length > 0) {
+      settingsLoaded.current = true
       const vals = {}
       Object.entries(settings).forEach(([k, row]) => {
         vals[k] = { ...row }
@@ -88,7 +92,7 @@ export default function Settings() {
       setLocal(vals)
       setDirty(new Set())
     }
-  }, [isLoading])
+  }, [isLoading, settings])
 
   const handleChange = (key, value) => {
     setLocal(prev => ({ ...prev, [key]: { ...prev[key], value } }))

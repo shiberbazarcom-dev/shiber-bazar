@@ -25,13 +25,32 @@ export default function ContactPage() {
     }
 
     setIsSubmitting(true)
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    toast.success('আপনার বার্তা পাঠানো হয়েছে! শীঘ্রই আমরা যোগাযোগ করবো।')
-    setFormData({ name: '', phone: '', message: '' })
-    setIsSubmitting(false)
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/shiberbazar.com@gmail.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          message: formData.message,
+          _subject: `শিবের বাজার — নতুন বার্তা from ${formData.name}`,
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      })
+      const json = await res.json()
+      if (json.success === 'true' || json.success === true) {
+        toast.success('আপনার বার্তা পাঠানো হয়েছে! শীঘ্রই আমরা যোগাযোগ করবো।')
+        setFormData({ name: '', phone: '', message: '' })
+      } else {
+        throw new Error('failed')
+      }
+    } catch {
+      toast.error('বার্তা পাঠাতে সমস্যা হয়েছে। WhatsApp-এ যোগাযোগ করুন।')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const whatsappUrl = `https://wa.me/8801310012276?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি শিবের বাজার ওয়েবসাইট থেকে যোগাযোগ করছি।')}`
