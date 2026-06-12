@@ -130,7 +130,7 @@ export default function ProductDetails() {
   const savings = discount > 0 ? Number(product.original_price) - Number(product.price) : 0
 
   return (
-    <div className="pb-28 md:pb-10 bg-white">
+    <div className="pb-36 md:pb-10 bg-white">
       <SEO
         title={product.name}
         description={product.description || `${product.name} — শিবের বাজারে পাওয়া যাচ্ছে। দাম ও বিস্তারিত দেখুন এবং সরাসরি অর্ডার করুন।`}
@@ -418,8 +418,7 @@ export default function ProductDetails() {
           MOBILE STICKY BOTTOM BAR
           Sits above the bottom navbar (60px)
       ══════════════════════════════════════════ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="md:hidden fixed bottom-[60px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="flex gap-2.5 max-w-lg mx-auto">
           <button onClick={handleAddToCart}
             className={`flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 border-2 transition-all active:scale-95 ${
