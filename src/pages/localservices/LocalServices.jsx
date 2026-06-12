@@ -36,7 +36,7 @@ export default function LocalServices() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {categories.map(cat => (
-              <Link key={cat.id} to={`/local-services/${cat.slug}`}
+              <Link key={cat.id} to={`/services/${cat.slug}`}
                 className="bg-white rounded-2xl border border-gray-100 p-5 text-center hover:border-blue-200 hover:shadow-md active:scale-95 transition-all">
                 <div className="text-4xl mb-2.5">{cat.icon}</div>
                 <p className="text-sm font-semibold text-gray-800 leading-snug">{cat.name_bn}</p>

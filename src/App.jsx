@@ -154,16 +154,14 @@ export default function App() {
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
-            {/* ── স্থানীয় সেবাসমূহ (Local Services Directory) ── */}
-            <Route path="/local-services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
-            <Route path="/local-services/:slug" element={<PublicLayout><LocalServiceCategory /></PublicLayout>} />
-
-            {/* ── Services (public) ── */}
-            {/* IMPORTANT: specific routes MUST come before /:slug to avoid slug catching them */}
-            <Route path="/services"                    element={<PublicLayout><ServicesPage /></PublicLayout>} />
+            {/* ── সেবাসমূহ — স্থানীয় সেবা ডিরেক্টরি (services page এখন এটাই) ── */}
+            <Route path="/services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
             <Route path="/services/detail/:id"         element={<PublicLayout><ServiceDetail /></PublicLayout>} />
             <Route path="/services/provider/:userId"   element={<PublicLayout><ProviderProfile /></PublicLayout>} />
-            <Route path="/services/:slug"              element={<PublicLayout><ServicesPage /></PublicLayout>} />
+            <Route path="/services/:slug" element={<PublicLayout><LocalServiceCategory /></PublicLayout>} />
+            {/* legacy redirect — পুরোনো /local-services লিংক */}
+            <Route path="/local-services"       element={<Navigate to="/services" replace />} />
+            <Route path="/local-services/:slug" element={<Navigate to="/services" replace />} />
             <Route path="/services/submit"       element={
               <PublicLayout>
                 <ProtectedRoute requireAuth>

@@ -89,7 +89,7 @@ export default function LocalServiceCategory() {
     <div className="py-24 text-center px-4">
       <div className="text-5xl mb-3">📒</div>
       <p className="text-gray-600 font-bold mb-4">ক্যাটাগরি পাওয়া যায়নি</p>
-      <Link to="/local-services" className="text-sm font-semibold" style={{ color: BLUE }}>← সব সেবা দেখুন</Link>
+      <Link to="/services" className="text-sm font-semibold" style={{ color: BLUE }}>← সব সেবা দেখুন</Link>
     </div>
   )
 
