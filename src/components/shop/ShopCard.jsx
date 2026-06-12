@@ -1,6 +1,4 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import OrderModal from '../order/OrderModal'
 
 /* ── helpers ── */
 function toWhatsApp(phone) {
@@ -20,7 +18,6 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
   const phone   = shop.phone || shop.profiles?.phone || null
   const waNum   = toWhatsApp(phone)
   const shopUrl = `/shop/${shop.slug || shop.id}`
-  const [orderOpen, setOrderOpen] = useState(false)
 
   // Prevent card navigation when tapping action buttons
   const stopProp = (e) => e.stopPropagation()
@@ -129,16 +126,16 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
 
         {/* Order + WhatsApp buttons */}
         <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={e => { stopProp(e); setOrderOpen(true) }}
+            <Link
+              to={shopUrl}
+              onClick={stopProp}
               className="flex-1 flex items-center justify-center gap-1 h-9 px-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all whitespace-nowrap"
             >
               <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               অর্ডার করুন
-            </button>
+            </Link>
             {waNum && (
               <a
                 href={`https://wa.me/${waNum}`}
@@ -174,10 +171,6 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
           দোকান দেখুন &rarr;
         </Link>
       </div>
-
-      {orderOpen && (
-        <OrderModal open={orderOpen} onClose={() => setOrderOpen(false)} shop={shop} />
-      )}
     </div>
   )
 }

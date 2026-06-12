@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>শিবের বাজার — আইকন জেনারেটর</title>
+</head>
+<body style="font-family:sans-serif;padding:24px;max-width:560px;margin:auto">
+<h2>শিবের বাজার — অ্যাপ আইকন জেনারেটর</h2>
+<p style="color:#555;line-height:1.6">
+  নিচের বাটনে ক্লিক করলে ৩টি PNG ডাউনলোড হবে:
+  <b>icon-192.png</b>, <b>icon-512.png</b>, <b>icon-maskable-512.png</b>।<br>
+  ডাউনলোড হওয়া ফাইলগুলো প্রজেক্টের <b>public/</b> ফোল্ডারে রেখে আগের ফাইল replace করুন, তারপর deploy করুন।
+</p>
+<button onclick="makeAll()" style="padding:12px 24px;font-size:16px;font-weight:bold;background:#2563EB;color:#fff;border:none;border-radius:12px;cursor:pointer">
+  ৩টি আইকন তৈরি ও ডাউনলোড করুন
+</button>
+<div id="preview" style="display:flex;gap:16px;margin-top:24px;align-items:center"></div>
+<p style="color:#999;font-size:13px;margin-top:16px">
+  গোল প্রিভিউটি maskable আইকন — ফোন গোল করে কাটলেও "শ" নিরাপদ জায়গায় থাকবে।
+</p>
+
+<script>
+function draw(size, maskable) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, '#1d4ed8');
+  g.addColorStop(1, '#3b82f6');
+
+  if (maskable) {
+    x.fillStyle = g;
+    x.fillRect(0, 0, size, size);
+  } else {
+    const r = size * 0.22;
+    x.fillStyle = g;
+    x.beginPath();
+    x.moveTo(r, 0);
+    x.arcTo(size, 0, size, size, r);
+    x.arcTo(size, size, 0, size, r);
+    x.arcTo(0, size, 0, 0, r);
+    x.arcTo(0, 0, size, 0, r);
+    x.closePath();
+    x.fill();
+  }
+
+  x.fillStyle = 'rgba(255,255,255,0.13)';
+  x.beginPath();
+  x.arc(size * 0.82, size * 0.16, size * 0.34, 0, Math.PI * 2);
+  x.fill();
+
+  x.fillStyle = '#ffffff';
+  x.font = 'bold ' + size * (maskable ? 0.40 : 0.50) + 'px "Noto Sans Bengali","Hind Siliguri","Bangla Sangam MN",sans-serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillText('শ', size / 2, size * 0.55);
+  return c;
+}
+
+function dl(canvas, name) {
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+function makeAll() {
+  const jobs = [
+    [192, false, 'icon-192.png'],
+    [512, false, 'icon-512.png'],
+    [512, true,  'icon-maskable-512.png'],
+  ];
+  const prev = document.getElementById('preview');
+  prev.innerHTML = '';
+  jobs.forEach(([s, m, n], i) => {
+    const c = draw(s, m);
+    c.style.width = '96px';
+    c.style.height = '96px';
+    c.style.borderRadius = m ? '50%' : '14px';
+    c.title = n;
+    prev.appendChild(c);
+    setTimeout(() => dl(c, n), i * 500);
+  });
+}
+</script>
+</body>
+</html>
