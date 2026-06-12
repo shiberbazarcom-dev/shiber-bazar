@@ -24,43 +24,45 @@ const WA_ICON = (
 
 /* ═══════════════════════════════════════════════════════
    ORDER MODAL — bottom sheet (mobile) / centered (desktop)
-   Uses the exact same order logic as OrderPage (usePlaceOrder).
+   Multi-item cart-style ordering inside the modal.
+   Uses the exact same order logic as OrderPage (usePlaceOrder):
+   items are flattened to product_name / quantity / total_amount,
+   identical to how CartPage orders are submitted.
 ═══════════════════════════════════════════════════════ */
 export default function OrderModal({ open, onClose, shop, product = null }) {
   const { profile } = useAuth()
   const placeOrder = usePlaceOrder()
   const adminWhatsapp = useAdminWhatsapp()
 
-  /* Shop's products for the picker (only fetched in general-order mode) */
-  const { data: shopProducts = [] } = useShopProducts(!product ? shop?.id : null)
+  /* Shop's products for the picker (fetched only while open) */
+  const { data: shopProducts = [] } = useShopProducts(open ? shop?.id : null)
 
-  const [qty, setQty] = useState(1)
-  const [success, setSuccess] = useState(null)
-  const [picked, setPicked] = useState(null)
+  const [items, setItems] = useState([])
+  const [query, setQuery] = useState('')
   const [suggestOpen, setSuggestOpen] = useState(false)
+  const [success, setSuccess] = useState(null)
   const [form, setForm] = useState(() => {
     const d = loadDraft()
     return {
       customer_name:    d.customer_name || profile?.full_name || '',
       customer_phone:   d.customer_phone || profile?.phone || '',
       customer_address: d.customer_address || '',
-      product_name:     '',
-      price:            '',
       notes:            '',
     }
   })
 
-  /* Sync product info each time the modal opens for a (new) product */
+  /* When opened from a product page, make sure that product is in the list */
   useEffect(() => {
     if (open) {
       setSuccess(null)
-      setQty(1)
-      if (!product) setPicked(null)
-      setForm(f => ({
-        ...f,
-        product_name: product?.name || f.product_name,
-        price: product?.price != null && product?.price !== '' ? String(product.price) : f.price,
-      }))
+      setSuggestOpen(false)
+      setQuery('')
+      if (product) {
+        setItems(arr => arr.some(x => x.key === product.id) ? arr : [
+          ...arr,
+          { key: product.id, name: product.name, price: product.price ?? '', image_url: product.image_url, qty: 1 },
+        ])
+      }
     }
   }, [open, product])
 
@@ -98,43 +100,65 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
   if (!open) return null
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const unitPrice = parseFloat(form.price) || 0
-  const total = unitPrice * qty
+
+  /* ── Items helpers ── */
+  const total = items.reduce((s, i) => s + (parseFloat(i.price) || 0) * i.qty, 0)
+  const totalQty = items.reduce((s, i) => s + i.qty, 0)
   const shopPhone = shop?.whatsapp || shop?.phone
 
-  /* Product picker (general-order mode) */
-  const activeProduct = product || picked
   const suggestions = shopProducts
-    .filter(p => productMatchesSearch(p, form.product_name))
+    .filter(p => productMatchesSearch(p, query))
     .slice(0, 8)
 
-  function pickProduct(p) {
-    setPicked(p)
-    setForm(f => ({ ...f, product_name: p.name, price: p.price != null && p.price !== '' ? String(p.price) : '' }))
+  function addProduct(p) {
+    setItems(arr => {
+      const i = arr.findIndex(x => x.key === p.id)
+      if (i >= 0) return arr.map((x, idx) => idx === i ? { ...x, qty: x.qty + 1 } : x)
+      return [...arr, { key: p.id, name: p.name, price: p.price ?? '', image_url: p.image_url, qty: 1 }]
+    })
+    setQuery('')
+  }
+
+  function addCustom(name) {
+    const n = name.trim()
+    if (!n) return
+    setItems(arr => [...arr, { key: `c-${Date.now()}`, name: n, price: '', image_url: null, qty: 1, custom: true }])
+    setQuery('')
     setSuggestOpen(false)
   }
 
-  function clearPicked() {
-    setPicked(null)
-    setForm(f => ({ ...f, product_name: '', price: '' }))
+  const updateItem = (key, patch) => setItems(arr => arr.map(x => x.key === key ? { ...x, ...patch } : x))
+  const removeItem = (key) => setItems(arr => arr.filter(x => x.key !== key))
+
+  const itemsSummary = items.map(i => `${i.name} ×${i.qty}`).join(', ')
+
+  function handleClose() {
+    if (success) { setItems([]); setSuccess(null) }
+    onClose()
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.customer_name.trim())    return toast.error('নাম দিন')
-    if (!form.customer_phone.trim())   return toast.error('ফোন নম্বর দিন')
-    if (!form.customer_address.trim()) return toast.error('ঠিকানা দিন')
-    if (!form.product_name.trim())     return toast.error('পণ্যের নাম দিন')
+    let list = items
+    if (list.length === 0 && query.trim()) {
+      list = [{ key: 'q', name: query.trim(), price: '', qty: 1 }]
+      setItems(list)
+    }
+    if (list.length === 0)                 return toast.error('অন্তত একটি পণ্য যোগ করুন')
+    if (!form.customer_name.trim())        return toast.error('নাম দিন')
+    if (!form.customer_phone.trim())       return toast.error('ফোন নম্বর দিন')
+    if (!form.customer_address.trim())     return toast.error('ঠিকানা দিন')
     try {
+      const listTotal = list.reduce((s, i) => s + (parseFloat(i.price) || 0) * i.qty, 0)
       const data = await placeOrder.mutateAsync({
         customer_name:    form.customer_name,
         customer_phone:   form.customer_phone,
         customer_address: form.customer_address,
-        product_name:     form.product_name,
-        quantity:         qty,
+        product_name:     list.map(i => `${i.name} ×${i.qty}`).join(', '),
+        quantity:         list.reduce((s, i) => s + i.qty, 0),
         notes:            form.notes,
         shop_id:          shop?.id || null,
-        total_amount:     total,
+        total_amount:     listTotal,
       })
       setSuccess(data)
     } catch {
@@ -143,8 +167,8 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
   }
 
   const waMessage =
-    `"${form.product_name || 'পণ্য'}" অর্ডার করতে চাই\n` +
-    `পরিমাণ: ${qty}` +
+    `অর্ডার করতে চাই:\n` +
+    (items.length ? items.map(i => `• ${i.name} ×${i.qty}`).join('\n') : `• ${query || 'পণ্য'}`) +
     (total > 0 ? `\nমোট: ৳${total.toLocaleString('bn-BD')}` : '')
 
   const inputCls = 'w-full h-12 px-4 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all'
@@ -154,18 +178,17 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
       <style>{`
         @keyframes sbSheetUp { from { transform: translateY(48px); opacity: .5 } to { transform: translateY(0); opacity: 1 } }
         @keyframes sbFadeIn  { from { opacity: 0 } to { opacity: 1 } }
+        @media (min-width: 640px) { .sb-order-panel { border-radius: 20px !important } }
       `}</style>
 
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" style={{ animation: 'sbFadeIn .2s ease' }} onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" style={{ animation: 'sbFadeIn .2s ease' }} onClick={handleClose} />
 
       {/* Panel */}
       <div
         className="sb-order-panel relative w-full sm:max-w-md bg-white shadow-2xl max-h-[92vh] sm:max-h-[85vh] overflow-y-auto"
         style={{ animation: 'sbSheetUp .25s ease', borderRadius: '20px 20px 0 0' }}
       >
-        <style>{`@media (min-width: 640px) { .sb-order-panel { border-radius: 20px !important } }`}</style>
-
         {/* Drag handle (mobile) */}
         <div className="sm:hidden pt-2.5 flex justify-center">
           <span className="w-10 h-1 rounded-full bg-gray-200" />
@@ -194,8 +217,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                     adminWhatsapp,
                     `🛒 নতুন অর্ডার\n` +
                     `অর্ডার নম্বর: ${success.order_number}\n` +
-                    `পণ্য: ${form.product_name}\n` +
-                    `পরিমাণ: ${qty}\n` +
+                    `পণ্য: ${itemsSummary}\n` +
                     `নাম: ${form.customer_name}\n` +
                     `ফোন: ${form.customer_phone}\n` +
                     `ঠিকানা: ${form.customer_address}` +
@@ -212,7 +234,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                 style={{ background: BLUE_GRADIENT }}>
                 📦 অর্ডার ট্র্যাক করুন
               </Link>
-              <button onClick={onClose}
+              <button onClick={handleClose}
                 className="w-full h-11 text-gray-500 font-semibold rounded-2xl text-sm border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all">
                 বন্ধ করুন
               </button>
@@ -222,12 +244,12 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
           /* ══════════ ORDER FORM ══════════ */
           <form onSubmit={handleSubmit}>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-gray-50 sticky top-0 bg-white z-10" style={{ borderRadius: '20px 20px 0 0' }}>
+            <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-gray-50 sticky top-0 bg-white z-30" style={{ borderRadius: '20px 20px 0 0' }}>
               <div>
                 <h3 className="font-bold text-gray-900 text-base">অর্ডার করুন</h3>
                 {shop?.shop_name && <p className="text-[11px] text-gray-400">দোকান: {shop.shop_name}</p>}
               </div>
-              <button type="button" onClick={onClose} aria-label="বন্ধ করুন"
+              <button type="button" onClick={handleClose} aria-label="বন্ধ করুন"
                 className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
@@ -235,65 +257,32 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
 
             <div className="px-5 py-4 space-y-5">
 
-              {/* ── Section 1: Product summary ── */}
-              {activeProduct ? (
-                <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-3">
-                  <div className="flex gap-3">
-                    {activeProduct.image_url
-                      ? <img src={activeProduct.image_url} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
-                      : <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-white border border-gray-100">📦</div>
-                    }
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">{activeProduct.name}</p>
-                      {unitPrice > 0 && (
-                        <p className="text-sm font-bold mt-0.5" style={{ color: BLUE }}>৳{unitPrice.toLocaleString('bn-BD')} <span className="text-[10px] text-gray-400 font-medium">/ একক</span></p>
-                      )}
-                    </div>
-                    {picked && (
-                      <button type="button" onClick={clearPicked}
-                        className="self-start flex-shrink-0 text-[10px] font-bold text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full px-2 py-1 active:scale-95 transition-all">
-                        ✕ পরিবর্তন
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                    {/* Quantity selector */}
-                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1">
-                      <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="কমান"
-                        className="w-9 h-9 rounded-lg text-gray-600 font-bold text-lg hover:bg-gray-50 active:scale-90 transition-all">−</button>
-                      <span className="w-8 text-center font-bold text-gray-900">{qty}</span>
-                      <button type="button" onClick={() => setQty(q => q + 1)} aria-label="বাড়ান"
-                        className="w-9 h-9 rounded-lg font-bold text-lg active:scale-90 transition-all text-white" style={{ background: BLUE }}>+</button>
-                    </div>
-                    {total > 0 && (
-                      <div className="text-right">
-                        <p className="text-[10px] text-gray-400">মোট</p>
-                        <p className="text-lg font-black" style={{ color: BLUE }}>৳{total.toLocaleString('bn-BD')}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* General order — pick from this shop's products (Banglish search) */
-                <div className="space-y-3">
-                  <div className="relative">
-                    <input value={form.product_name}
-                      onChange={e => { set('product_name', e.target.value); setSuggestOpen(true) }}
-                      onFocus={() => setSuggestOpen(true)}
-                      onBlur={() => setTimeout(() => setSuggestOpen(false), 150)}
-                      className={inputCls} placeholder="পণ্য খুঁজুন বা লিখুন... *" />
-                    <svg className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
-                    </svg>
+              {/* ── Section 1: Products ── */}
+              <div className="space-y-3">
+                {/* Search / add — Banglish auto-suggest */}
+                <div className="relative">
+                  <input value={query}
+                    onChange={e => { setQuery(e.target.value); setSuggestOpen(true) }}
+                    onFocus={() => setSuggestOpen(true)}
+                    onBlur={() => setTimeout(() => setSuggestOpen(false), 150)}
+                    className={inputCls}
+                    placeholder={items.length ? 'আরও পণ্য যোগ করুন...' : 'পণ্য খুঁজুন বা লিখুন... *'} />
+                  <svg className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
+                  </svg>
 
-                    {suggestOpen && suggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 max-h-60 overflow-y-auto">
+                  {suggestOpen && (suggestions.length > 0 || query.trim()) && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 max-h-60 overflow-y-auto">
+                      {suggestions.length > 0 && (
                         <p className="px-3.5 pt-2.5 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-                          {form.product_name.trim() ? 'মিলে যাওয়া পণ্য' : 'এই দোকানের পণ্য'}
+                          {query.trim() ? 'মিলে যাওয়া পণ্য' : 'এই দোকানের পণ্য'}
                         </p>
-                        {suggestions.map(p => (
+                      )}
+                      {suggestions.map(p => {
+                        const added = items.find(x => x.key === p.id)
+                        return (
                           <button key={p.id} type="button"
-                            onMouseDown={e => { e.preventDefault(); pickProduct(p) }}
+                            onMouseDown={e => { e.preventDefault(); addProduct(p) }}
                             className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-blue-50/60 active:bg-blue-50 text-left transition-colors">
                             {p.image_url
                               ? <img src={p.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-50 flex-shrink-0 border border-gray-100" />
@@ -303,30 +292,78 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                             {p.price != null && p.price !== '' && (
                               <span className="text-xs font-bold flex-shrink-0" style={{ color: BLUE }}>৳{Number(p.price).toLocaleString('bn-BD')}</span>
                             )}
+                            <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${
+                              added ? 'bg-green-100 text-green-600' : 'text-white'
+                            }`} style={added ? {} : { background: BLUE }}>
+                              {added ? '✓' : '+'}
+                            </span>
                           </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-3">
-                    <input type="number" min="0" value={form.price} onChange={e => set('price', e.target.value)}
-                      className={inputCls} placeholder="একক মূল্য (৳)" />
-                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl p-1 flex-shrink-0">
-                      <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="কমান"
-                        className="w-9 h-9 rounded-lg text-gray-600 font-bold text-lg hover:bg-white active:scale-90 transition-all">−</button>
-                      <span className="w-8 text-center font-bold text-gray-900">{qty}</span>
-                      <button type="button" onClick={() => setQty(q => q + 1)} aria-label="বাড়ান"
-                        className="w-9 h-9 rounded-lg font-bold text-lg active:scale-90 transition-all text-white" style={{ background: BLUE }}>+</button>
-                    </div>
-                  </div>
-                  {total > 0 && (
-                    <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-100">
-                      <span className="text-xs text-gray-500">মোট ({qty} × ৳{form.price})</span>
-                      <span className="font-bold" style={{ color: BLUE }}>৳{total.toLocaleString('bn-BD')}</span>
+                        )
+                      })}
+                      {query.trim() && (
+                        <button type="button"
+                          onMouseDown={e => { e.preventDefault(); addCustom(query) }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-gray-50 text-left border-t border-gray-50 transition-colors">
+                          <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold text-white" style={{ background: BLUE }}>+</span>
+                          <span className="text-xs font-semibold text-gray-600">"{query.trim()}" নিজে লিখে যোগ করুন</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
+
+                {/* Selected items */}
+                {items.length > 0 && (
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50/60 divide-y divide-gray-100 overflow-hidden">
+                    {items.map(it => (
+                      <div key={it.key} className="flex items-center gap-2.5 p-2.5">
+                        {it.image_url
+                          ? <img src={it.image_url} alt="" className="w-11 h-11 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
+                          : <span className="w-11 h-11 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-lg flex-shrink-0">📦</span>
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-800 leading-snug line-clamp-1">{it.name}</p>
+                          {it.custom ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="text-[10px] text-gray-400">দাম (৳):</span>
+                              <input type="number" min="0" value={it.price}
+                                onChange={e => updateItem(it.key, { price: e.target.value })}
+                                className="w-20 h-7 px-2 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                                placeholder="০" />
+                            </div>
+                          ) : (
+                            parseFloat(it.price) > 0 && (
+                              <p className="text-xs font-bold mt-0.5" style={{ color: BLUE }}>
+                                ৳{(parseFloat(it.price) * it.qty).toLocaleString('bn-BD')}
+                                {it.qty > 1 && <span className="text-[10px] text-gray-400 font-medium"> (৳{Number(it.price).toLocaleString('bn-BD')} × {it.qty})</span>}
+                              </p>
+                            )
+                          )}
+                        </div>
+                        {/* Qty stepper */}
+                        <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5 flex-shrink-0">
+                          <button type="button" onClick={() => it.qty > 1 ? updateItem(it.key, { qty: it.qty - 1 }) : removeItem(it.key)} aria-label="কমান"
+                            className="w-7 h-7 rounded-md text-gray-600 font-bold hover:bg-gray-50 active:scale-90 transition-all">−</button>
+                          <span className="w-6 text-center font-bold text-gray-900 text-sm">{it.qty}</span>
+                          <button type="button" onClick={() => updateItem(it.key, { qty: it.qty + 1 })} aria-label="বাড়ান"
+                            className="w-7 h-7 rounded-md font-bold text-white active:scale-90 transition-all" style={{ background: BLUE }}>+</button>
+                        </div>
+                        <button type="button" onClick={() => removeItem(it.key)} aria-label="বাদ দিন"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 flex-shrink-0 active:scale-90 transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                    {/* Total */}
+                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-white">
+                      <span className="text-xs font-semibold text-gray-500">মোট ({totalQty}টি পণ্য)</span>
+                      <span className="text-lg font-black" style={{ color: BLUE }}>
+                        {total > 0 ? `৳${total.toLocaleString('bn-BD')}` : '—'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* ── Section 2: Customer info ── */}
               <div className="space-y-3">
@@ -357,7 +394,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                 style={{ background: BLUE_GRADIENT }}>
                 {placeOrder.isPending
                   ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> অর্ডার দেওয়া হচ্ছে...</>
-                  : <>🛒 অর্ডার নিশ্চিত করুন</>
+                  : <>🛒 অর্ডার নিশ্চিত করুন {total > 0 && `— ৳${total.toLocaleString('bn-BD')}`}</>
                 }
               </button>
               {shopPhone && (
