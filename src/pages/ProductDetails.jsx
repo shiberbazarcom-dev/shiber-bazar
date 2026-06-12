@@ -264,7 +264,7 @@ export default function ProductDetails() {
               <div className="flex flex-col sm:flex-row gap-2.5 mt-1">
                 <button
                   onClick={handleAddToCart}
-                  className={`flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
+                  className={`sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
                     inCart
                       ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
                       : 'border-blue-600 text-blue-600 hover:bg-blue-50'
@@ -281,7 +281,7 @@ export default function ProductDetails() {
                       `"${product.name}" পণ্যটি অর্ডার করতে চাই${product.price ? ` — মূল্য ৳${product.price}` : ''}`
                     )}
                     target="_blank" rel="noreferrer"
-                    className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                    className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
                     style={{ background: '#25d366' }}>
                     {WA_ICON}
                     WhatsApp এ অর্ডার
@@ -355,8 +355,8 @@ export default function ProductDetails() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Shop header strip */}
             <div className="h-12 w-full" style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6)' }} />
-            <div className="px-5 pb-5 -mt-6">
-              <div className="flex items-end gap-3 mb-4">
+            <div className="px-5 pb-5 pt-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-shrink-0">
                   {(shop.logo || shop.logo_url)
                     ? <img src={shop.logo || shop.logo_url} alt="" className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-sm" />
@@ -394,7 +394,7 @@ export default function ProductDetails() {
                   </span>
                   <div className="min-w-0">
                     <p className="text-[10px] text-gray-400">বিক্রয় ফোন নম্বর</p>
-                    <p className="text-sm font-bold text-gray-800 truncate">+{shop.whatsapp || shop.phone}</p>
+                    <p className="text-sm font-bold text-gray-800 truncate">+{String(shop.whatsapp || shop.phone).replace(/^\++/, '')}</p>
                   </div>
                 </a>
               )}
