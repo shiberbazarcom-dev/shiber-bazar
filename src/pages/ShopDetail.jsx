@@ -388,8 +388,8 @@ export default function ShopDetail() {
             )}
           </div>
 
-          {/* Primary actions — only these two */}
-          <div className="flex gap-2.5 mt-4">
+          {/* Primary actions — desktop only (mobile uses the sticky bottom bar) */}
+          <div className="hidden lg:flex gap-2.5 mt-4">
             <button onClick={() => goOrder(null)}
               className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-white shadow-md shadow-blue-200 hover:opacity-90 active:scale-95 transition-all"
               style={{ background: BLUE_GRADIENT }}>

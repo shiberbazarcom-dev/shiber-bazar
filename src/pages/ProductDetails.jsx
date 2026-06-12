@@ -257,8 +257,8 @@ export default function ProductDetails() {
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-2.5 mt-1">
+              {/* Action buttons — desktop only (mobile uses the sticky bottom bar) */}
+              <div className="hidden md:flex flex-col sm:flex-row gap-2.5 mt-1">
                 <button
                   onClick={goOrder}
                   className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 transition-all active:scale-95"
@@ -283,9 +283,9 @@ export default function ProductDetails() {
                 )}
               </div>
 
-              {/* Add to cart — secondary */}
+              {/* Add to cart — secondary (desktop only; mobile sticky bar has cart icon) */}
               <button onClick={handleAddToCart}
-                className={`w-full h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
+                className={`w-full h-11 font-semibold rounded-2xl text-sm hidden md:flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
                   inCart
                     ? 'bg-blue-600 border-blue-600 text-white'
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
