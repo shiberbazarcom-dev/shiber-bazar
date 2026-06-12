@@ -102,8 +102,10 @@ function ReviewCard({ review }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   PRODUCT CARD — Shoppe style (portrait image)
+   PRODUCT CARD — premium storefront style
 ═══════════════════════════════════════════════════════ */
+const BLUE_GRADIENT = 'linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)'
+
 function ProductCard({ product, shop, onOrder }) {
   const { addItem } = useCart()
   const navigate = useNavigate()
@@ -112,11 +114,11 @@ function ProductCard({ product, shop, onOrder }) {
 
   return (
     <div
-      className="bg-white rounded-2xl overflow-hidden cursor-pointer group active:scale-[0.97] transition-transform duration-150"
+      className="h-full flex flex-col bg-white rounded-2xl overflow-hidden cursor-pointer group border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
       onClick={() => navigate(`/product/${product.id}`)}
     >
-      {/* Portrait image — 4:5 ratio */}
-      <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50" style={{ paddingBottom: '125%' }}>
+      {/* Square image */}
+      <div className="relative w-full overflow-hidden bg-gray-50" style={{ paddingBottom: '100%' }}>
         <div className="absolute inset-0">
           {product.image_url
             ? <img src={product.image_url} alt={product.name}
@@ -127,57 +129,55 @@ function ProductCard({ product, shop, onOrder }) {
           }
         </div>
 
-        {/* Discount badge */}
-        {discount > 0 && (
-          <span className="absolute top-2.5 left-2.5 text-[10px] font-bold text-white bg-red-500 px-2 py-1 rounded-lg">
-            -{discount}%
-          </span>
-        )}
+        {/* Badges */}
+        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          {discount > 0 && (
+            <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shadow-sm">
+              🏷️ -{discount}% ছাড়
+            </span>
+          )}
+          {product.is_new && (
+            <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm" style={{ background: BLUE_GRADIENT }}>
+              🔥 নতুন
+            </span>
+          )}
+        </div>
 
-        {/* Quick add button */}
+        {/* Quick add to cart */}
         <button
           onClick={e => {
             e.stopPropagation()
             addItem({ ...product, shops: shop })
             toast.success('কার্টে যোগ হয়েছে', { duration: 1500 })
           }}
-          className="absolute bottom-2.5 right-2.5 w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0"
+          className="absolute bottom-2 right-2 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-md flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white active:scale-90 transition-all duration-200"
           title="কার্টে যোগ করুন"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
         </button>
-
-        {/* Favorite / new badge */}
-        {product.is_new && !discount && (
-          <span className="absolute top-2.5 left-2.5 text-[10px] font-bold text-white bg-blue-500 px-2 py-1 rounded-lg">
-            নতুন
-          </span>
-        )}
       </div>
 
       {/* Info */}
-      <div className="pt-2.5 pb-3 px-1">
-        <p className="text-xs text-gray-700 line-clamp-2 leading-snug mb-1.5 font-medium">{product.name}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5">
-            {product.price
-              ? <span className="text-sm font-bold text-gray-900">৳{Number(product.price).toLocaleString('bn-BD')}</span>
-              : <span className="text-xs text-gray-400">দাম জানতে কল করুন</span>
-            }
-            {discount > 0 && (
-              <span className="text-[10px] text-gray-400 line-through">৳{Number(product.original_price).toLocaleString('bn-BD')}</span>
-            )}
-          </div>
-          <button
-            onClick={e => { e.stopPropagation(); onOrder(product) }}
-            className="text-[10px] font-bold px-2.5 py-1 rounded-lg text-white hover:opacity-90 active:scale-95 transition-all"
-            style={{ background: BLUE }}
-          >
-            অর্ডার
-          </button>
+      <div className="p-2.5 flex flex-col flex-1">
+        <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug min-h-[2rem]">{product.name}</p>
+        <div className="flex items-baseline gap-1.5 mt-1.5 mb-2">
+          {product.price
+            ? <span className="text-base font-bold" style={{ color: BLUE }}>৳{Number(product.price).toLocaleString('bn-BD')}</span>
+            : <span className="text-xs text-gray-400">দাম জানতে যোগাযোগ</span>
+          }
+          {discount > 0 && (
+            <span className="text-[10px] text-gray-400 line-through">৳{Number(product.original_price).toLocaleString('bn-BD')}</span>
+          )}
         </div>
+        <button
+          onClick={e => { e.stopPropagation(); onOrder(product) }}
+          className="mt-auto w-full h-9 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+          style={{ background: BLUE_GRADIENT }}
+        >
+          অর্ডার করুন
+        </button>
       </div>
     </div>
   )
@@ -253,13 +253,15 @@ export default function ShopDetail() {
     return list
   }, [products, chip, productSearch])
 
+  const featuredProducts = useMemo(() => products.filter(p => p.is_featured).slice(0, 10), [products])
+
   /* ── Loading skeleton ── */
   if (isLoading) return (
     <div className="min-h-screen bg-white">
       <div className="animate-pulse">
-        <div className="h-44 bg-gray-100" />
-        <div className="px-4 pt-4 pb-3 flex gap-3 items-center">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex-shrink-0" />
+        <div className="h-36 sm:h-48 bg-gray-100" />
+        <div className="px-4 pb-3 flex gap-3 items-end -mt-10">
+          <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-white flex-shrink-0" />
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-gray-100 rounded w-32" />
             <div className="h-3 bg-gray-100 rounded w-20" />
@@ -308,7 +310,7 @@ export default function ShopDetail() {
   ]
 
   return (
-    <div className="bg-white min-h-screen pb-28 lg:pb-6">
+    <div className="bg-white min-h-screen pb-36 md:pb-24 lg:pb-6">
       <SEO
         title={shop.shop_name}
         description={shop.description || `${shop.shop_name} — শিবের বাজারের একটি দোকান।`}
@@ -344,92 +346,113 @@ export default function ShopDetail() {
               : <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/></svg>
             }
           </button>
-          <button onClick={handleFav}
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0">
-            {isFav
-              ? <svg className="w-5 h-5 text-red-500 fill-red-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-              : <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            }
-          </button>
-          <button onClick={handleShare}
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0">
-            <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-            </svg>
-          </button>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto">
 
         {/* ══════════════════════════════
-            SHOP PROFILE CARD
+            COVER BANNER + SHOP PROFILE
         ══════════════════════════════ */}
-        <div className="px-4 pt-4 pb-5 border-b border-gray-50">
-          <div className="flex gap-4 items-start">
-            {/* Logo */}
+        <div className="relative">
+          <div className="h-36 sm:h-48 w-full overflow-hidden"
+            style={{ background: BLUE_GRADIENT }}>
+            {(shop.cover_image || shop.cover_image_url) && (
+              <img src={shop.cover_image || shop.cover_image_url} alt=""
+                className="w-full h-full object-cover"
+                onError={e => { e.target.style.display = 'none' }} />
+            )}
+          </div>
+
+          {/* Overlay actions — favorite & share */}
+          <div className="absolute top-3 right-3 flex gap-2">
+            <button onClick={handleFav} aria-label="পছন্দ করুন"
+              className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition-all">
+              {isFav
+                ? <svg className="w-4.5 h-4.5 text-red-500 fill-red-500" width="18" height="18" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                : <svg className="w-4.5 h-4.5 text-gray-600" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              }
+            </button>
+            <button onClick={handleShare} aria-label="শেয়ার করুন"
+              className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition-all">
+              <svg className="text-gray-600" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 pb-5 border-b border-gray-50">
+          {/* Circular logo overlapping banner + trust badge */}
+          <div className="flex items-end justify-between relative z-10 -mt-10">
             <div className="relative flex-shrink-0">
               <img src={logoUrl} alt={shop.shop_name}
-                className="w-20 h-20 rounded-2xl object-cover shadow-sm border border-gray-100"
+                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md bg-white"
                 onError={e => { e.target.src = logoUrl }} />
               {shop.verification_status === 'verified' && (
-                <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow">
+                <span className="absolute bottom-0.5 right-0.5 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow">
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                     <path d="M2.5 6.5l2 2 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span>
               )}
             </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-lg text-gray-900 leading-tight">{shop.shop_name}</h2>
-              {shop.categories?.name && (
-                <p className="text-xs text-blue-600 font-medium mt-0.5">{shop.categories.name}</p>
-              )}
-
-              {/* Stats row */}
-              <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                <span className="flex items-center gap-1 font-medium">
-                  <span className="text-gray-800 font-bold text-sm">{products.length}</span> পণ্য
-                </span>
-                {avgRating && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-yellow-400">★</span>
-                    <span className="font-bold text-gray-800">{avgRating}</span>
-                    <span className="text-gray-400">({reviews.length})</span>
-                  </span>
-                )}
-                {shop.delivery_available && (
-                  <span className="flex items-center gap-1 text-green-600 font-medium">🚚 ডেলিভারি</span>
-                )}
-              </div>
-
-              {(shop.district || shop.address) && (
-                <p className="text-xs text-gray-400 mt-1">📍 {shop.district || shop.address?.split(',')[0]}</p>
-              )}
-            </div>
+            {shop.verification_status === 'verified' && (
+              <span className="mb-1 inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
+                ✓ যাচাইকৃত দোকান
+              </span>
+            )}
           </div>
 
-          {/* Description */}
-          {shop.description && (
-            <p className="text-xs text-gray-500 leading-relaxed mt-3 line-clamp-2">{shop.description}</p>
-          )}
+          {/* Shop info */}
+          <div className="mt-2.5">
+            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5">
+              {shop.shop_name}
+              {shop.verification_status === 'verified' && (
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )}
+            </h2>
+            {(shop.categories?.name || shop.district || shop.address) && (
+              <p className="text-xs text-gray-500 font-medium mt-1">
+                {[shop.categories?.name, shop.district || shop.address?.split(',')[0]].filter(Boolean).join(' • ')}
+              </p>
+            )}
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-gray-500">
+              <span><b className="text-gray-800 text-sm">{products.length}</b> পণ্য</span>
+              {shop.delivery_available && (
+                <span className="text-green-600 font-medium">🚚 ডেলিভারি</span>
+              )}
+              {avgRating && (
+                <span className="flex items-center gap-1">
+                  <span className="text-yellow-400">★</span>
+                  <b className="text-gray-800">{avgRating}</b>
+                  <span className="text-gray-400">({reviews.length} রিভিউ)</span>
+                </span>
+              )}
+            </div>
+            {(shop.tagline || shop.description) && (
+              <p className="text-[13px] text-gray-400 italic mt-2 line-clamp-1">
+                "{(shop.tagline || shop.description).split('\n')[0]}"
+              </p>
+            )}
+          </div>
 
-          {/* CTA buttons */}
+          {/* Primary actions — only these two */}
           <div className="flex gap-2.5 mt-4">
             <button onClick={() => goOrder(null)}
-              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold text-white hover:opacity-90 active:scale-95 transition-all"
-              style={{ background: BLUE }}>
+              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-white shadow-md shadow-blue-200 hover:opacity-90 active:scale-95 transition-all"
+              style={{ background: BLUE_GRADIENT }}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
               </svg>
-              অর্ডার করুন
+              🛒 অর্ডার করুন
             </button>
             {phone && (
               <a href={whatsappUrl(phone, `আমি "${shop.shop_name}" সম্পর্কে জানতে চাই`)}
                 target="_blank" rel="noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold text-white hover:opacity-90 active:scale-95 transition-all"
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-white shadow-md shadow-green-200 hover:opacity-90 active:scale-95 transition-all"
                 style={{ background: '#25d366' }}>
                 <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -466,9 +489,9 @@ export default function ShopDetail() {
             PRODUCTS TAB
         ══════════════════════════════ */}
         {activeTab === 'products' && (
-          <div className="px-4 pt-4 pb-4">
-            {/* Filter chips */}
-            <div className="flex gap-2 overflow-x-auto pb-3 mb-1 scrollbar-hide">
+          <div className="px-4 pb-4">
+            {/* Filter chips — sticky on mobile */}
+            <div className="sticky top-[104px] z-20 bg-white/95 backdrop-blur -mx-4 px-4 py-2.5 flex gap-2 overflow-x-auto scrollbar-hide">
               {CHIPS.map(c => (
                 <button key={c.id} onClick={() => setChip(c.id)}
                   className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all ${
@@ -476,11 +499,25 @@ export default function ShopDetail() {
                       ? 'text-white shadow-sm'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
-                  style={chip === c.id ? { background: BLUE } : {}}>
+                  style={chip === c.id ? { background: BLUE_GRADIENT } : {}}>
                   {c.label}
                 </button>
               ))}
             </div>
+
+            {/* 🔥 Featured products */}
+            {chip === 'all' && !productSearch && featuredProducts.length > 0 && (
+              <div className="mt-3 mb-5">
+                <h3 className="text-sm font-bold text-gray-900 mb-2.5">🔥 ফিচার্ড পণ্য</h3>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {featuredProducts.map(p => (
+                    <div key={p.id} className="w-36 flex-shrink-0">
+                      <ProductCard product={p} shop={shop} onOrder={goOrder} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {displayedProducts.length === 0 ? (
               <div className="text-center py-20">
@@ -504,12 +541,28 @@ export default function ShopDetail() {
                   </p>
                 )}
                 {/* 2-column portrait grid */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {chip === 'all' && !productSearch && featuredProducts.length > 0 && (
+                  <h3 className="text-sm font-bold text-gray-900 mt-1 mb-2.5">সব পণ্য</h3>
+                )}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mt-3">
                   {displayedProducts.map(p => (
                     <ProductCard key={p.id} product={p} shop={shop} onOrder={goOrder} />
                   ))}
                 </div>
               </>
+            )}
+
+            {/* 📸 Shop gallery — optional, shows only if shop has gallery images */}
+            {Array.isArray(shop.gallery_images) && shop.gallery_images.length > 0 && (
+              <div className="mt-7">
+                <h3 className="text-sm font-bold text-gray-900 mb-2.5">📸 গ্যালারি</h3>
+                <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {shop.gallery_images.map((img, i) => (
+                    <img key={i} src={img} alt="" loading="lazy"
+                      className="h-32 w-44 object-cover rounded-2xl flex-shrink-0 border border-gray-100" />
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -616,22 +669,22 @@ export default function ShopDetail() {
       </div>
 
       {/* ══ MOBILE STICKY BOTTOM BAR ══ */}
-      <div className="lg:hidden fixed bottom-[60px] md:bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <div className="grid grid-cols-2 divide-x divide-gray-100 max-w-2xl mx-auto">
+      <div className="lg:hidden fixed bottom-[60px] md:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-3 py-2.5">
+        <div className="flex gap-2.5 max-w-2xl mx-auto">
           <button onClick={() => goOrder(null)}
-            className="flex flex-col items-center justify-center gap-0.5 py-3 text-xs font-bold text-white transition-opacity active:opacity-90"
-            style={{ background: BLUE }}>
-            <svg className="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white active:scale-95 transition-all"
+            style={{ background: BLUE_GRADIENT }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            অর্ডার করুন
+            🛒 অর্ডার করুন
           </button>
           {phone ? (
             <a href={whatsappUrl(phone, `আমি "${shop.shop_name}" সম্পর্কে জানতে চাই`)}
               target="_blank" rel="noreferrer"
-              className="flex flex-col items-center justify-center gap-0.5 py-3 text-xs font-bold text-white transition-opacity active:opacity-90"
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
-              <svg className="w-5 h-5 mb-0.5 fill-white" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
               WhatsApp
