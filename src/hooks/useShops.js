@@ -321,11 +321,20 @@ export function useDeleteShop() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id) => {
-      await supabase.from('shops').delete().eq('id', id)
+      // Delete child records first so nothing is orphaned (products tab stays clean)
+      await supabase.from('products').delete().eq('shop_id', id)
+      await supabase.from('favorites').delete().eq('shop_id', id)
+      await supabase.from('reviews').delete().eq('shop_id', id)
+      await supabase.from('shop_images').delete().eq('shop_id', id)
+      const { error } = await supabase.from('shops').delete().eq('id', id)
+      if (error) throw error
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] })
       qc.invalidateQueries({ queryKey: ['my-shops'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['my-products'] })
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
     },
   })
 }
