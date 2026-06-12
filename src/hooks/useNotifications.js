@@ -2,6 +2,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import toast from 'react-hot-toast'
+
+/* ── Pleasant 3-note chime (WebAudio — no sound file needed) ── */
+function playChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if (!Ctx) return
+    const ctx = new Ctx()
+    const notes = [523.25, 659.25, 783.99] // C5 → E5 → G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      const t = ctx.currentTime + i * 0.13
+      gain.gain.setValueAtTime(0, t)
+      gain.gain.linearRampToValueAtTime(0.18, t + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55)
+      osc.start(t)
+      osc.stop(t + 0.6)
+    })
+    setTimeout(() => ctx.close(), 1500)
+  } catch { /* autoplay blocked আগে user interaction না হলে — নীরবে ignore */ }
+}
 
 /* ── Get user's notifications ── */
 export function useNotifications() {
@@ -153,9 +179,24 @@ export function useRealtimeNotifications() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
           qc.invalidateQueries({ queryKey: ['notifications'] })
           qc.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+
+          /* New notification → chime + toast (approve হলে celebratory) */
+          if (payload.eventType === 'INSERT' && payload.new) {
+            playChime()
+            const n = payload.new
+            const isGood = (n.type || '').includes('approved')
+            toast(
+              `${n.title || 'নতুন নোটিফিকেশন'}${n.message ? `\n${n.message}` : ''}`,
+              {
+                duration: 5000,
+                icon: isGood ? '🎉' : '🔔',
+                style: { background: isGood ? '#16a34a' : '#1e293b', color: '#fff', borderRadius: '12px', fontSize: '13px' },
+              }
+            )
+          }
         }
       )
       .subscribe()

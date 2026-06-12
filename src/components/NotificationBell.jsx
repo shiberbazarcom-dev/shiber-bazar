@@ -45,8 +45,10 @@ export default function NotificationBell() {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'shop_approved':
+      case 'service_approved':
         return '✅'
       case 'shop_rejected':
+      case 'service_rejected':
         return '❌'
       case 'new_shop_request':
         return '🏪'

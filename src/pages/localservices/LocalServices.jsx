@@ -44,6 +44,16 @@ export default function LocalServices() {
             ))}
           </div>
         )}
+
+        {/* Submit your own service — goes to admin review */}
+        <Link to="/services/submit"
+          className="mt-6 flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-4 hover:border-blue-300 hover:bg-blue-50 active:scale-[0.98] transition-all">
+          <div>
+            <p className="text-sm font-bold text-gray-800">➕ আপনার সেবা যোগ করুন</p>
+            <p className="text-xs text-gray-400 mt-0.5">ইলেকট্রিশিয়ান, শিক্ষক, ড্রাইভার? বিনামূল্যে তালিকাভুক্ত হোন — অ্যাডমিন অনুমোদনের পর সবাই দেখবে</p>
+          </div>
+          <span className="w-9 h-9 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ background: '#2563EB' }}>→</span>
+        </Link>
       </div>
     </div>
   )

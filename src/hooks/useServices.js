@@ -223,8 +223,30 @@ export function useAdminUpdateService() {
       const updates = {}
       if (status     !== undefined) updates.status      = status
       if (is_verified !== undefined) updates.is_verified = is_verified
-      const { error } = await supabase.from('services').update(updates).eq('id', id)
+      const { data: svc, error } = await supabase
+        .from('services')
+        .update(updates)
+        .eq('id', id)
+        .select('id, name, user_id')
+        .single()
       if (error) throw error
+
+      /* Notify the owner — realtime bell picks it up & plays the chime */
+      if ((status === 'approved' || status === 'rejected') && svc?.user_id) {
+        try {
+          await supabase.from('notifications').insert({
+            user_id: svc.user_id,
+            type: status === 'approved' ? 'service_approved' : 'service_rejected',
+            title: status === 'approved'
+              ? '🎉 আপনার সেবা অনুমোদিত হয়েছে'
+              : 'আপনার সেবা প্রত্যাখ্যাত হয়েছে',
+            message: status === 'approved'
+              ? `"${svc.name}" এখন সেবাসমূহ পেইজে সবাই দেখতে পাবে।`
+              : `"${svc.name}" অনুমোদন করা হয়নি। তথ্য ঠিক করে আবার জমা দিন।`,
+            is_read: false,
+          })
+        } catch { /* notification ব্যর্থ হলেও মূল আপডেট আটকাবে না */ }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.adminPending })

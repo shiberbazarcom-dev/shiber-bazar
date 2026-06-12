@@ -254,8 +254,32 @@ function useUpdateShopStatus() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from('shops').update({ status }).eq('id', id)
+      const { data: shop, error } = await supabase
+        .from('shops')
+        .update({ status })
+        .eq('id', id)
+        .select('id, shop_name, slug, owner_id')
+        .single()
       if (error) throw error
+
+      // Notify the shop owner — realtime bell picks it up & plays the chime
+      const approved = status === 'approved' || status === 'active'
+      const rejected = status === 'rejected'
+      if ((approved || rejected) && shop?.owner_id) {
+        try {
+          await supabase.from('notifications').insert({
+            user_id: shop.owner_id,
+            type: approved ? 'shop_approved' : 'shop_rejected',
+            title: approved
+              ? '🎉 আপনার দোকান অনুমোদিত হয়েছে'
+              : 'আপনার দোকান প্রত্যাখ্যাত হয়েছে',
+            message: approved
+              ? `"${shop.shop_name}" এখন শিবের বাজারে লাইভ — ক্রেতারা দেখতে ও অর্ডার করতে পারবে!`
+              : `"${shop.shop_name}" অনুমোদন করা হয়নি। তথ্য ঠিক করে আবার আবেদন করুন।`,
+            is_read: false,
+          })
+        } catch { /* notification ব্যর্থ হলেও মূল আপডেট আটকাবে না */ }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] })
