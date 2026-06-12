@@ -368,6 +368,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin/products',        icon: '🛍️', label: 'পণ্য' },
     { to: '/admin/verifications',   icon: '🔏', label: 'যাচাইকরণ' },
     { to: '/admin/services',        icon: '🛠️', label: 'সেবা অনুমোদন' },
+    { to: '/admin/service-directory', icon: '📒', label: 'সেবা ডিরেক্টরি' },
     { to: '/admin/ads',             icon: '📢', label: 'বিজ্ঞাপন' },
     { to: '/admin/error-logs',      icon: '🐛', label: 'Error Logs' },
     { to: '/admin/settings',        icon: '⚙️', label: 'সেটিংস' },

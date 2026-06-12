@@ -35,6 +35,11 @@ const SubmitService      = lazy(() => import('./pages/services/SubmitService'))
 const MyServices         = lazy(() => import('./pages/dashboard/MyServices'))
 const ManageServices     = lazy(() => import('./pages/admin/ManageServices'))
 
+/* ── স্থানীয় সেবাসমূহ (Local Services Directory — independent module) ── */
+const LocalServices         = lazy(() => import('./pages/localservices/LocalServices'))
+const LocalServiceCategory  = lazy(() => import('./pages/localservices/LocalServiceCategory'))
+const ServiceDirectoryAdmin = lazy(() => import('./pages/admin/ServiceDirectory'))
+
 /* ── Customer Account ── */
 const AccountPage      = lazy(() => import('./pages/account/AccountPage'))
 
@@ -149,6 +154,10 @@ export default function App() {
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
+            {/* ── স্থানীয় সেবাসমূহ (Local Services Directory) ── */}
+            <Route path="/local-services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
+            <Route path="/local-services/:slug" element={<PublicLayout><LocalServiceCategory /></PublicLayout>} />
+
             {/* ── Services (public) ── */}
             {/* IMPORTANT: specific routes MUST come before /:slug to avoid slug catching them */}
             <Route path="/services"                    element={<PublicLayout><ServicesPage /></PublicLayout>} />
@@ -235,6 +244,11 @@ export default function App() {
               <Route path="analytics"    element={<Analytics />} />
               <Route path="settings"     element={<Settings />} />
               <Route path="services"     element={<ManageServices />} />
+              <Route path="service-directory" element={
+                <ProtectedRoute requireRole={['super_admin']}>
+                  <ServiceDirectoryAdmin />
+                </ProtectedRoute>
+              } />
               <Route path="error-logs"   element={<ErrorLogs />} />
             </Route>
 

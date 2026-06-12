@@ -235,7 +235,7 @@ export default function Navbar() {
                 )}
               </div>
 
-              <NavLink to="/services" className={({ isActive }) =>
+              <NavLink to="/local-services" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 সেবাসমূহ
               </NavLink>
@@ -351,7 +351,7 @@ export default function Navbar() {
             <nav className="max-w-6xl mx-auto px-4 py-1 flex flex-col">
               {[
                 { to: '/categories',  label: 'ক্যাটাগরি' },
-                { to: '/services',    label: 'সেবাসমূহ' },
+                { to: '/local-services', label: 'সেবাসমূহ' },
                 { to: '/shops',       label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/contact',     label: 'যোগাযোগ' },
