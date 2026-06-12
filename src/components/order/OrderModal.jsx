@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { usePlaceOrder } from '../../hooks/useOrders'
+import { useShopProducts } from '../../hooks/useProducts'
 import { useAdminWhatsapp } from '../../hooks/useSettings'
 import { useAuth } from '../../context/AuthContext'
 import { whatsappUrl } from '../../lib/utils'
+import { productMatchesSearch } from '../../lib/banglishSearch'
 import toast from 'react-hot-toast'
 
 const BLUE = '#2563EB'
@@ -29,8 +31,13 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
   const placeOrder = usePlaceOrder()
   const adminWhatsapp = useAdminWhatsapp()
 
+  /* Shop's products for the picker (only fetched in general-order mode) */
+  const { data: shopProducts = [] } = useShopProducts(!product ? shop?.id : null)
+
   const [qty, setQty] = useState(1)
   const [success, setSuccess] = useState(null)
+  const [picked, setPicked] = useState(null)
+  const [suggestOpen, setSuggestOpen] = useState(false)
   const [form, setForm] = useState(() => {
     const d = loadDraft()
     return {
@@ -48,6 +55,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
     if (open) {
       setSuccess(null)
       setQty(1)
+      if (!product) setPicked(null)
       setForm(f => ({
         ...f,
         product_name: product?.name || f.product_name,
@@ -93,6 +101,23 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
   const unitPrice = parseFloat(form.price) || 0
   const total = unitPrice * qty
   const shopPhone = shop?.whatsapp || shop?.phone
+
+  /* Product picker (general-order mode) */
+  const activeProduct = product || picked
+  const suggestions = shopProducts
+    .filter(p => productMatchesSearch(p, form.product_name))
+    .slice(0, 8)
+
+  function pickProduct(p) {
+    setPicked(p)
+    setForm(f => ({ ...f, product_name: p.name, price: p.price != null && p.price !== '' ? String(p.price) : '' }))
+    setSuggestOpen(false)
+  }
+
+  function clearPicked() {
+    setPicked(null)
+    setForm(f => ({ ...f, product_name: '', price: '' }))
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -211,19 +236,25 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
             <div className="px-5 py-4 space-y-5">
 
               {/* ── Section 1: Product summary ── */}
-              {product ? (
+              {activeProduct ? (
                 <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-3">
                   <div className="flex gap-3">
-                    {product.image_url
-                      ? <img src={product.image_url} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
+                    {activeProduct.image_url
+                      ? <img src={activeProduct.image_url} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
                       : <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-white border border-gray-100">📦</div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">{product.name}</p>
+                      <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">{activeProduct.name}</p>
                       {unitPrice > 0 && (
                         <p className="text-sm font-bold mt-0.5" style={{ color: BLUE }}>৳{unitPrice.toLocaleString('bn-BD')} <span className="text-[10px] text-gray-400 font-medium">/ একক</span></p>
                       )}
                     </div>
+                    {picked && (
+                      <button type="button" onClick={clearPicked}
+                        className="self-start flex-shrink-0 text-[10px] font-bold text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full px-2 py-1 active:scale-95 transition-all">
+                        ✕ পরিবর্তন
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                     {/* Quantity selector */}
@@ -243,10 +274,40 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                   </div>
                 </div>
               ) : (
-                /* General order — no specific product */
+                /* General order — pick from this shop's products (Banglish search) */
                 <div className="space-y-3">
-                  <input value={form.product_name} onChange={e => set('product_name', e.target.value)}
-                    className={inputCls} placeholder="কী কিনতে চান? (পণ্যের নাম) *" />
+                  <div className="relative">
+                    <input value={form.product_name}
+                      onChange={e => { set('product_name', e.target.value); setSuggestOpen(true) }}
+                      onFocus={() => setSuggestOpen(true)}
+                      onBlur={() => setTimeout(() => setSuggestOpen(false), 150)}
+                      className={inputCls} placeholder="পণ্য খুঁজুন বা লিখুন... *" />
+                    <svg className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
+                    </svg>
+
+                    {suggestOpen && suggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 max-h-60 overflow-y-auto">
+                        <p className="px-3.5 pt-2.5 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                          {form.product_name.trim() ? 'মিলে যাওয়া পণ্য' : 'এই দোকানের পণ্য'}
+                        </p>
+                        {suggestions.map(p => (
+                          <button key={p.id} type="button"
+                            onMouseDown={e => { e.preventDefault(); pickProduct(p) }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-blue-50/60 active:bg-blue-50 text-left transition-colors">
+                            {p.image_url
+                              ? <img src={p.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-50 flex-shrink-0 border border-gray-100" />
+                              : <span className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-base flex-shrink-0">📦</span>
+                            }
+                            <span className="flex-1 min-w-0 text-xs font-semibold text-gray-700 truncate">{p.name}</span>
+                            {p.price != null && p.price !== '' && (
+                              <span className="text-xs font-bold flex-shrink-0" style={{ color: BLUE }}>৳{Number(p.price).toLocaleString('bn-BD')}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-3">
                     <input type="number" min="0" value={form.price} onChange={e => set('price', e.target.value)}
                       className={inputCls} placeholder="একক মূল্য (৳)" />

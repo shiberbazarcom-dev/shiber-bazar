@@ -5,6 +5,7 @@ import { useShopProducts } from '../hooks/useProducts'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
+import { productMatchesSearch } from '../lib/banglishSearch'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
 import OrderModal from '../components/order/OrderModal'
@@ -19,56 +20,6 @@ function VerifiedSeal({ className }) {
       <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
     </svg>
   )
-}
-
-/* ─────────────────────────────────────────────────────────
-   BANGLISH → BENGALI keyword map
-───────────────────────────────────────────────────────── */
-const BANGLISH_MAP = {
-  shirt: ['শার্ট','সার্ট'], jama: ['জামা'], panjabi: ['পাঞ্জাবি'], punjabi: ['পাঞ্জাবি'],
-  lungi: ['লুঙ্গি'], saree: ['শাড়ি'], sari: ['শাড়ি'], salwar: ['সালোয়ার'],
-  kamiz: ['কামিজ'], kameez: ['কামিজ'], pant: ['প্যান্ট'], trouser: ['ট্রাউজার'],
-  jacket: ['জ্যাকেট'], sweater: ['সোয়েটার','সুয়েটার'], coat: ['কোট'],
-  cap: ['টুপি'], topi: ['টুপি'], juta: ['জুতা'], shoe: ['জুতা','স্যান্ডেল'],
-  sandal: ['স্যান্ডেল'], belt: ['বেল্ট'], bag: ['ব্যাগ'], moja: ['মোজা'], socks: ['মোজা'],
-  rice: ['চাল','ভাত'], chal: ['চাল'], dal: ['ডাল'], daal: ['ডাল'],
-  tel: ['তেল'], oil: ['তেল'], fish: ['মাছ'], maach: ['মাছ'], murgi: ['মুরগি'], chicken: ['মুরগি'],
-  egg: ['ডিম'], dim: ['ডিম'], milk: ['দুধ'], dudh: ['দুধ'],
-  alu: ['আলু'], potato: ['আলু'], onion: ['পেঁয়াজ'], peyaj: ['পেঁয়াজ'],
-  sugar: ['চিনি'], chini: ['চিনি'], salt: ['লবণ'], lobon: ['লবণ'],
-  phone: ['ফোন','মোবাইল'], mobile: ['মোবাইল','ফোন'], tv: ['টিভি'],
-  fan: ['ফ্যান'], fridge: ['ফ্রিজ'], laptop: ['ল্যাপটপ'],
-  sabun: ['সাবান'], soap: ['সাবান'], shampoo: ['শ্যাম্পু'],
-  cream: ['ক্রিম'], lotion: ['লোশন'], powder: ['পাউডার'],
-  chair: ['চেয়ার'], table: ['টেবিল'], bed: ['বিছানা','বেড'], sofa: ['সোফা'],
-  medicine: ['ওষুধ'], oshud: ['ওষুধ'],
-  pen: ['কলম','পেন'], pencil: ['পেন্সিল'], khata: ['খাতা'], book: ['বই'], boi: ['বই'],
-  clock: ['ঘড়ি'], ghori: ['ঘড়ি'], watch: ['ঘড়ি'], toy: ['খেলনা'],
-}
-
-function productMatchesSearch(product, query) {
-  if (!query.trim()) return true
-  const q = query.trim().toLowerCase()
-  const name = (product.name || '').toLowerCase()
-  const desc = (product.description || '').toLowerCase()
-  if (name.includes(q) || desc.includes(q)) return true
-  const words = q.split(/\s+/)
-  for (const word of words) {
-    const mapped = BANGLISH_MAP[word]
-    if (mapped) {
-      for (const bn of mapped) {
-        if (name.includes(bn) || desc.includes(bn)) return true
-      }
-    }
-  }
-  for (const [key, bns] of Object.entries(BANGLISH_MAP)) {
-    if (key.includes(q) || q.includes(key)) {
-      for (const bn of bns) {
-        if (name.includes(bn) || desc.includes(bn)) return true
-      }
-    }
-  }
-  return false
 }
 
 /* ─── Star input ─── */
