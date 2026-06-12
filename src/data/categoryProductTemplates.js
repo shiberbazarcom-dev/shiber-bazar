@@ -984,30 +984,57 @@ const electrical = [
 // ─── Category keyword → templates map ──────────────────────────────────────
 
 const CATEGORY_MAP = [
-  { keywords: ['grocery', 'মুদি', 'কিরানা', 'খাদ্য', 'বাজার', 'ফুড'], templates: grocery },
-  { keywords: ['clothing', 'cloth', 'fashion', 'garment', 'কাপড়', 'পোশাক', 'বস্ত্র', 'ফ্যাশন'], templates: clothing },
-  { keywords: ['pharmacy', 'medicine', 'ফার্মেসি', 'ওষুধ', 'মেডিসিন', 'স্বাস্থ্য', 'health'], templates: pharmacy },
-  { keywords: ['electronics', 'ইলেকট্রনিক', 'digital', 'tech', 'technology'], templates: electronics },
-  { keywords: ['restaurant', 'food', 'খাবার', 'রেস্তোরাঁ', 'রেস্টুরেন্ট', 'হোটেল', 'ক্যাফে', 'cafe', 'snacks'], templates: restaurant },
-  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'কসমেটিকস', 'বিউটি', 'makeup', 'skincare'], templates: cosmetics },
-  { keywords: ['stationery', 'stationary', 'স্টেশনারি', 'office', 'অফিস', 'book', 'বই', 'education', 'school'], templates: stationery },
-  { keywords: ['hardware', 'হার্ডওয়্যার', 'নির্মাণ', 'construction', 'tools', 'building'], templates: hardware },
-  { keywords: ['sanitary', 'স্যানিটারি', 'bathroom', 'plumbing', 'bath', 'পাইপ', 'ফিটিংস'], templates: sanitary },
-  { keywords: ['electrical', 'বৈদ্যুতিক', 'electric', 'wiring', 'তার', 'সুইচ', 'ইলেকট্রিক'], templates: electrical },
+  { keywords: ['grocery', 'মুদি', 'কিরানা', 'খাদ্য', 'বাজার', 'ফুড'], templates: grocery, img: '/product-placeholder.svg' },
+  { keywords: ['clothing', 'cloth', 'fashion', 'garment', 'কাপড়', 'পোশাক', 'বস্ত্র', 'ফ্যাশন'], templates: clothing, img: '/products/clothing.svg' },
+  { keywords: ['pharmacy', 'medicine', 'ফার্মেসি', 'ওষুধ', 'মেডিসিন', 'স্বাস্থ্য', 'health'], templates: pharmacy, img: '/products/medicine.svg' },
+  { keywords: ['electronics', 'ইলেকট্রনিক', 'digital', 'tech', 'technology'], templates: electronics, img: '/products/electronics.svg' },
+  { keywords: ['restaurant', 'food', 'খাবার', 'রেস্তোরাঁ', 'রেস্টুরেন্ট', 'হোটেল', 'ক্যাফে', 'cafe', 'snacks'], templates: restaurant, img: '/products/food.svg' },
+  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'কসমেটিকস', 'বিউটি', 'makeup', 'skincare'], templates: cosmetics, img: '/products/cosmetics.svg' },
+  { keywords: ['stationery', 'stationary', 'স্টেশনারি', 'office', 'অফিস', 'book', 'বই', 'education', 'school'], templates: stationery, img: '/products/stationery.svg' },
+  { keywords: ['hardware', 'হার্ডওয়্যার', 'নির্মাণ', 'construction', 'tools', 'building'], templates: hardware, img: '/products/tools.svg' },
+  { keywords: ['sanitary', 'স্যানিটারি', 'bathroom', 'plumbing', 'bath', 'পাইপ', 'ফিটিংস'], templates: sanitary, img: '/products/sanitary.svg' },
+  { keywords: ['electrical', 'বৈদ্যুতিক', 'electric', 'wiring', 'তার', 'সুইচ', 'ইলেকট্রিক'], templates: electrical, img: '/products/electrical.svg' },
 ]
+
+/* ── Product-name keyword → tiny SVG illustration (each <1 KB, served from /public) ── */
+const IMG_RULES = [
+  { img: '/products/rice.svg',   kw: ['চাল'] },
+  { img: '/products/flour.svg',  kw: ['আটা', 'ময়দা', 'সুজি'] },
+  { img: '/products/dal.svg',    kw: ['ডাল'] },
+  { img: '/products/oil.svg',    kw: ['তেল'] },
+  { img: '/products/sauce.svg',  kw: ['সস'] },
+  { img: '/products/sugar.svg',  kw: ['চিনি', 'লবণ'] },
+  { img: '/products/milk.svg',   kw: ['দুধ', 'মিল্ক', 'হরলিক্স', 'বোর্নভিটা'] },
+  { img: '/products/tea.svg',    kw: ['চা ', 'চা প', 'চা ব', 'কফি'] },
+  { img: '/products/jar.svg',    kw: ['ঘি', 'মধু'] },
+  { img: '/products/snacks.svg', kw: ['চিড়া', 'মুড়ি', 'খই'] },
+  { img: '/products/nuts.svg',   kw: ['বাদাম', 'কিশমিশ', 'খেজুর', 'নারকেল'] },
+  { img: '/products/spice.svg',  kw: ['গুঁড়া', 'মসলা', 'মরিচ', 'জিরা', 'এলাচ', 'দারুচিনি', 'লবঙ্গ', 'তেজপাতা', 'ধনে', 'হলুদ', 'সরিষা', 'তেঁতুল', 'আমচুর', 'আদা', 'রসুন'] },
+]
+
+function imageForProduct(name, fallback) {
+  for (const rule of IMG_RULES) {
+    if (rule.kw.some(k => name.includes(k))) return rule.img
+  }
+  return fallback
+}
 
 /**
  * Returns template products for a given category name.
+ * Each template gets a tiny SVG `image` auto-matched from its name.
  * Returns [] if no match found.
  * @param {string} categoryName - The display name of the category
- * @returns {Array<{name: string, price: number, stock: number}>}
+ * @returns {Array<{name: string, price: number, stock: number, image: string}>}
  */
 export function getTemplateProducts(categoryName) {
   if (!categoryName) return []
   const lower = categoryName.toLowerCase()
   for (const entry of CATEGORY_MAP) {
     if (entry.keywords.some(kw => lower.includes(kw.toLowerCase()))) {
-      return entry.templates
+      return entry.templates.map(t => ({
+        ...t,
+        image: t.image || imageForProduct(t.name, entry.img),
+      }))
     }
   }
   return []
