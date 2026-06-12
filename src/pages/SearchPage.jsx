@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useShops } from '../hooks/useShops'
 import { useSearchProducts } from '../hooks/useProducts'
-import { useServices } from '../hooks/useServices'
+import { useSearchDirectory } from '../hooks/useServiceDirectory'
 import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
-import ServiceCard from '../components/services/ServiceCard'
 import { whatsappUrl } from '../lib/utils'
 import { getBengaliMatch } from '../lib/banglish'
 import SEO from '../components/SEO'
@@ -76,6 +75,46 @@ function ProductCard({ product }) {
   )
 }
 
+/* ── স্থানীয় সেবা ডিরেক্টরি result card ── */
+function DirectoryResultCard({ entry }) {
+  const cat = entry.local_service_categories
+  return (
+    <div className="bg-white rounded-xl shadow-card p-3.5 flex items-center gap-3">
+      {entry.photo_url
+        ? <img src={entry.photo_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0 bg-gray-50 border border-gray-100" />
+        : <span className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 font-bold text-lg flex items-center justify-center flex-shrink-0">{(entry.full_name || '?')[0]}</span>
+      }
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-900 text-sm leading-tight truncate">
+          {entry.full_name}
+          {entry.is_verified && <span className="ml-1 text-blue-500 text-xs">✔</span>}
+        </p>
+        {cat && (
+          <Link to={`/services/${cat.slug}`} className="text-xs text-blue-600 font-medium hover:underline">
+            {cat.icon} {cat.name_bn}{entry.additional_info ? ` • ${entry.additional_info}` : ''}
+          </Link>
+        )}
+        {entry.address && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {entry.address}</p>}
+      </div>
+      <div className="flex gap-1.5 flex-shrink-0">
+        <a href={`tel:${entry.phone_number}`} aria-label="কল করুন"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+          style={{ background: BLUE }}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+        </a>
+        <a href={whatsappUrl(entry.phone_number, 'আসসালামু আলাইকুম, শিবের বাজার থেকে যোগাযোগ করছি।')}
+          target="_blank" rel="noreferrer" aria-label="WhatsApp"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+          style={{ background: '#25d366' }}>
+          💬
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function ProductCardSkeleton() {
   return (
     <div className="bg-white rounded-xl shadow-card overflow-hidden">
@@ -118,7 +157,7 @@ export default function SearchPage() {
   const shops = shopData?.pages?.flatMap(p => p.data) ?? []
 
   const { data: products = [], isLoading: productsLoading } = useSearchProducts(query)
-  const { data: services = [], isLoading: servicesLoading } = useServices(null, query)
+  const { data: services = [], isLoading: servicesLoading } = useSearchDirectory(query)
 
   const isLoading = tab === 'shops' ? shopsLoading : tab === 'products' ? productsLoading : servicesLoading
   const totalShops    = shops.length
@@ -286,8 +325,8 @@ export default function SearchPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map(s => <ServiceCard key={s.id} service={s} />)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {services.map(s => <DirectoryResultCard key={s.id} entry={s} />)}
             </div>
           )
         )}

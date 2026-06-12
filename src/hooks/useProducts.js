@@ -12,7 +12,7 @@ export function useSearchProducts(query) {
       const orFilter = buildOrFilter(terms, ['name', 'description'])
       const { data, error } = await supabase
         .from('products')
-        .select('*, shops(id, shop_name, slug, phone, whatsapp, logo_url)')
+        .select('*, shops(*)')
         .eq('is_active', true)
         .or(orFilter)
         .limit(40)

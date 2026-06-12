@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { expandQuery, buildOrFilter } from '../lib/banglish'
 
 /* ═══════════════════════════════════════════════════════
    স্থানীয় সেবাসমূহ (Local Services Directory)
@@ -97,6 +98,54 @@ export function useDeleteDirectoryEntry() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sd-entries'] }),
+  })
+}
+
+/* ── Public: search directory entries (Banglish-aware) ── */
+export function useSearchDirectory(query) {
+  return useQuery({
+    queryKey: ['sd-search', query],
+    queryFn: async () => {
+      if (!query?.trim()) return []
+      const terms = expandQuery(query)
+      const orFilter = buildOrFilter(terms, ['full_name', 'phone_number', 'address', 'additional_info', 'description'])
+
+      /* Entries matching name/phone/address/info */
+      const { data: byFields, error } = await supabase
+        .from('local_service_directory')
+        .select('*, local_service_categories(name_bn, icon, slug)')
+        .eq('is_active', true)
+        .or(orFilter)
+        .limit(40)
+      if (error) throw error
+
+      /* Entries whose CATEGORY name matches (e.g. "ডাক্তার" খুঁজলে সব ডাক্তার) */
+      const catOr = terms.map(t => `name_bn.ilike.%${t}%`).join(',')
+      const { data: cats } = await supabase
+        .from('local_service_categories')
+        .select('id')
+        .eq('is_active', true)
+        .or(catOr)
+      let byCategory = []
+      if (cats?.length) {
+        const { data } = await supabase
+          .from('local_service_directory')
+          .select('*, local_service_categories(name_bn, icon, slug)')
+          .eq('is_active', true)
+          .in('category_id', cats.map(c => c.id))
+          .limit(40)
+        byCategory = data || []
+      }
+
+      /* Merge unique */
+      const seen = new Set()
+      return [...(byFields || []), ...byCategory].filter(e => {
+        if (seen.has(e.id)) return false
+        seen.add(e.id)
+        return true
+      })
+    },
+    enabled: !!query?.trim(),
   })
 }
 
