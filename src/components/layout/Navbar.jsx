@@ -160,17 +160,18 @@ export default function Navbar() {
           📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
         </div>
 
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
           <div className="flex items-center gap-2 sm:gap-3">
 
-            {/* Logo — favicon icon + brand text */}
-            <Link to="/" className="flex-shrink-0 flex items-center gap-1.5">
+            {/* Logo — icon + brand + slogan */}
+            <Link to="/" className="flex-shrink-0 flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
                    style={{ background: '#2563EB' }}>
                 শ
               </div>
-              <span className="hidden sm:block font-bold text-gray-800 leading-tight text-base whitespace-nowrap">
-                শিবের বাজার
+              <span className="hidden sm:flex flex-col leading-tight whitespace-nowrap">
+                <span className="font-semibold text-gray-800 text-[15px]">শিবের বাজার</span>
+                <span className="text-[10px] font-medium text-blue-600 tracking-widest uppercase">Digital Bazar</span>
               </span>
             </Link>
 
@@ -207,16 +208,11 @@ export default function Navbar() {
             </form>
 
             {/* ── Desktop nav ── */}
-            <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
-              <NavLink to="/" end className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                হোম
-              </NavLink>
-
+            <nav className="hidden md:flex items-center gap-1.5 flex-shrink-0">
               {/* Categories dropdown */}
               <div className="relative" ref={catRef}>
                 <button onClick={() => setCatOpen(o => !o)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
                   ক্যাটাগরি <span className="text-xs">{catOpen ? '▲' : '▼'}</span>
                 </button>
                 {catOpen && (
@@ -239,19 +235,24 @@ export default function Navbar() {
                 )}
               </div>
 
+              <NavLink to="/services" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
+                সেবাসমূহ
+              </NavLink>
+
               <NavLink to="/shops" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 সব দোকান
               </NavLink>
 
               <NavLink to="/track-order" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                📦 অর্ডার ট্র্যাক
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
+                অর্ডার ট্র্যাক
               </NavLink>
 
               <NavLink to="/contact" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                📞 যোগাযোগ
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
+                যোগাযোগ
               </NavLink>
             </nav>
 
@@ -325,15 +326,47 @@ export default function Navbar() {
                     লগইন
                   </Link>
                   <Link to="/register"
-                    className="text-sm font-medium text-white px-3.5 py-1.5 rounded-lg whitespace-nowrap"
+                    className="text-sm font-medium text-white px-3.5 py-1.5 rounded-lg whitespace-nowrap hover:opacity-90 transition-opacity"
                     style={{ background: '#2563EB' }}>
                     রেজিস্ট্রেশন
                   </Link>
                 </div>
               )}
             </div>
+
+            {/* Mobile hamburger */}
+            <button onClick={() => setMenuOpen(o => !o)} aria-label="মেনু"
+              className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-100 transition-colors flex-shrink-0">
+              {menuOpen
+                ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+              }
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu panel */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white">
+            <nav className="max-w-6xl mx-auto px-4 py-1 flex flex-col">
+              {[
+                { to: '/categories',  label: 'ক্যাটাগরি' },
+                { to: '/services',    label: 'সেবাসমূহ' },
+                { to: '/shops',       label: 'সব দোকান' },
+                { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
+                { to: '/contact',     label: 'যোগাযোগ' },
+              ].map(item => (
+                <NavLink key={item.to} to={item.to}
+                  className={({ isActive }) =>
+                    `py-3.5 px-1 text-sm font-medium border-b border-gray-50 transition-colors ${
+                      isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
+                    }`}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* ══════════════════════════════════════════════
