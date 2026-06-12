@@ -165,10 +165,8 @@ export default function Navbar() {
 
             {/* Logo — icon + brand + slogan */}
             <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-                   style={{ background: '#2563EB' }}>
-                শ
-              </div>
+              <img src="/logo.png" alt="শিবের বাজার"
+                className="w-9 h-9 object-contain flex-shrink-0" />
               <span className="hidden sm:flex flex-col leading-tight whitespace-nowrap">
                 <span className="font-semibold text-gray-800 text-[15px]">শিবের বাজার</span>
                 <span className="text-[10px] font-medium text-blue-600 tracking-widest uppercase">Digital Bazar</span>

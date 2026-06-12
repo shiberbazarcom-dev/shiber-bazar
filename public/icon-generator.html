@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>শিবের বাজার — লোগো থেকে অ্যাপ আইকন</title>
+</head>
+<body style="font-family:sans-serif;padding:24px;max-width:560px;margin:auto">
+<h2>লোগো থেকে অ্যাপ আইকন জেনারেটর</h2>
+<p style="color:#555;line-height:1.6">
+  এটি আপনার <b>logo.png</b> থেকে ৩টি আইকন বানাবে:
+  <b>icon-192.png</b>, <b>icon-512.png</b>, <b>icon-maskable-512.png</b>।<br>
+  ডাউনলোড হওয়া ফাইলগুলো <b>public/</b> ফোল্ডারে রেখে পুরোনো ফাইল replace করুন, তারপর deploy করুন।
+</p>
+
+<button id="go" disabled onclick="makeAll()"
+  style="padding:12px 24px;font-size:16px;font-weight:bold;background:#2563EB;color:#fff;border:none;border-radius:12px;cursor:pointer;opacity:.5">
+  লোগো লোড হচ্ছে...
+</button>
+
+<p style="color:#999;font-size:13px;margin-top:10px">
+  লোগো অটো লোড না হলে নিজে বেছে দিন:
+  <input type="file" accept="image/png,image/jpeg" onchange="pickFile(this)">
+</p>
+
+<div id="preview" style="display:flex;gap:16px;margin-top:24px;align-items:center"></div>
+<p style="color:#999;font-size:13px;margin-top:12px">
+  গোল প্রিভিউটি maskable আইকন — ফোন গোল করে কাটলেও লোগো নিরাপদ জায়গায় থাকবে।
+</p>
+
+<script>
+let logo = null
+
+function ready() {
+  const b = document.getElementById('go')
+  b.disabled = false
+  b.style.opacity = 1
+  b.textContent = '৩টি আইকন তৈরি ও ডাউনলোড করুন'
+}
+
+/* Try auto-loading /logo.png (works when served from the site) */
+const auto = new Image()
+auto.onload = () => { logo = auto; ready() }
+auto.onerror = () => {}
+auto.src = '/logo.png'
+
+/* Manual fallback — works even when opened as a local file */
+function pickFile(input) {
+  const f = input.files && input.files[0]
+  if (!f) return
+  const r = new FileReader()
+  r.onload = () => {
+    const img = new Image()
+    img.onload = () => { logo = img; ready() }
+    img.src = r.result
+  }
+  r.readAsDataURL(f)
+}
+
+function draw(size, maskable) {
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const x = c.getContext('2d')
+  x.fillStyle = '#ffffff'
+  x.fillRect(0, 0, size, size)
+  const scale = maskable ? 0.66 : 0.86
+  const s = size * scale
+  x.drawImage(logo, (size - s) / 2, (size - s) / 2, s, s)
+  return c
+}
+
+function dl(canvas, name) {
+  const a = document.createElement('a')
+  a.download = name
+  a.href = canvas.toDataURL('image/png')
+  a.click()
+}
+
+function makeAll() {
+  if (!logo) return alert('আগে লোগো লোড করুন')
+  const jobs = [
+    [192, false, 'icon-192.png'],
+    [512, false, 'icon-512.png'],
+    [512, true,  'icon-maskable-512.png'],
+  ]
+  const prev = document.getElementById('preview')
+  prev.innerHTML = ''
+  jobs.forEach(([s, m, n], i) => {
+    const c = draw(s, m)
+    c.style.width = '96px'
+    c.style.height = '96px'
+    c.style.border = '1px solid #e5e7eb'
+    c.style.borderRadius = m ? '50%' : '14px'
+    c.title = n
+    prev.appendChild(c)
+    setTimeout(() => dl(c, n), i * 500)
+  })
+}
+</script>
+</body>
+</html>
