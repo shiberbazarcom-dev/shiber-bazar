@@ -313,6 +313,7 @@ export default function AddShop() {
           name: t.name,
           price: t.price,
           stock: t.stock,
+          image_url: '/product-placeholder.svg',
           is_active: true,
           is_featured: false,
         }))

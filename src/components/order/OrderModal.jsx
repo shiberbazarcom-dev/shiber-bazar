@@ -284,10 +284,9 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                           <button key={p.id} type="button"
                             onMouseDown={e => { e.preventDefault(); addProduct(p) }}
                             className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-blue-50/60 active:bg-blue-50 text-left transition-colors">
-                            {p.image_url
-                              ? <img src={p.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-50 flex-shrink-0 border border-gray-100" />
-                              : <span className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-base flex-shrink-0">📦</span>
-                            }
+                            <img src={p.image_url || '/product-placeholder.svg'} alt=""
+                              onError={e => { e.target.onerror = null; e.target.src = '/product-placeholder.svg' }}
+                              className="w-9 h-9 rounded-lg object-cover bg-gray-50 flex-shrink-0 border border-gray-100" />
                             <span className="flex-1 min-w-0 text-xs font-semibold text-gray-700 truncate">{p.name}</span>
                             {p.price != null && p.price !== '' && (
                               <span className="text-xs font-bold flex-shrink-0" style={{ color: BLUE }}>৳{Number(p.price).toLocaleString('bn-BD')}</span>
@@ -317,10 +316,9 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                   <div className="rounded-2xl border border-gray-100 bg-gray-50/60 divide-y divide-gray-100 overflow-hidden">
                     {items.map(it => (
                       <div key={it.key} className="flex items-center gap-2.5 p-2.5">
-                        {it.image_url
-                          ? <img src={it.image_url} alt="" className="w-11 h-11 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
-                          : <span className="w-11 h-11 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-lg flex-shrink-0">📦</span>
-                        }
+                        <img src={it.image_url || '/product-placeholder.svg'} alt=""
+                          onError={e => { e.target.onerror = null; e.target.src = '/product-placeholder.svg' }}
+                          className="w-11 h-11 rounded-xl object-cover flex-shrink-0 bg-white border border-gray-100" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-gray-800 leading-snug line-clamp-1">{it.name}</p>
                           {it.custom ? (

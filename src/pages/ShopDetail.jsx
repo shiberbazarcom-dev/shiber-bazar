@@ -81,13 +81,11 @@ function ProductCard({ product, shop, onOrder }) {
       {/* Square image */}
       <div className="relative w-full overflow-hidden bg-gray-50" style={{ paddingBottom: '100%' }}>
         <div className="absolute inset-0">
-          {product.image_url
-            ? <img src={product.image_url} alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={e => { e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-5xl bg-gray-50">📦</div>' }}
-              />
-            : <div className="w-full h-full flex items-center justify-center text-5xl bg-gray-50">📦</div>
-          }
+          <img src={product.image_url || '/product-placeholder.svg'} alt={product.name}
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={e => { e.target.onerror = null; e.target.src = '/product-placeholder.svg' }}
+          />
         </div>
 
         {/* Badges */}
