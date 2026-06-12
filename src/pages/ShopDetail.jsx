@@ -7,9 +7,19 @@ import { useCart } from '../context/CartContext'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
+import OrderModal from '../components/order/OrderModal'
 
 const BLUE = '#2563EB'
 const GREEN = '#16a34a'
+
+/* ─── Verified seal (rosette) icon ─── */
+function VerifiedSeal({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-label="যাচাইকৃত">
+      <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+    </svg>
+  )
+}
 
 /* ─────────────────────────────────────────────────────────
    BANGLISH → BENGALI keyword map
@@ -204,19 +214,13 @@ export default function ShopDetail() {
   const [chip, setChip]           = useState('all')
   const [productSearch, setProductSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [orderOpen, setOrderOpen] = useState(false)
+  const [orderProduct, setOrderProduct] = useState(null)
 
+  /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder(product) {
-    if (product) {
-      navigate(`/order/${shop.id}`, {
-        state: {
-          shopName: shop.shop_name,
-          cartItems: [{ ...product, shops: shop, qty: 1 }],
-          totalAmount: Number(product.price || 0),
-        }
-      })
-    } else {
-      navigate(`/order/${shop.id}?shop=${encodeURIComponent(shop.shop_name)}`)
-    }
+    setOrderProduct(product || null)
+    setOrderOpen(true)
   }
 
   const isFav = favorites.some(f => f.shop_id === shop?.id)
@@ -389,17 +393,12 @@ export default function ShopDetail() {
               <img src={logoUrl} alt={shop.shop_name}
                 className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md bg-white"
                 onError={e => { e.target.src = logoUrl }} />
-              {shop.verification_status === 'verified' && (
-                <span className="absolute bottom-0.5 right-0.5 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow">
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                    <path d="M2.5 6.5l2 2 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </span>
-              )}
             </div>
             {shop.verification_status === 'verified' && (
-              <span className="mb-1 inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
-                ✓ যাচাইকৃত দোকান
+              <span className="mb-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-700 px-3 py-1.5 rounded-full shadow-sm border border-blue-200"
+                style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)' }}>
+                <VerifiedSeal className="w-4 h-4 text-blue-600" />
+                যাচাইকৃত দোকান
               </span>
             )}
           </div>
@@ -409,9 +408,10 @@ export default function ShopDetail() {
             <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5">
               {shop.shop_name}
               {shop.verification_status === 'verified' && (
-                <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+                <span className="relative inline-flex flex-shrink-0" title="যাচাইকৃত দোকান">
+                  <span className="absolute inset-0 rounded-full bg-blue-400/50 animate-ping" style={{ animationDuration: '2.5s' }} />
+                  <VerifiedSeal className="w-5 h-5 text-blue-500 relative" />
+                </span>
               )}
             </h2>
             {(shop.categories?.name || shop.district || shop.address) && (
@@ -692,6 +692,14 @@ export default function ShopDetail() {
           ) : <div />}
         </div>
       </div>
+
+      {/* ══ ORDER MODAL (bottom sheet) ══ */}
+      <OrderModal
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        shop={shop}
+        product={orderProduct}
+      />
     </div>
   )
 }

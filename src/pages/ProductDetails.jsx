@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
+import OrderModal from '../components/order/OrderModal'
 
 const GREEN = '#16a34a'
 const BLUE  = '#2563EB'
@@ -59,6 +60,7 @@ export default function ProductDetails() {
   const { addItem, isInCart } = useCart()
   const [activeImg, setActiveImg] = useState(0)
   const [imgZoom, setImgZoom] = useState(false)
+  const [orderOpen, setOrderOpen] = useState(false)
 
   const inCart = product ? isInCart(product.id) : false
 
@@ -70,14 +72,9 @@ export default function ProductDetails() {
     })
   }
 
+  /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder() {
-    const shop = product.shops
-    const params = new URLSearchParams({
-      shop: shop?.shop_name || '',
-      product: product.name,
-      ...(product.price ? { price: String(product.price) } : {}),
-    })
-    navigate(`/order/${shop?.id}?${params.toString()}`)
+    setOrderOpen(true)
   }
 
   async function handleShare() {
@@ -451,6 +448,14 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
+
+      {/* ══ ORDER MODAL (bottom sheet) ══ */}
+      <OrderModal
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        shop={shop}
+        product={product}
+      />
 
       {/* ── Image zoom modal ── */}
       {imgZoom && mainImage && (
