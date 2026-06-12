@@ -263,16 +263,13 @@ export default function ProductDetails() {
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-2.5 mt-1">
                 <button
-                  onClick={handleAddToCart}
-                  className={`sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
-                    inCart
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                      : 'border-blue-600 text-blue-600 hover:bg-blue-50'
-                  }`}>
+                  onClick={goOrder}
+                  className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 transition-all active:scale-95"
+                  style={{ background: BLUE }}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
-                  {inCart ? 'কার্টে আছে ✓' : 'কার্টে যোগ করুন'}
+                  অর্ডার করুন
                 </button>
 
                 {(shop?.whatsapp || shop?.phone) && (
@@ -289,13 +286,17 @@ export default function ProductDetails() {
                 )}
               </div>
 
-              {/* Order via site button */}
-              <button onClick={goOrder}
-                className="w-full h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95">
+              {/* Add to cart — secondary */}
+              <button onClick={handleAddToCart}
+                className={`w-full h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
+                  inCart
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                }`}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                অর্ডার ফর্ম পূরণ করুন
+                {inCart ? 'কার্টে আছে ✓' : 'কার্টে যোগ করুন'}
               </button>
 
               {/* Description */}
@@ -420,14 +421,21 @@ export default function ProductDetails() {
       ══════════════════════════════════════════ */}
       <div className="md:hidden fixed bottom-[60px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="flex gap-2.5 max-w-lg mx-auto">
-          <button onClick={handleAddToCart}
-            className={`flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 border-2 transition-all active:scale-95 ${
+          <button onClick={handleAddToCart} aria-label="কার্টে যোগ করুন"
+            className={`w-12 h-12 flex-shrink-0 rounded-2xl border-2 flex items-center justify-center transition-all active:scale-95 ${
               inCart ? 'bg-blue-600 border-blue-600 text-white' : 'border-blue-600 text-blue-600 bg-white'
             }`}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            {inCart ? '✓ কার্টে আছে' : 'কার্টে যোগ'}
+          </button>
+          <button onClick={goOrder}
+            className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 text-white active:scale-95 transition-all"
+            style={{ background: BLUE }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            অর্ডার করুন
           </button>
           {(shop?.whatsapp || shop?.phone) && (
             <a href={whatsappUrl(
@@ -435,10 +443,10 @@ export default function ProductDetails() {
                 `"${product.name}" পণ্যটি অর্ডার করতে চাই${product.price ? ` — মূল্য ৳${product.price}` : ''}`
               )}
               target="_blank" rel="noreferrer"
-              className="flex-[2] h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white active:scale-95 transition-all"
+              className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
               {WA_ICON}
-              WhatsApp অর্ডার
+              WhatsApp
             </a>
           )}
         </div>
