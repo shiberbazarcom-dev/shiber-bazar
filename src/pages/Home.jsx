@@ -9,8 +9,7 @@ import SearchDropdown from '../components/SearchDropdown'
 import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
-import { useServiceCategories } from '../hooks/useServices'
-import { SERVICE_CATEGORIES } from '../data/serviceCategories'
+import { useDirectoryCategories } from '../hooks/useServiceDirectory'
 
 // Animated counter component
 function AnimatedCounter({ value, suffix = '' }) {
@@ -164,8 +163,10 @@ function CategoryPill({ category }) {
 
 /* ── Homepage Services Section ─────────────────────────────────── */
 function HomeServicesSection() {
-  const { data: dbCats = [] } = useServiceCategories()
-  const cats = (dbCats.length ? dbCats : SERVICE_CATEGORIES).slice(0, 10)
+  /* স্থানীয় সেবা ডিরেক্টরি-র category — /services/:slug এর সাথে মিলে */
+  const { data: dbCats = [] } = useDirectoryCategories()
+  const cats = dbCats.slice(0, 10)
+  if (cats.length === 0) return null
 
   return (
     <section className="py-10 sm:py-14 bg-white">

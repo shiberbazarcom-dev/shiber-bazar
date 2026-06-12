@@ -981,35 +981,262 @@ const electrical = [
   { name: 'সোলার সিস্টেম (৫০W কমপ্লিট)', price: 12000, stock: 2 },
 ]
 
+// ─── সবজি ─────────────────────────────────────────────────────────────────
+const vegetables = [
+  { name: 'আলু (১ কেজি)', price: 35, stock: 100 },
+  { name: 'দেশি পেঁয়াজ (১ কেজি)', price: 70, stock: 80 },
+  { name: 'রসুন (১ কেজি)', price: 180, stock: 50 },
+  { name: 'আদা (১ কেজি)', price: 220, stock: 50 },
+  { name: 'টমেটো (১ কেজি)', price: 60, stock: 60 },
+  { name: 'বেগুন (১ কেজি)', price: 50, stock: 60 },
+  { name: 'শসা (১ কেজি)', price: 50, stock: 60 },
+  { name: 'কাঁচা মরিচ (২৫০ গ্রাম)', price: 30, stock: 80 },
+  { name: 'ফুলকপি (প্রতিটি)', price: 40, stock: 50 },
+  { name: 'বাঁধাকপি (প্রতিটি)', price: 35, stock: 50 },
+  { name: 'গাজর (১ কেজি)', price: 60, stock: 50 },
+  { name: 'মুলা (১ কেজি)', price: 30, stock: 50 },
+  { name: 'লাউ (প্রতিটি)', price: 50, stock: 40 },
+  { name: 'মিষ্টি কুমড়া (১ কেজি)', price: 40, stock: 50 },
+  { name: 'ঢেঁড়স (১ কেজি)', price: 50, stock: 50 },
+  { name: 'পটল (১ কেজি)', price: 50, stock: 50 },
+  { name: 'করলা (১ কেজি)', price: 60, stock: 50 },
+  { name: 'চিচিঙ্গা (১ কেজি)', price: 40, stock: 40 },
+  { name: 'বরবটি (১ কেজি)', price: 60, stock: 40 },
+  { name: 'সিম (১ কেজি)', price: 60, stock: 40 },
+  { name: 'পেঁপে (১ কেজি)', price: 30, stock: 50 },
+  { name: 'কচু (১ কেজি)', price: 50, stock: 30 },
+  { name: 'লেবু (হালি)', price: 20, stock: 80 },
+  { name: 'ধনেপাতা (১০০ গ্রাম)', price: 15, stock: 60 },
+  { name: 'পালং শাক (আঁটি)', price: 15, stock: 60 },
+  { name: 'লাল শাক (আঁটি)', price: 15, stock: 60 },
+  { name: 'পুঁই শাক (আঁটি)', price: 20, stock: 50 },
+  { name: 'মিষ্টি আলু (১ কেজি)', price: 50, stock: 40 },
+]
+
+// ─── মাছ ──────────────────────────────────────────────────────────────────
+const fish = [
+  { name: 'রুই মাছ (১ কেজি)', price: 350, stock: 30 },
+  { name: 'কাতলা মাছ (১ কেজি)', price: 320, stock: 30 },
+  { name: 'ইলিশ মাছ (১ কেজি)', price: 1200, stock: 15 },
+  { name: 'পাঙাশ মাছ (১ কেজি)', price: 180, stock: 40 },
+  { name: 'তেলাপিয়া মাছ (১ কেজি)', price: 200, stock: 40 },
+  { name: 'সিলভার কার্প (১ কেজি)', price: 180, stock: 35 },
+  { name: 'মৃগেল মাছ (১ কেজি)', price: 280, stock: 25 },
+  { name: 'চিংড়ি মাঝারি (১ কেজি)', price: 600, stock: 20 },
+  { name: 'গলদা চিংড়ি (১ কেজি)', price: 900, stock: 12 },
+  { name: 'পাবদা মাছ (১ কেজি)', price: 450, stock: 20 },
+  { name: 'টেংরা মাছ (১ কেজি)', price: 500, stock: 18 },
+  { name: 'শিং মাছ (১ কেজি)', price: 550, stock: 18 },
+  { name: 'মাগুর মাছ (১ কেজি)', price: 600, stock: 15 },
+  { name: 'কৈ মাছ (১ কেজি)', price: 400, stock: 20 },
+  { name: 'বোয়াল মাছ (১ কেজি)', price: 700, stock: 12 },
+  { name: 'শোল মাছ (১ কেজি)', price: 500, stock: 15 },
+  { name: 'লইট্টা শুঁটকি (২৫০ গ্রাম)', price: 150, stock: 30 },
+]
+
+// ─── মাংস ─────────────────────────────────────────────────────────────────
+const meat = [
+  { name: 'গরুর মাংস (১ কেজি)', price: 780, stock: 40 },
+  { name: 'খাসির মাংস (১ কেজি)', price: 1100, stock: 25 },
+  { name: 'ব্রয়লার মুরগি (১ কেজি)', price: 190, stock: 60 },
+  { name: 'সোনালি মুরগি (১ কেজি)', price: 320, stock: 40 },
+  { name: 'দেশি মুরগি (১ কেজি)', price: 550, stock: 25 },
+  { name: 'হাঁস (প্রতিটি)', price: 600, stock: 15 },
+  { name: 'কবুতর (জোড়া)', price: 300, stock: 15 },
+  { name: 'গরুর কলিজা (১ কেজি)', price: 700, stock: 20 },
+  { name: 'খাসির পায়া (সেট)', price: 400, stock: 15 },
+  { name: 'মুরগির গিলা-কলিজা (১ কেজি)', price: 150, stock: 30 },
+]
+
+// ─── আসবাবপত্র ────────────────────────────────────────────────────────────
+const furniture = [
+  { name: 'কাঠের খাট (সিঙ্গেল)', price: 8500, stock: 5 },
+  { name: 'কাঠের খাট (ডাবল)', price: 15000, stock: 5 },
+  { name: 'আলমারি (২ পাল্লা)', price: 12000, stock: 5 },
+  { name: 'ওয়ারড্রোব (৩ পাল্লা)', price: 14000, stock: 4 },
+  { name: 'ড্রেসিং টেবিল', price: 9000, stock: 5 },
+  { name: 'পড়ার টেবিল', price: 4500, stock: 8 },
+  { name: 'অফিস টেবিল', price: 7000, stock: 6 },
+  { name: 'কাঠের চেয়ার', price: 1800, stock: 15 },
+  { name: 'প্লাস্টিক চেয়ার', price: 600, stock: 30 },
+  { name: 'সোফা সেট (৫ সিট)', price: 35000, stock: 3 },
+  { name: 'ডাইনিং টেবিল (৬ চেয়ার সহ)', price: 28000, stock: 3 },
+  { name: 'টি-টেবিল', price: 3500, stock: 8 },
+  { name: 'শোকেস', price: 11000, stock: 4 },
+  { name: 'বুক শেলফ', price: 5500, stock: 6 },
+  { name: 'জুতার র‍্যাক', price: 2500, stock: 10 },
+  { name: 'টিভি ট্রলি', price: 4500, stock: 6 },
+  { name: 'কম্পিউটার টেবিল', price: 5000, stock: 6 },
+  { name: 'শিশুর দোলনা', price: 3500, stock: 5 },
+  { name: 'বেতের মোড়া (জোড়া)', price: 800, stock: 15 },
+  { name: 'তোশক (ডাবল)', price: 4500, stock: 8 },
+]
+
+// ─── গহনা ─────────────────────────────────────────────────────────────────
+const jewellery = [
+  { name: 'সোনার আংটি (১ আনা)', price: 9500, stock: 8 },
+  { name: 'সোনার কানের দুল (১ জোড়া)', price: 18000, stock: 6 },
+  { name: 'সোনার চেইন (২ আনা)', price: 45000, stock: 4 },
+  { name: 'সোনার নাকফুল', price: 4500, stock: 12 },
+  { name: 'রূপার আংটি', price: 1200, stock: 20 },
+  { name: 'রূপার নূপুর (জোড়া)', price: 2200, stock: 15 },
+  { name: 'ইমিটেশন নেকলেস সেট', price: 850, stock: 25 },
+  { name: 'ইমিটেশন চুড়ি (ডজন)', price: 250, stock: 40 },
+  { name: 'ইমিটেশন কানের দুল', price: 220, stock: 40 },
+  { name: 'ব্রেসলেট (মেয়েদের)', price: 350, stock: 30 },
+  { name: 'টিকলি', price: 280, stock: 25 },
+  { name: 'মাথার টায়রা', price: 450, stock: 20 },
+  { name: 'পায়েল (জোড়া)', price: 380, stock: 25 },
+  { name: 'লকেট সহ চেইন', price: 550, stock: 25 },
+  { name: 'পাথর বসানো আংটি', price: 480, stock: 25 },
+  { name: 'বিয়ের গহনা সেট (ভাড়া)', price: 3500, stock: 5 },
+  { name: 'গহনার বক্স', price: 450, stock: 20 },
+]
+
+// ─── সেলুন / পার্লার ──────────────────────────────────────────────────────
+const salon = [
+  { name: 'চুল কাটা (পুরুষ)', price: 100, stock: 100 },
+  { name: 'চুল কাটা (শিশু)', price: 80, stock: 100 },
+  { name: 'শেভ', price: 60, stock: 100 },
+  { name: 'চুল কাটা + শেভ প্যাকেজ', price: 140, stock: 100 },
+  { name: 'ফেসিয়াল (সাধারণ)', price: 400, stock: 50 },
+  { name: 'ফেসিয়াল (গোল্ড)', price: 800, stock: 30 },
+  { name: 'চুলে কালার (পুরুষ)', price: 350, stock: 40 },
+  { name: 'হেয়ার স্পা', price: 600, stock: 30 },
+  { name: 'হেড ম্যাসাজ', price: 150, stock: 80 },
+  { name: 'বডি ম্যাসাজ', price: 500, stock: 30 },
+  { name: 'ভ্রু প্লাক', price: 50, stock: 80 },
+  { name: 'ওয়াক্সিং (ফুল হ্যান্ড)', price: 300, stock: 40 },
+  { name: 'মেনিকিউর', price: 350, stock: 30 },
+  { name: 'পেডিকিউর', price: 400, stock: 30 },
+  { name: 'ব্রাইডাল মেকআপ', price: 5000, stock: 10 },
+  { name: 'পার্টি মেকআপ', price: 1500, stock: 20 },
+]
+
+// ─── মিষ্টির দোকান ────────────────────────────────────────────────────────
+const sweetshop = [
+  { name: 'রসগোল্লা (১ কেজি)', price: 320, stock: 30 },
+  { name: 'রসমালাই (১ কেজি)', price: 450, stock: 25 },
+  { name: 'চমচম (১ কেজি)', price: 380, stock: 25 },
+  { name: 'কালোজাম (১ কেজি)', price: 350, stock: 25 },
+  { name: 'সন্দেশ (১ কেজি)', price: 500, stock: 20 },
+  { name: 'ছানার জিলাপি (১ কেজি)', price: 400, stock: 20 },
+  { name: 'মিষ্টি দই (১ কেজি)', price: 280, stock: 30 },
+  { name: 'টক দই (১ কেজি)', price: 220, stock: 30 },
+  { name: 'লাড্ডু (১ কেজি)', price: 320, stock: 25 },
+  { name: 'বরফি (১ কেজি)', price: 420, stock: 20 },
+  { name: 'কাঁচাগোল্লা (১ কেজি)', price: 550, stock: 15 },
+  { name: 'বালুশাই (১ কেজি)', price: 350, stock: 20 },
+  { name: 'জিলাপি (১ কেজি)', price: 200, stock: 30 },
+  { name: 'নিমকি (৫০০ গ্রাম)', price: 120, stock: 30 },
+  { name: 'শনপাপড়ি (৫০০ গ্রাম)', price: 300, stock: 20 },
+]
+
 // ─── Category keyword → templates map ──────────────────────────────────────
 
 const CATEGORY_MAP = [
+  /* নির্দিষ্ট ক্যাটাগরি আগে — যেন "কাঁচাবাজার" আগে সবজিতে ধরা পড়ে, "বাজার" দিয়ে মুদিতে নয় */
+  { keywords: ['সবজি', 'vegetable', 'কাঁচাবাজার', 'কাঁচা বাজার', 'তরকারি'], templates: vegetables, img: '/products/vegetable.svg' },
+  { keywords: ['মাছ', 'fish'], templates: fish, img: '/products/fish.svg' },
+  { keywords: ['মাংস', 'meat', 'গোশত', 'কসাই'], templates: meat, img: '/products/meat.svg' },
+  { keywords: ['মিষ্টি', 'sweet', 'দধি', 'দই'], templates: sweetshop, img: '/products/sweets.svg' },
+  { keywords: ['আসবাব', 'furniture', 'ফার্নিচার'], templates: furniture, img: '/products/furniture.svg' },
+  { keywords: ['গহনা', 'jewel', 'জুয়েলারি', 'জুয়েলার্স', 'অলংকার'], templates: jewellery, img: '/products/jewellery.svg' },
+  { keywords: ['সেলুন', 'salon', 'পার্লার', 'parlour'], templates: salon, img: '/products/salon.svg' },
+  { keywords: ['চা', 'tea', 'টি স্টল'], templates: restaurant, img: '/products/food.svg' },
   { keywords: ['grocery', 'মুদি', 'কিরানা', 'খাদ্য', 'বাজার', 'ফুড'], templates: grocery, img: '/product-placeholder.svg' },
   { keywords: ['clothing', 'cloth', 'fashion', 'garment', 'কাপড়', 'পোশাক', 'বস্ত্র', 'ফ্যাশন'], templates: clothing, img: '/products/clothing.svg' },
   { keywords: ['pharmacy', 'medicine', 'ফার্মেসি', 'ওষুধ', 'মেডিসিন', 'স্বাস্থ্য', 'health'], templates: pharmacy, img: '/products/medicine.svg' },
-  { keywords: ['electronics', 'ইলেকট্রনিক', 'digital', 'tech', 'technology'], templates: electronics, img: '/products/electronics.svg' },
+  { keywords: ['electronics', 'ইলেকট্রনিক', 'digital', 'tech', 'technology', 'মোবাইল', 'mobile'], templates: electronics, img: '/products/electronics.svg' },
   { keywords: ['restaurant', 'food', 'খাবার', 'রেস্তোরাঁ', 'রেস্টুরেন্ট', 'হোটেল', 'ক্যাফে', 'cafe', 'snacks'], templates: restaurant, img: '/products/food.svg' },
-  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'কসমেটিকস', 'বিউটি', 'makeup', 'skincare'], templates: cosmetics, img: '/products/cosmetics.svg' },
-  { keywords: ['stationery', 'stationary', 'স্টেশনারি', 'office', 'অফিস', 'book', 'বই', 'education', 'school'], templates: stationery, img: '/products/stationery.svg' },
+  { keywords: ['cosmetics', 'beauty', 'cosmetic', 'কসমেটিকস', 'বিউটি', 'makeup', 'skincare', 'প্রসাধনী'], templates: cosmetics, img: '/products/cosmetics.svg' },
+  { keywords: ['stationery', 'stationary', 'স্টেশনারি', 'office', 'অফিস', 'book', 'বই', 'education', 'school', 'লাইব্রেরি'], templates: stationery, img: '/products/stationery.svg' },
   { keywords: ['hardware', 'হার্ডওয়্যার', 'নির্মাণ', 'construction', 'tools', 'building'], templates: hardware, img: '/products/tools.svg' },
   { keywords: ['sanitary', 'স্যানিটারি', 'bathroom', 'plumbing', 'bath', 'পাইপ', 'ফিটিংস'], templates: sanitary, img: '/products/sanitary.svg' },
   { keywords: ['electrical', 'বৈদ্যুতিক', 'electric', 'wiring', 'তার', 'সুইচ', 'ইলেকট্রিক'], templates: electrical, img: '/products/electrical.svg' },
 ]
 
-/* ── Product-name keyword → tiny SVG illustration (each <1 KB, served from /public) ── */
+/* ── Product-name keyword → tiny SVG illustration (each <1 KB, served from /public) ──
+   ⚠ ক্রম গুরুত্বপূর্ণ — প্রথম match জেতে। নির্দিষ্ট শব্দ আগে, সাধারণ শব্দ পরে। */
 const IMG_RULES = [
-  { img: '/products/rice.svg',   kw: ['চাল'] },
-  { img: '/products/flour.svg',  kw: ['আটা', 'ময়দা', 'সুজি'] },
-  { img: '/products/dal.svg',    kw: ['ডাল'] },
-  { img: '/products/oil.svg',    kw: ['তেল'] },
-  { img: '/products/sauce.svg',  kw: ['সস'] },
-  { img: '/products/sugar.svg',  kw: ['চিনি', 'লবণ'] },
-  { img: '/products/milk.svg',   kw: ['দুধ', 'মিল্ক', 'হরলিক্স', 'বোর্নভিটা'] },
-  { img: '/products/tea.svg',    kw: ['চা ', 'চা প', 'চা ব', 'কফি'] },
-  { img: '/products/jar.svg',    kw: ['ঘি', 'মধু'] },
-  { img: '/products/snacks.svg', kw: ['চিড়া', 'মুড়ি', 'খই'] },
-  { img: '/products/nuts.svg',   kw: ['বাদাম', 'কিশমিশ', 'খেজুর', 'নারকেল'] },
-  { img: '/products/spice.svg',  kw: ['গুঁড়া', 'মসলা', 'মরিচ', 'জিরা', 'এলাচ', 'দারুচিনি', 'লবঙ্গ', 'তেজপাতা', 'ধনে', 'হলুদ', 'সরিষা', 'তেঁতুল', 'আমচুর', 'আদা', 'রসুন'] },
+  /* ── খাবার / মুদি ── */
+  { img: '/products/flatbread.svg', kw: ['রুটি', 'পরোটা', 'লুচি', 'পুরি', 'নান '] },
+  { img: '/products/rice.svg',      kw: ['চাল'] },
+  { img: '/products/biryani.svg',   kw: ['বিরিয়ানি', 'পোলাও', 'খিচুড়ি', 'ভাত', 'তেহারি', 'ফ্রাইড রাইস', 'থালি'] },
+  { img: '/products/flour.svg',     kw: ['আটা', 'ময়দা', 'সুজি'] },
+  { img: '/products/dal.svg',       kw: ['ডাল'] },
+  { img: '/products/oil.svg',       kw: ['তেল'] },
+  { img: '/products/sauce.svg',     kw: ['সস'] },
+  { img: '/products/sugar.svg',     kw: ['চিনি', 'লবণ'] },
+  { img: '/products/milk.svg',      kw: ['দুধ', 'মিল্ক', 'হরলিক্স', 'বোর্নভিটা'] },
+  { img: '/products/tea.svg',       kw: ['চা ', 'কফি'] },
+  { img: '/products/jar.svg',       kw: ['ঘি', 'মধু'] },
+  { img: '/products/snacks.svg',    kw: ['চিড়া', 'মুড়ি', 'খই'] },
+  { img: '/products/nuts.svg',      kw: ['বাদাম', 'কিশমিশ', 'খেজুর', 'নারকেল'] },
+  { img: '/products/sweets.svg',    kw: ['মিষ্টি', 'রসগোল্লা', 'রসমালাই', 'জিলাপি', 'হালুয়া', 'সেমাই', 'পায়েস', 'পিঠা', 'কেক', 'পেস্ট্রি', 'পুডিং', 'আইসক্রিম', 'ফালুদা', 'ক্যারামেল', 'দই'] },
+  { img: '/products/fastfood.svg',  kw: ['বার্গার', 'পিজ্জা', 'স্যান্ডউইচ', 'হটডগ', 'নাগেটস', 'শাওয়ারমা', 'চাউমিন', 'নুডলস', 'সিঙ্গারা', 'সমুচা', 'চপ', 'পেঁয়াজু', 'বেগুনি', 'ফুচকা', 'চটপটি', 'ফ্রেঞ্চ ফ্রাই'] },
+  { img: '/products/drink.svg',     kw: ['জুস', 'শরবত', 'বোরহানি', 'লাচ্ছি', 'মাঠা', 'কোকাকোলা', 'মিনারেল', 'আখের রস', 'ডাবের'] },
+
+  /* ── মাছ / মাংস / সবজি ── */
+  { img: '/products/fish.svg', kw: ['মাছ', 'ইলিশ', 'রুই', 'কাতলা', 'চিংড়ি', 'পাঙাশ', 'তেলাপিয়া', 'পাবদা', 'টেংরা', 'শুঁটকি', 'বোয়াল', 'মাগুর', 'কার্প', 'মৃগেল', 'শোল', 'কৈ '] },
+  { img: '/products/meat.svg', kw: ['মাংস', 'মুরগি', 'চিকেন', 'খাসি', 'গরুর', 'হাঁস', 'কবুতর', 'কলিজা', 'গোশত', 'পায়া', 'বিফ', 'মটন'] },
+  { img: '/products/vegetable.svg', kw: ['আলু', 'পেঁয়াজ', 'টমেটো', 'বেগুন', 'শসা', 'লাউ', 'কুমড়া', 'ঢেঁড়স', 'করলা', 'পটল', 'বরবটি', 'সিম (', 'ফুলকপি', 'বাঁধাকপি', 'গাজর', 'মুলা', 'শাক', 'পেঁপে', 'কচু', 'লেবু', 'ধনেপাতা', 'চিচিঙ্গা', 'কাঁচা মরিচ', 'সবজি'] },
+
+  /* ── ফার্মেসি ── */
+  { img: '/products/medicine.svg',  kw: ['ট্যাবলেট', 'ক্যাপসুল', 'ওষুধ', 'লজেন্স', 'ভিটামিন', 'ইনহেলার', 'ইনসুলিন'] },
+  { img: '/products/syrup.svg',     kw: ['সিরাপ', 'ড্রপ', 'স্যালাইন', 'সলিউশন', 'টিংচার'] },
+  { img: '/products/firstaid.svg',  kw: ['ব্যান্ডেজ', 'গজ ', 'তুলা', 'প্লাস্টার', 'সার্জিকাল', 'ফার্স্ট এইড', 'স্যানিটাইজার', 'মাস্ক (', 'গ্লাভস', 'সিরিঞ্জ', 'নিডেল', 'ওয়াইপ'] },
+  { img: '/products/meddevice.svg', kw: ['থার্মোমিটার', 'প্রেশার মেশিন', 'গ্লুকোমিটার', 'অক্সিমিটার', 'স্টেথোস্কোপ', 'নেবুলাইজার'] },
+
+  /* ── সেলুন (মেকআপ rule-এর আগে — "ব্রাইডাল মেকআপ" সেলুনে যাবে) ── */
+  { img: '/products/salon.svg', kw: ['চুল কাটা', 'শেভ', 'ফেসিয়াল', 'ম্যাসাজ', 'মেনিকিউর', 'পেডিকিউর', 'ওয়াক্সিং', 'ভ্রু প্লাক', 'ব্রাইডাল', 'পার্টি মেকআপ', 'হেয়ার স্পা'] },
+
+  /* ── কসমেটিকস ── */
+  { img: '/products/makeup.svg',    kw: ['লিপস্টিক', 'লিপ ', 'নেইল', 'কাজল', 'মাসকারা', 'আইলাইনার', 'আই শ্যাডো', 'ফাউন্ডেশন', 'কনসিলার', 'ব্লাশ', 'মেকআপ', 'আইব্রো', 'কনট্যুর', 'ব্রোঞ্জার', 'আইল্যাশ'] },
+  { img: '/products/perfume.svg',   kw: ['পারফিউম', 'বডি স্প্রে', 'আতর', 'ডিওডোরেন্ট', 'অ্যান্টিপার্সপিরেন্ট'] },
+  { img: '/products/haircare.svg',  kw: ['শ্যাম্পু', 'কন্ডিশনার', 'হেয়ার', 'মেহেদি'] },
+  { img: '/products/cosmetics.svg', kw: ['ক্রিম', 'লোশন', 'সিরাম', 'ফেসওয়াশ', 'ফেস ', 'ফেসপ্যাক', 'স্ক্রাব', 'টোনার', 'ময়েশ্চারাইজার', 'সানস্ক্রিন', 'সাবান', 'বডি ', 'গ্লিসারিন', 'অ্যালোভেরা', 'মাস্ক', 'পাউডার', 'ব্লিচ', 'ওয়াক্স', 'রোজওয়াটার', 'চন্দন'] },
+
+  /* ── মসলা (কসমেটিকসের পরে — "হলুদ ফেস প্যাক" আগেই ধরা পড়ে) ── */
+  { img: '/products/spice.svg', kw: ['গুঁড়া', 'মসলা', 'মরিচ', 'জিরা', 'এলাচ', 'দারুচিনি', 'লবঙ্গ', 'তেজপাতা', 'ধনে', 'হলুদ', 'সরিষা', 'তেঁতুল', 'আমচুর', 'আদা', 'রসুন'] },
+
+  /* ── পোশাক ── */
+  { img: '/products/saree.svg',    kw: ['শাড়ি', 'কামিজ', 'কুর্তি', 'ফ্রক', 'গাউন', 'বোরখা', 'আবায়া', 'হিজাব', 'ওড়না', 'নিকাব', 'ব্লাউজ', 'পেটিকোট', 'লেগিংস'] },
+  { img: '/products/panjabi.svg',  kw: ['পাঞ্জাবি', 'ফতুয়া', 'শেরওয়ানি', 'লুঙ্গি'] },
+  { img: '/products/pants.svg',    kw: ['প্যান্ট', 'জিন্স', 'পাজামা', 'শর্টস', 'ট্রাউজার'] },
+  { img: '/products/winter.svg',   kw: ['সোয়েটার', 'জ্যাকেট', 'কম্বল', 'শাল', 'কোট', 'ব্লেজার'] },
+  { img: '/products/bedding.svg',  kw: ['তোয়ালে', 'গামছা', 'চাদর', 'বেড কভার', 'বালিশ', 'জায়নামাজ', 'মশার নেট'] },
+  { img: '/products/cap.svg',      kw: ['টুপি', 'ক্যাপ'] },
+  { img: '/products/clothing.svg', kw: ['শার্ট', 'গেঞ্জি', 'পোশাক', 'ড্রেস', 'আন্ডারওয়্যার', 'মোজা', 'ট্র্যাকস্যুট', 'কটি'] },
+
+  /* ── ইলেকট্রনিকস / ইলেকট্রিক্যাল ── */
+  { img: '/products/computer.svg',   kw: ['ল্যাপটপ', 'মাউস', 'কীবোর্ড', 'মনিটর', 'পেনড্রাইভ', 'মেমোরি', 'এইচডিডি', 'রাউটার', 'ওয়েবক্যাম', 'প্রিন্টার', 'ক্যালকুলেটর', 'ডিভিআর', 'সিসিটিভি', 'গেমিং'] },
+  { img: '/products/audio.svg',      kw: ['হেডফোন', 'ইয়ারফোন', 'স্পিকার', 'হেডসেট', 'মাইক্রোফোন'] },
+  { img: '/products/wire.svg',       kw: ['তার (', 'জিআই তার', 'ইলেকট্রিক তার', 'তার সংযোগ'] },
+  { img: '/products/charger.svg',    kw: ['চার্জার', 'ক্যাবল', 'কর্ড', 'অ্যাডাপ্টার', 'মাল্টিপ্লাগ', 'পাওয়ার ব্যাংক', 'ওটিজি', 'পাওয়ার স্ট্রিপ'] },
+  { img: '/products/fan.svg',        kw: ['ফ্যান'] },
+  { img: '/products/battery.svg',    kw: ['ব্যাটারি', 'আইপিএস', 'ইউপিএস', 'স্টেবিলাইজার'] },
+  { img: '/products/clock.svg',      kw: ['ঘড়ি'] },
+  { img: '/products/appliance.svg',  kw: ['কুকার', 'কেটল', 'ব্লেন্ডার', 'টোস্টার', 'ওভেন', 'আয়রন', 'ড্রায়ার', 'স্ট্রেইটনার', 'শেভার', 'গিজার', 'হিটার'] },
+  { img: '/products/electrical.svg', kw: ['বাল্ব', 'টিউব লাইট', 'ডাউনলাইট', 'স্পটলাইট', 'টর্চ', 'এলইডি', 'LED', 'সোলার', 'এনার্জি'] },
+  { img: '/products/switch.svg',     kw: ['সুইচ', 'সকেট', 'ব্রেকার', 'ফিউজ', 'জাংশন', 'রেগুলেটর', 'ডোরবেল', 'ডোর বেল', 'ইন্টারকম', 'সেন্সর', 'ডিটেক্টর', 'মাল্টিমিটার'] },
+
+  /* ── আসবাবপত্র / গহনা ── */
+  { img: '/products/furniture.svg', kw: ['খাট', 'আলমারি', 'সোফা', 'ওয়ারড্রোব', 'শোকেস', 'শেলফ', 'র‍্যাক', 'ট্রলি', 'দোলনা', 'মোড়া', 'তোশক', 'চেয়ার', 'টেবিল'] },
+  { img: '/products/jewellery.svg', kw: ['চুড়ি', 'দুল', 'নেকলেস', 'আংটি', 'নূপুর', 'গহনা', 'লকেট', 'টিকলি', 'টায়রা', 'পায়েল', 'সিঁদুর', 'ইমিটেশন', 'নাকফুল', 'সোনার', 'রূপার', 'ব্রেসলেট'] },
+
+  /* ── স্টেশনারি ── */
+  { img: '/products/pen.svg',      kw: ['কলম', 'পেনসিল', 'বলপয়েন্ট', 'জেল পেন', 'মার্কার', 'চক ('] },
+  { img: '/products/bag.svg',      kw: ['ব্যাগ'] },
+  { img: '/products/notebook.svg', kw: ['খাতা', 'নোটবুক', 'ডায়েরি', 'প্যাড', 'পেপার', 'কাগজ', 'এনভেলোপ', 'ফাইল', 'বাইন্ডার', 'বই', 'রেজিস্ট', 'মেমো', 'রসিদ', 'স্কেচ', 'ক্যালেন্ডার', 'কার্ড', 'স্টিকার', 'লেবেল', 'ফোল্ডার'] },
+
+  /* ── হার্ডওয়্যার / স্যানিটারি ── */
+  { img: '/products/paint.svg',    kw: ['পেইন্ট', 'রং', 'প্রাইমার', 'থিনার', 'স্যান্ডপেপার', 'ওয়াটারকালার', 'পোস্টার কালার', 'পেস্টেল'] },
+  { img: '/products/bathroom.svg', kw: ['কমোড', 'বেসিন', 'শাওয়ার', 'বাথটাব', 'মিরর', 'ইউরিনাল', 'ফ্লাশ', 'টয়লেট', 'বাথরুম', 'টাইলস', 'ড্রেন'] },
+  { img: '/products/pipe.svg',     kw: ['পাইপ', 'পাম্প', 'ট্যাংক', 'ভালভ', 'ভাল্ভ', 'ফিটিং', 'এলবো', 'জয়েন্ট', 'কাপলিং', 'ট্র্যাপ', 'সিফন', 'হোস', 'নোজেল'] },
+  { img: '/products/lock.svg',     kw: ['লক', 'প্যাডলক', 'হ্যান্ডেল', 'কব্জা', 'হিঞ্জ', 'তালা'] },
+  { img: '/products/brick.svg',    kw: ['সিমেন্ট', 'ইট (', 'বালি (', 'রড (', 'পুটি', 'গ্রাউট', 'অ্যাডহেসিভ'] },
+  { img: '/products/tools.svg',    kw: ['হ্যামার', 'ড্রাইভার', 'প্লায়ার', 'রেঞ্চ', 'স্পানার', 'চিজেল', 'হ্যাকসো', 'ড্রিল', 'গ্রাইন্ড', 'ওয়েল্ডিং', 'মেজারিং', 'স্ক্রু', 'পেরেক', 'বোল্ট', 'মই'] },
 ]
 
 function imageForProduct(name, fallback) {

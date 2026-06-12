@@ -21,9 +21,6 @@ export default function NotificationBell() {
   // Subscribe to real-time updates (no-ops gracefully if table missing)
   useRealtimeNotifications()
 
-  // notifications table may not exist yet — render nothing rather than crash
-  if (notifError) return null
-  
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -34,6 +31,10 @@ export default function NotificationBell() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // notifications table may not exist yet — render nothing rather than crash
+  // (must come AFTER all hooks — Rules of Hooks)
+  if (notifError) return null
   
   const handleNotificationClick = (notification) => {
     if (!notification.is_read) {
