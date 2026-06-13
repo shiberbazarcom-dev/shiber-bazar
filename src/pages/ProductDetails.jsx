@@ -270,7 +270,7 @@ export default function ProductDetails() {
                 </button>
 
                 {(shop?.whatsapp || shop?.phone) && (
-                  <a href={whatsappUrl(shop.whatsapp || shop.phone)}
+                  <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
                     target="_blank" rel="noreferrer"
                     className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
                     style={{ background: '#25d366' }}>
@@ -432,7 +432,7 @@ export default function ProductDetails() {
             অর্ডার করুন
           </button>
           {(shop?.whatsapp || shop?.phone) && (
-            <a href={whatsappUrl(shop.whatsapp || shop.phone)}
+            <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
               target="_blank" rel="noreferrer"
               className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
