@@ -147,16 +147,17 @@ export default function ManageAds() {
 
       {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[92dvh] sm:max-h-[90vh]">
+            {/* Sticky header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+              <h2 className="font-bold text-gray-800 text-base">
                 {editing ? '✏️ বিজ্ঞাপন সম্পাদনা' : '➕ নতুন বিজ্ঞাপন'}
               </h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">✕</button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form id="ad-form" onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1">
               {/* Title */}
               <div>
                 <label className="form-label">শিরোনাম *</label>
@@ -193,8 +194,10 @@ export default function ManageAds() {
               </div>
 
               {/* Size hint */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl text-xs text-blue-700">
-                <span className="text-base">📐</span>
+              <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-50 rounded-xl text-xs text-blue-700">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 <span>
                   <strong>{spec.label}</strong> — প্রস্তাবিত আকার: <strong>{spec.size}</strong> ({spec.hint})
                 </span>
@@ -279,18 +282,23 @@ export default function ManageAds() {
                 <span className="text-sm font-medium text-gray-700">সক্রিয় রাখুন</span>
               </label>
 
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
-                  বাতিল
-                </button>
-                <button type="submit" disabled={isPending}
-                  className="flex-1 py-2.5 text-white rounded-xl text-sm font-semibold disabled:opacity-60"
-                  style={{ background: GREEN }}>
-                  {isPending ? '⏳...' : editing ? 'আপডেট করুন' : 'তৈরি করুন'}
-                </button>
-              </div>
             </form>
+
+            {/* Sticky footer buttons */}
+            <div className="flex gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0 bg-white">
+              <button type="button" onClick={() => setShowForm(false)}
+                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+                বাতিল
+              </button>
+              <button
+                type="submit"
+                form="ad-form"
+                disabled={isPending}
+                className="flex-1 py-2.5 text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+                style={{ background: GREEN }}>
+                {isPending ? '⏳...' : editing ? 'আপডেট করুন' : 'তৈরি করুন'}
+              </button>
+            </div>
           </div>
         </div>
       )}
