@@ -1,18 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
-import { format } from 'date-fns'
+import { format, formatDistance } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead } from '../../hooks/useChat'
 
-function MessageBubble({ msg, isOwn }) {
+function MessageGroup({ group, isOwn, senderName, senderInitial }) {
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-1.5`}>
-      <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-        isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
-      }`}>
-        <p className="break-words">{msg.content}</p>
-        <p className={`text-[10px] mt-1 ${isOwn ? 'text-blue-200' : 'text-gray-400'} text-right`}>
-          {format(new Date(msg.created_at), 'h:mm a')}
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 mb-3 animate-fadeIn`}>
+      {!isOwn && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto">
+          {senderInitial}
+        </div>
+      )}
+      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[70%]`}>
+        {!isOwn && (
+          <p className="text-xs text-gray-500 px-3">{senderName}</p>
+        )}
+        <div className="flex flex-col gap-0.5">
+          {group.map((msg, idx) => (
+            <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm leading-relaxed ${
+                isOwn
+                  ? 'bg-blue-500 text-white rounded-br-sm'
+                  : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
+              }`}>
+                <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+              </div>
+              {idx === group.length - 1 && isOwn && msg.is_read && (
+                <span className="text-xs text-green-600 font-bold">✓✓</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className={`text-xs mt-1 px-3 ${isOwn ? 'text-gray-400' : 'text-gray-500'}`}>
+          {format(new Date(group[group.length - 1].created_at), 'h:mm a')}
         </p>
       </div>
     </div>
@@ -54,16 +75,42 @@ export default function ChatWindow({ conversation, otherName }) {
     )
   }
 
+  // Group messages by sender and date
   const grouped = []
   let lastDate = null
-  messages.forEach(msg => {
+  let lastSenderId = null
+  let currentGroup = []
+
+  messages.forEach((msg, idx) => {
     const dateKey = format(new Date(msg.created_at), 'yyyy-MM-dd')
+
+    // If date changed, push date separator
     if (dateKey !== lastDate) {
+      if (currentGroup.length > 0) {
+        grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
+        currentGroup = []
+      }
       grouped.push({ type: 'date', key: dateKey, label: format(new Date(msg.created_at), 'd MMMM yyyy', { locale: bn }) })
       lastDate = dateKey
+      lastSenderId = null
     }
-    grouped.push({ type: 'msg', ...msg })
+
+    // If sender changed, start new group
+    if (msg.sender_id !== lastSenderId) {
+      if (currentGroup.length > 0) {
+        grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
+      }
+      currentGroup = [msg]
+      lastSenderId = msg.sender_id
+    } else {
+      currentGroup.push(msg)
+    }
   })
+
+  // Push last group
+  if (currentGroup.length > 0) {
+    grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -77,21 +124,29 @@ export default function ChatWindow({ conversation, otherName }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 bg-gray-50 space-y-0.5">
+      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
         {grouped.length === 0 && (
           <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
         )}
-        {grouped.map(item =>
-          item.type === 'date' ? (
-            <div key={item.key} className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400 px-2">{item.label}</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-          ) : (
-            <MessageBubble key={item.id} msg={item} isOwn={item.sender_id === user?.id} />
-          )
-        )}
+        <div className="space-y-2">
+          {grouped.map((item, idx) =>
+            item.type === 'date' ? (
+              <div key={item.key} className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-gray-300" />
+                <span className="text-xs text-gray-500 px-2 font-medium">{item.label}</span>
+                <div className="flex-1 h-px bg-gray-300" />
+              </div>
+            ) : (
+              <MessageGroup
+                key={`group-${idx}`}
+                group={item.group}
+                isOwn={item.senderId === user?.id}
+                senderName={item.group[0].sender?.full_name || 'ব্যবহারকারী'}
+                senderInitial={(item.group[0].sender?.full_name || '?')[0].toUpperCase()}
+              />
+            )
+          )}
+        </div>
         <div ref={bottomRef} />
       </div>
 
