@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '../../lib/utils'
 import { useOrderStats, useShopOrderStats } from '../../hooks/useOrders'
-import { useUnreadMessageCount } from '../../hooks/useChat'
+import { useUnreadMessageCount, useUpdateLastSeen } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -255,6 +255,7 @@ export default function DashboardLayout({ type = 'user' }) {
   const { data: adminStats }     = useOrderStats()        // admin pending count
   const { data: shopOwnerStats } = useShopOrderStats()    // shop owner forwarded count
   const { data: unreadMessages = 0 } = useUnreadMessageCount()
+  useUpdateLastSeen()
 
   const adminBadge     = type === 'admin'               ? (adminStats?.pending    || 0) : 0
   const ownerBadge     = type !== 'admin' && isShopOwner ? (shopOwnerStats?.confirmed || 0) : 0

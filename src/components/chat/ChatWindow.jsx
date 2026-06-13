@@ -6,10 +6,10 @@ import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, 
 
 function PresenceStatus({ userId }) {
   const lastSeen = useOtherUserPresence(userId)
-  if (!lastSeen) return <p className="text-xs text-gray-400">অফলাইন</p>
+  if (!lastSeen) return null
 
   const diff = Date.now() - new Date(lastSeen).getTime()
-  const isOnline = diff < 60000 // within 1 minute = online
+  const isOnline = diff < 90000 // within 90s = online
 
   if (isOnline) return (
     <p className="text-xs text-green-500 font-medium flex items-center gap-1">
@@ -20,8 +20,7 @@ function PresenceStatus({ userId }) {
 
   return (
     <p className="text-xs text-gray-400">
-      শেষ দেখা{' '}
-      {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}
+      শেষ দেখা {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}
     </p>
   )
 }
