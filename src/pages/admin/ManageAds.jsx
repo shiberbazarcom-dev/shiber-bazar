@@ -20,11 +20,11 @@ const EMPTY_FORM = {
 
 const AD_TYPE_LABELS = { banner: '🖼️ ব্যানার', sidebar: '📌 সাইডবার', popup: '🪟 পপআপ' }
 
-/* ── Recommended size & aspect ratio per type ── */
+/* ── Recommended size & height per type ── */
 const AD_TYPE_SPECS = {
-  banner:  { label: '🖼️ ব্যানার',  size: '1200 × 300 px',  ratio: 'aspect-[4/1]',    hint: 'প্রশস্ত আনুভূমিক ব্যানার' },
-  sidebar: { label: '📌 সাইডবার', size: '300 × 600 px',   ratio: 'aspect-[1/2]',    hint: 'লম্বা পার্শ্ব বিজ্ঞাপন' },
-  popup:   { label: '🪟 পপআপ',    size: '600 × 400 px',   ratio: 'aspect-[3/2]',    hint: 'মাঝারি পপআপ উইন্ডো' },
+  banner:  { label: '🖼️ ব্যানার',  size: '1200 × 300 px',  height: 'h-28',  hint: 'প্রশস্ত আনুভূমিক ব্যানার' },
+  sidebar: { label: '📌 সাইডবার', size: '300 × 600 px',   height: 'h-48',  hint: 'লম্বা পার্শ্ব বিজ্ঞাপন' },
+  popup:   { label: '🪟 পপআপ',    size: '600 × 400 px',   height: 'h-40',  hint: 'মাঝারি পপআপ উইন্ডো' },
 }
 
 export default function ManageAds() {
@@ -67,7 +67,7 @@ export default function ManageAds() {
     setShowForm(true)
   }
 
-  /* ── Image file upload ── */
+  /* ── Image file upload — tries 'ads' bucket, falls back to 'shops' ── */
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -75,18 +75,39 @@ export default function ManageAds() {
     if (!check.ok) return toast.error(check.message)
     const compressed = await compressImage(file)
 
-    // local preview instantly
     setPreviewUrl(URL.createObjectURL(compressed))
     setUploading(true)
     try {
-      const url = await uploadImage(compressed, 'ads')
+      let url
+      try {
+        url = await uploadImage(compressed, 'ads')
+      } catch {
+        // 'ads' bucket not created yet — use 'shops' bucket as fallback
+        url = await uploadImage(compressed, 'shops')
+      }
       set('image_url', url)
       toast.success('ছবি আপলোড হয়েছে ✅')
-    } catch {
-      toast.error('ছবি আপলোড ব্যর্থ হয়েছে')
+    } catch (err) {
+      toast.error('ছবি আপলোড ব্যর্থ হয়েছে: ' + (err.message || ''))
       setPreviewUrl('')
+      set('image_url', '')
     } finally {
       setUploading(false)
+    }
+  }
+
+  /* ── Sanitise form before sending to Supabase ── */
+  function buildPayload() {
+    return {
+      title:       form.title.trim(),
+      description: form.description.trim() || null,
+      image_url:   form.image_url   || null,
+      target_url:  form.target_url.trim() || null,
+      ad_type:     form.ad_type,
+      is_active:   form.is_active,
+      sort_order:  Number(form.sort_order) || 0,
+      start_date:  form.start_date || null,
+      end_date:    form.end_date   || null,
     }
   }
 
@@ -94,18 +115,30 @@ export default function ManageAds() {
     e.preventDefault()
     if (!form.title.trim()) return toast.error('বিজ্ঞাপনের শিরোনাম দিন')
     try {
+      const payload = buildPayload()
       if (editing) {
-        await updateAd.mutateAsync({ id: editing, ...form })
+        await updateAd.mutateAsync({ id: editing, ...payload })
         toast.success('বিজ্ঞাপন আপডেট হয়েছে ✅')
       } else {
-        await createAd.mutateAsync(form)
+        await createAd.mutateAsync(payload)
         toast.success('নতুন বিজ্ঞাপন তৈরি হয়েছে ✅')
       }
       setShowForm(false)
       setEditing(null)
       setForm(EMPTY_FORM)
-    } catch {
-      toast.error('সমস্যা হয়েছে')
+      setPreviewUrl('')
+    } catch (err) {
+      console.error('Ad save error:', err)
+      const msg = err?.message || ''
+      if (msg.includes('column') && msg.includes('does not exist')) {
+        toast.error('Supabase এ migration_ads.sql রান করুন — নতুন column নেই')
+      } else if (msg.includes('violates') || msg.includes('policy')) {
+        toast.error('Permission নেই — RLS policy চেক করুন')
+      } else if (msg.includes('invalid input') && msg.includes('date')) {
+        toast.error('তারিখ ফরম্যাট ভুল')
+      } else {
+        toast.error('সমস্যা হয়েছে: ' + (msg || 'অজানা ত্রুটি'))
+      }
     }
   }
 
@@ -210,33 +243,31 @@ export default function ManageAds() {
                 {/* Upload zone */}
                 <div
                   onClick={() => !uploading && fileRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl cursor-pointer transition-colors overflow-hidden
-                    ${uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'}`}>
-
-                  {/* Preview with correct aspect ratio */}
+                  className={`relative w-full ${spec.height} border-2 border-dashed rounded-xl cursor-pointer transition-colors overflow-hidden flex items-center justify-center
+                    ${uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'}`}
+                >
                   {previewUrl ? (
-                    <div className={`w-full ${spec.ratio} relative`}>
-                      <img src={previewUrl} alt=""
-                        className="absolute inset-0 w-full h-full object-cover" />
-                      {uploading && (
-                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                          <div className="w-6 h-6 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                    <>
+                      <img src={previewUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                      {uploading ? (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
+                          <div className="w-7 h-7 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                         </div>
-                      )}
-                      {/* Change button overlay */}
-                      {!uploading && (
-                        <div className="absolute inset-0 bg-black/0 hover:bg-black/30 flex items-center justify-center transition-all group">
+                      ) : (
+                        <div className="absolute inset-0 bg-black/0 hover:bg-black/40 flex items-center justify-center transition-all group z-10">
                           <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/60 px-3 py-1.5 rounded-lg">
                             ✏️ ছবি পরিবর্তন করুন
                           </span>
                         </div>
                       )}
-                    </div>
+                    </>
                   ) : (
-                    <div className={`w-full ${spec.ratio} flex flex-col items-center justify-center gap-2 text-gray-400`}>
-                      <span className="text-3xl">🖼️</span>
-                      <p className="text-sm font-medium">ছবি আপলোড করুন</p>
-                      <p className="text-xs">{spec.size} · JPG, PNG, WebP · সর্বোচ্চ ৫ MB</p>
+                    <div className="flex flex-col items-center gap-1.5 text-gray-400 pointer-events-none">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-500">ছবি আপলোড করুন</p>
+                      <p className="text-xs text-gray-400">{spec.size} · JPG, PNG, WebP · সর্বোচ্চ ৫ MB</p>
                     </div>
                   )}
                 </div>
