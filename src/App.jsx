@@ -37,6 +37,9 @@ const SubmitService      = lazy(() => import('./pages/services/SubmitService'))
 const MyServices         = lazy(() => import('./pages/dashboard/MyServices'))
 const ManageServices     = lazy(() => import('./pages/admin/ManageServices'))
 
+/* ── ইউনিয়ন পরিষদ ── */
+const HatkhulaUnion         = lazy(() => import('./pages/union/HatkhulaUnion'))
+
 /* ── স্থানীয় সেবাসমূহ (Local Services Directory — independent module) ── */
 const LocalServices         = lazy(() => import('./pages/localservices/LocalServices'))
 const LocalServiceCategory  = lazy(() => import('./pages/localservices/LocalServiceCategory'))
@@ -171,6 +174,7 @@ export default function App() {
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
             {/* ── সেবাসমূহ — স্থানীয় সেবা ডিরেক্টরি (services page এখন এটাই) ── */}
+            <Route path="/hatkhula-union"  element={<PublicLayout><HatkhulaUnion /></PublicLayout>} />
             <Route path="/services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
             <Route path="/services/detail/:id"         element={<PublicLayout><ServiceDetail /></PublicLayout>} />
             <Route path="/services/provider/:userId"   element={<PublicLayout><ProviderProfile /></PublicLayout>} />
