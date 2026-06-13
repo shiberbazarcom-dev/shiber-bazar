@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFeaturedShops, useLatestShops, useMarketStats } from '../hooks/useShops'
 import { useCategoryWithCount } from '../hooks/useCategories'
@@ -36,94 +36,127 @@ function AnimatedCounter({ value, suffix = '' }) {
   return <span>{count.toLocaleString('bn-BD')}{suffix}</span>
 }
 
-// ── Banner Ad (full image + text overlay, auto-slideshow) ──────────
+// ── Banner Ad — modern e-commerce style ──────────────────────────
 function BannerAd({ ads }) {
   const [current, setCurrent] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const [paused, setPaused]   = useState(false)
+  const timer = useRef(null)
 
+  const startTimer = () => {
+    clearInterval(timer.current)
+    if (ads.length > 1) {
+      timer.current = setInterval(() => setCurrent(p => (p + 1) % ads.length), 5000)
+    }
+  }
+
+  useEffect(() => { startTimer(); return () => clearInterval(timer.current) }, [ads.length])
   useEffect(() => {
-    if (ads.length <= 1 || isPaused) return
-    const t = setInterval(() => setCurrent(p => (p + 1) % ads.length), 5000)
-    return () => clearInterval(t)
-  }, [ads.length, isPaused])
+    if (paused) clearInterval(timer.current)
+    else startTimer()
+  }, [paused])
 
   if (!ads.length) return null
   const ad = ads[current]
 
-  const inner = (
-    <div
-      className="relative rounded-2xl overflow-hidden shadow-xl min-h-[180px] sm:min-h-[220px]"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {/* Background: image if available, else gradient */}
-      {ad.image_url ? (
-        <img
-          src={ad.image_url}
-          alt={ad.title}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
-      )}
+  function go(idx) {
+    setCurrent((idx + ads.length) % ads.length)
+    startTimer()
+  }
 
-      {/* Overlay — stronger when image present so text stays readable */}
-      <div className={`absolute inset-0 ${ad.image_url ? 'bg-black/45' : 'bg-black/10'}`} />
+  /* ── Single slide ── */
+  function Slide({ a, active }) {
+    const wrap = (children) => a.target_url
+      ? <a href={a.target_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">{children}</a>
+      : <div className="w-full h-full">{children}</div>
 
-      {/* Text content */}
-      <div className="relative z-10 px-6 sm:px-10 py-8 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex-1 text-center md:text-left">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 mb-3">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            বিজ্ঞাপন
-          </span>
-          <h3 className="text-xl sm:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-sm">
-            {ad.title}
-          </h3>
-          {ad.description && (
-            <p className="text-white/85 text-sm sm:text-base mb-4 max-w-lg drop-shadow-sm">
-              {ad.description}
-            </p>
-          )}
-          {ad.target_url ? (
-            <a
-              href={ad.target_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-brand-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all hover:scale-105 active:scale-95 shadow-lg text-sm"
-            >
-              বিস্তারিত দেখুন →
-            </a>
-          ) : (
-            <Link
-              to="/shops"
-              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-white/30 transition-all text-sm"
-            >
-              দোকান ব্রাউজ করুন →
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* Dot indicators */}
-      {ads.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {ads.map((_, i) => (
-            <button key={i} onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
+    return (
+      <div className={`absolute inset-0 transition-opacity duration-700 ${active ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
+        {wrap(
+          a.image_url ? (
+            /* ── Image ad: show image purely, let the image speak ── */
+            <img
+              src={a.image_url}
+              alt={a.title}
+              className="w-full h-full object-cover"
+              draggable={false}
             />
-          ))}
-        </div>
-      )}
-    </div>
-  )
+          ) : (
+            /* ── Text-only ad: gradient card ── */
+            <div className="w-full h-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-400 flex items-center">
+              <div className="px-8 sm:px-16 py-8 max-w-2xl">
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-2">বিজ্ঞাপন</p>
+                <h3 className="text-white font-bold text-2xl sm:text-4xl leading-tight mb-3">{a.title}</h3>
+                {a.description && (
+                  <p className="text-white/80 text-sm sm:text-base mb-5">{a.description}</p>
+                )}
+                <span className="inline-flex items-center gap-2 bg-white text-brand-700 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+                  বিস্তারিত দেখুন
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          )
+        )}
+      </div>
+    )
+  }
 
   return (
-    <section className="py-6 bg-white">
+    <section className="bg-gray-100 py-3 sm:py-4">
       <div className="container-app">
-        {ad.target_url ? (
-          <a href={ad.target_url} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>
-        ) : inner}
+        <div
+          className="relative w-full overflow-hidden rounded-xl shadow-md group"
+          style={{ aspectRatio: '21/6', minHeight: 140, maxHeight: 320 }}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {/* Slides */}
+          {ads.map((a, i) => <Slide key={a.id} a={a} active={i === current} />)}
+
+          {/* Left arrow */}
+          {ads.length > 1 && (
+            <>
+              <button
+                onClick={() => go(current - 1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="আগের">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Right arrow */}
+              <button
+                onClick={() => go(current + 1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="পরের">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Dot indicators */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                {ads.map((_, i) => (
+                  <button key={i} onClick={() => go(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === current
+                        ? 'w-5 h-1.5 bg-white'
+                        : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/70'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Slide counter top-right */}
+              <div className="absolute top-2.5 right-3 z-20 bg-black/30 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full">
+                {current + 1} / {ads.length}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </section>
   )
@@ -133,34 +166,44 @@ function BannerAd({ ads }) {
 function SidebarAdStrip({ ads }) {
   if (!ads.length) return null
   return (
-    <div className="container-app my-2">
-      <div className="flex flex-wrap gap-3 justify-center">
+    <div className="container-app py-3">
+      <div className="flex flex-wrap gap-3">
         {ads.map(ad => {
           const card = (
-            <div className="relative rounded-xl overflow-hidden shadow-md flex-1 min-w-[220px] max-w-xs min-h-[120px] group">
+            <div className="relative rounded-xl overflow-hidden shadow-sm border border-gray-100 h-32 sm:h-36 w-full group cursor-pointer">
               {ad.image_url ? (
                 <img src={ad.image_url} alt={ad.title}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-700" />
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-400" />
               )}
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="relative z-10 p-4 h-full flex flex-col justify-end">
-                <p className="text-white font-bold text-sm leading-tight drop-shadow">{ad.title}</p>
-                {ad.description && <p className="text-white/80 text-xs mt-0.5 line-clamp-2">{ad.description}</p>}
-                {ad.target_url && (
-                  <span className="inline-flex mt-2 text-xs text-white/90 bg-white/20 px-2.5 py-1 rounded-lg self-start font-medium">
-                    দেখুন →
-                  </span>
+              {/* Gradient overlay only for text ads */}
+              {!ad.image_url && (
+                <div className="absolute inset-0 bg-black/10" />
+              )}
+              {/* Bottom label for image ads */}
+              {ad.image_url && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              )}
+              <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
+                <p className="text-white font-bold text-sm leading-tight drop-shadow line-clamp-1">{ad.title}</p>
+                {ad.description && !ad.image_url && (
+                  <p className="text-white/80 text-xs mt-0.5 line-clamp-1">{ad.description}</p>
                 )}
               </div>
+              {ad.target_url && (
+                <div className="absolute top-2 right-2 z-10 bg-white/20 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  বিজ্ঞাপন
+                </div>
+              )}
             </div>
           )
           return ad.target_url ? (
-            <a key={ad.id} href={ad.target_url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[220px] max-w-xs">
+            <a key={ad.id} href={ad.target_url} target="_blank" rel="noopener noreferrer"
+              className="flex-1 min-w-[200px]">
               {card}
             </a>
-          ) : <div key={ad.id} className="flex-1 min-w-[220px] max-w-xs">{card}</div>
+          ) : <div key={ad.id} className="flex-1 min-w-[200px]">{card}</div>
         })}
       </div>
     </div>
