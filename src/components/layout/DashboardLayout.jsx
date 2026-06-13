@@ -431,6 +431,8 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin',                   icon: '📊', label: 'ড্যাশবোর্ড',     end: true },
     { to: '/admin/analytics',         icon: '📈', label: 'অ্যানালিটিক্স' },
     { section: 'দোকান ও পণ্য' },
+    { to: '/admin/quick-add-shop',    icon: '⚡', label: 'দ্রুত যোগ' },
+    { to: '/admin/bulk-import',       icon: '📥', label: 'Bulk Import' },
     { to: '/admin/shop-requests',     icon: '🏪', label: 'দোকান আবেদন' },
     { to: '/admin/shops',             icon: '🏬', label: 'দোকান' },
     { to: '/admin/categories',        icon: '📋', label: 'বিভাগ' },

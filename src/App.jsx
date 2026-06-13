@@ -73,6 +73,8 @@ const Analytics            = lazy(() => import('./pages/admin/Analytics'))
 const Settings             = lazy(() => import('./pages/admin/Settings'))
 const ErrorLogs            = lazy(() => import('./pages/admin/ErrorLogs'))
 const AuditLog             = lazy(() => import('./pages/admin/AuditLog'))
+const QuickAddShop         = lazy(() => import('./pages/admin/QuickAddShop'))
+const BulkImport           = lazy(() => import('./pages/admin/BulkImport'))
 
 /* Loading fallback */
 function PageLoader() {
@@ -276,8 +278,10 @@ export default function App() {
                   <ServiceDirectoryAdmin />
                 </ProtectedRoute>
               } />
-              <Route path="error-logs"   element={<ErrorLogs />} />
-              <Route path="audit-log"    element={<AuditLog />} />
+              <Route path="error-logs"      element={<ErrorLogs />} />
+              <Route path="audit-log"       element={<AuditLog />} />
+              <Route path="quick-add-shop"  element={<QuickAddShop />} />
+              <Route path="bulk-import"     element={<BulkImport />} />
             </Route>
 
             {/* Fallback */}
