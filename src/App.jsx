@@ -55,6 +55,7 @@ const Profile           = lazy(() => import('./pages/dashboard/Profile'))
 const QRCodePage        = lazy(() => import('./pages/dashboard/QRCode'))
 const ShopAnalytics     = lazy(() => import('./pages/dashboard/ShopAnalytics'))
 const Chat              = lazy(() => import('./pages/dashboard/Chat'))
+const Broadcast         = lazy(() => import('./pages/dashboard/Broadcast'))
 
 /* ── Super Admin / Market Manager ── */
 const AdminDashboard   = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -237,6 +238,12 @@ export default function App() {
               {/* Chat — any logged-in user */}
               <Route path="chat"                 element={<Chat />} />
               <Route path="chat/:conversationId" element={<Chat />} />
+              {/* Broadcast — shop owner only */}
+              <Route path="broadcast" element={
+                <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
+                  <Broadcast />
+                </ProtectedRoute>
+              } />
               <Route path="my-services" element={<MyServices />} />
             </Route>
 

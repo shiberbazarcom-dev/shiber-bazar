@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext'
 import { useStartConversation } from '../hooks/useChat'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import { productMatchesSearch } from '../lib/banglishSearch'
+import { getShopTier, getTierProgress } from '../lib/shopTier'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
 import OrderModal from '../components/order/OrderModal'
@@ -365,7 +366,7 @@ export default function ShopDetail() {
 
           {/* Shop info */}
           <div className="mt-2.5">
-            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5">
+            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5 flex-wrap">
               {shop.shop_name}
               {shop.verification_status === 'verified' && (
                 <span className="relative inline-flex flex-shrink-0" title="যাচাইকৃত দোকান">
@@ -373,6 +374,16 @@ export default function ShopDetail() {
                   <VerifiedSeal className="w-5 h-5 text-blue-500 relative" />
                 </span>
               )}
+              {(() => {
+                const tierShop = { ...shop, is_verified: shop.verification_status === 'verified' }
+                const tier = getShopTier(tierShop)
+                if (!tier) return null
+                return (
+                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full border ${tier.bg} ${tier.color} ${tier.border}`}>
+                    {tier.emoji} {tier.label}
+                  </span>
+                )
+              })()}
             </h2>
             {(shop.categories?.name || shop.district || shop.address) && (
               <p className="text-xs text-gray-500 font-medium mt-1">

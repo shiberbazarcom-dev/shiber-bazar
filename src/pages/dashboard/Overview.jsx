@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useMyShopRequest, useSubmitShopRequest } from '../../hooks/useShopRequests'
+import { useMyShops } from '../../hooks/useShops'
 import { useAdminWhatsapp } from '../../hooks/useSettings'
 import { whatsappUrl } from '../../lib/utils'
+import { getShopTier, getTierProgress, TIERS } from '../../lib/shopTier'
 import toast from 'react-hot-toast'
 
 const BLUE = '#2563EB'
@@ -160,10 +162,12 @@ function ShopRequestModal({ onClose, onSuccess }) {
 export default function DashboardOverview() {
   const { profile, user, role } = useAuth()
   const { data: myRequest, isLoading: requestLoading } = useMyShopRequest()
+  const { data: myShops = [] } = useMyShops()
   const [showForm, setShowForm] = useState(false)
 
   const isShopOwner = ['shop_owner', 'super_admin', 'market_manager'].includes(role)
   const firstName   = profile?.full_name?.split(' ')[0] || 'ব্যবহারকারী'
+  const primaryShop = myShops[0] || null
 
   return (
     <div className="space-y-5 pb-28 md:pb-6">
@@ -194,6 +198,94 @@ export default function DashboardOverview() {
           </div>
         </div>
       )}
+
+      {/* ── Tier progress card (shop owners with a verified shop) ── */}
+      {isShopOwner && primaryShop && (() => {
+        const tier     = getShopTier(primaryShop)
+        const progress = getTierProgress(primaryShop)
+        if (!tier && !primaryShop.is_verified) return null
+
+        const tierColors = {
+          gold:   'from-amber-400 to-yellow-500',
+          silver: 'from-slate-400 to-gray-500',
+          bronze: 'from-orange-400 to-amber-600',
+        }
+        const tierBg = {
+          gold:   'bg-amber-50 border-amber-200',
+          silver: 'bg-slate-50 border-slate-200',
+          bronze: 'bg-orange-50 border-orange-200',
+        }
+
+        return (
+          <div className={`rounded-2xl border p-5 ${tier ? tierBg[tier.key] : 'bg-gray-50 border-gray-200'}`}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{tier ? tier.emoji : '🏅'}</span>
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {tier ? `${tier.label} টিয়ার` : 'ভেরিফিকেশন পেন্ডিং'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {tier?.key === 'gold' ? 'সর্বোচ্চ স্তর অর্জিত!' : 'পরের টিয়ারে উন্নীত হতে'}
+                  </p>
+                </div>
+              </div>
+              {tier && (
+                <div className={`text-xs font-bold px-3 py-1.5 rounded-full text-white bg-gradient-to-r ${tierColors[tier.key]}`}>
+                  {tier.emoji} {tier.label}
+                </div>
+              )}
+            </div>
+
+            {/* Progress toward next tier */}
+            {progress && (
+              <div className="space-y-2.5 mt-4">
+                <p className="text-xs font-semibold text-gray-600 mb-2">
+                  {progress.nextTier.emoji} {progress.nextTier.label} টিয়ারের জন্য আরও চাই:
+                </p>
+                {/* Reviews progress */}
+                {progress.nextTier.minReviews > 0 && (
+                  <div>
+                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                      <span>রিভিউ ({primaryShop.review_count || 0}/{progress.nextTier.minReviews})</span>
+                      <span>{progress.reviewsNeeded > 0 ? `আরও ${progress.reviewsNeeded}টি` : '✓ পূর্ণ'}</span>
+                    </div>
+                    <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${tierColors[progress.nextTier.key]} transition-all duration-700`}
+                        style={{ width: `${progress.reviewProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Rating progress */}
+                {progress.nextTier.minRating > 0 && (
+                  <div>
+                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                      <span>রেটিং ({Number(primaryShop.avg_rating || 0).toFixed(1)}/{progress.nextTier.minRating})</span>
+                      <span>{progress.ratingNeeded > 0 ? `আরও +${progress.ratingNeeded.toFixed(1)}` : '✓ পূর্ণ'}</span>
+                    </div>
+                    <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${tierColors[progress.nextTier.key]} transition-all duration-700`}
+                        style={{ width: `${progress.ratingProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gold achieved */}
+            {tier?.key === 'gold' && (
+              <div className="mt-3 text-center py-2 bg-amber-100/60 rounded-xl">
+                <p className="text-xs font-bold text-amber-700">🎉 আপনি সর্বোচ্চ গোল্ড টিয়ারে আছেন!</p>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* ── Shop request card (only for plain users) ── */}
       {!isShopOwner && !requestLoading && (

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { getShopTier } from '../../lib/shopTier'
 
 /* ── helpers ── */
 function toWhatsApp(phone) {
@@ -11,6 +12,17 @@ function toWhatsApp(phone) {
 
 function avatarUrl(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent((name || 'দ')[0])}&size=80&background=e0e7ff&color=3730a3&bold=true`
+}
+
+/* ── Tier Badge ── */
+function TierBadge({ shop }) {
+  const tier = getShopTier(shop)
+  if (!tier) return null
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0 ${tier.bg} ${tier.color} ${tier.border}`}>
+      {tier.emoji} {tier.label}
+    </span>
+  )
 }
 
 /* ── ShopCard — Clean minimal style ── */
@@ -66,7 +78,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
       {/* ── Body ── */}
       <div className="flex flex-col flex-1 pt-7 pb-3 px-4 gap-2">
 
-        {/* Name + Verified */}
+        {/* Name + Verified + Tier */}
         <Link to={shopUrl} className="group">
           <div className="flex items-start gap-1.5 flex-wrap">
             <h3 className="font-bold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors">
@@ -80,6 +92,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
                 ভেরিফাইড
               </span>
             )}
+            <TierBadge shop={shop} />
           </div>
           {shop.categories?.name && (
             <p className="text-[11px] text-gray-400 mt-0.5">
