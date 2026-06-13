@@ -532,17 +532,17 @@ export default function DashboardLayout({ type = 'user' }) {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       {sidebar}
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Unified topbar (mobile + desktop) */}
         <TopBar type={type} profile={profile} signOut={signOut} setSidebarOpen={setSidebarOpen} mobileBadge={mobileBadge} links={links} />
 
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
           <Outlet />
         </main>
       </div>
