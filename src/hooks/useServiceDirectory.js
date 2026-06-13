@@ -101,6 +101,22 @@ export function useDeleteDirectoryEntry() {
   })
 }
 
+/* ── Public: ALL active entries (for the সেবাসমূহ landing list) ── */
+export function useAllDirectoryEntries() {
+  return useQuery({
+    queryKey: ['sd-entries-all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('local_service_directory')
+        .select('*, local_service_categories(id, name_bn, icon, slug, display_type)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+  })
+}
+
 /* ── Public: search directory entries (Banglish-aware) ── */
 export function useSearchDirectory(query) {
   return useQuery({
