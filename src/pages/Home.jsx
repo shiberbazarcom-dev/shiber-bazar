@@ -36,103 +36,218 @@ function AnimatedCounter({ value, suffix = '' }) {
   return <span>{count.toLocaleString('bn-BD')}{suffix}</span>
 }
 
-// Premium Banner Component
-function PremiumBanner({ ads }) {
+// ── Banner Ad (full image + text overlay, auto-slideshow) ──────────
+function BannerAd({ ads }) {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
     if (ads.length <= 1 || isPaused) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % ads.length)
-    }, 5000)
-    return () => clearInterval(timer)
+    const t = setInterval(() => setCurrent(p => (p + 1) % ads.length), 5000)
+    return () => clearInterval(t)
   }, [ads.length, isPaused])
 
   if (!ads.length) return null
+  const ad = ads[current]
 
-  const currentAd = ads[current]
-
-  return (
-    <section 
-      className="relative w-full overflow-hidden"
+  const inner = (
+    <div
+      className="relative rounded-2xl overflow-hidden shadow-xl min-h-[180px] sm:min-h-[220px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="container-app">
-        <div className="relative rounded-2xl overflow-hidden shadow-xl">
-          {/* Gradient Background Animation */}
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 animate-gradient" />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.03%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50" />
-          
-          {/* Content */}
-          <div className="relative z-10 px-6 sm:px-10 py-10 sm:py-14">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex-1 text-center md:text-left">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 mb-4">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                  প্রিমিয়াম বিজ্ঞাপন
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
-                  {currentAd.title}
-                </h3>
-                <p className="text-white/80 text-sm sm:text-base mb-4 max-w-lg">
-                  {currentAd.description || 'সেরা অফার এবং ডিল পেতে এখনই ক্লিক করুন'}
-                </p>
-                {currentAd.target_url ? (
-                  <a 
-                    href={currentAd.target_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-white text-brand-600 font-semibold px-5 py-2.5 rounded-lg hover:bg-white/90 transition-all hover:scale-105 active:scale-95 shadow-lg"
-                  >
-                    বিস্তারিত দেখুন
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </a>
-                ) : (
-                  <Link 
-                    to="/shops"
-                    className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-white/30 transition-all hover:scale-105 active:scale-95"
-                  >
-                    দোকান ব্রাউজ করুন
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </Link>
-                )}
-              </div>
-              
-              {/* Decorative Element */}
-              <div className="hidden md:flex items-center justify-center w-32 h-32 relative">
-                <div className="absolute inset-0 bg-white/10 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
-                <div className="absolute inset-4 bg-white/20 rounded-full" />
-                <span className="text-5xl relative z-10">🎯</span>
-              </div>
-            </div>
-          </div>
+      {/* Background: image if available, else gradient */}
+      {ad.image_url ? (
+        <img
+          src={ad.image_url}
+          alt={ad.title}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
+      )}
 
-          {/* Progress Indicators */}
-          {ads.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {ads.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrent(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === current ? 'w-8 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'
-                  }`}
-                />
-              ))}
-            </div>
+      {/* Overlay — stronger when image present so text stays readable */}
+      <div className={`absolute inset-0 ${ad.image_url ? 'bg-black/45' : 'bg-black/10'}`} />
+
+      {/* Text content */}
+      <div className="relative z-10 px-6 sm:px-10 py-8 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex-1 text-center md:text-left">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 mb-3">
+            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            বিজ্ঞাপন
+          </span>
+          <h3 className="text-xl sm:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-sm">
+            {ad.title}
+          </h3>
+          {ad.description && (
+            <p className="text-white/85 text-sm sm:text-base mb-4 max-w-lg drop-shadow-sm">
+              {ad.description}
+            </p>
           )}
-
-          {/* Corner Accent */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/10 to-transparent" />
+          {ad.target_url ? (
+            <a
+              href={ad.target_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white text-brand-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all hover:scale-105 active:scale-95 shadow-lg text-sm"
+            >
+              বিস্তারিত দেখুন →
+            </a>
+          ) : (
+            <Link
+              to="/shops"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-white/30 transition-all text-sm"
+            >
+              দোকান ব্রাউজ করুন →
+            </Link>
+          )}
         </div>
       </div>
+
+      {/* Dot indicators */}
+      {ads.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {ads.map((_, i) => (
+            <button key={i} onClick={() => setCurrent(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <section className="py-6 bg-white">
+      <div className="container-app">
+        {ad.target_url ? (
+          <a href={ad.target_url} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>
+        ) : inner}
+      </div>
     </section>
+  )
+}
+
+// ── Sidebar / mid-page Ad strips ───────────────────────────────────
+function SidebarAdStrip({ ads }) {
+  if (!ads.length) return null
+  return (
+    <div className="container-app my-2">
+      <div className="flex flex-wrap gap-3 justify-center">
+        {ads.map(ad => {
+          const card = (
+            <div className="relative rounded-xl overflow-hidden shadow-md flex-1 min-w-[220px] max-w-xs min-h-[120px] group">
+              {ad.image_url ? (
+                <img src={ad.image_url} alt={ad.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-700" />
+              )}
+              <div className="absolute inset-0 bg-black/40" />
+              <div className="relative z-10 p-4 h-full flex flex-col justify-end">
+                <p className="text-white font-bold text-sm leading-tight drop-shadow">{ad.title}</p>
+                {ad.description && <p className="text-white/80 text-xs mt-0.5 line-clamp-2">{ad.description}</p>}
+                {ad.target_url && (
+                  <span className="inline-flex mt-2 text-xs text-white/90 bg-white/20 px-2.5 py-1 rounded-lg self-start font-medium">
+                    দেখুন →
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+          return ad.target_url ? (
+            <a key={ad.id} href={ad.target_url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[220px] max-w-xs">
+              {card}
+            </a>
+          ) : <div key={ad.id} className="flex-1 min-w-[220px] max-w-xs">{card}</div>
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Popup Ad (shows once per session) ──────────────────────────────
+function PopupAd({ ads }) {
+  const [visible, setVisible] = useState(false)
+  const [idx, setIdx] = useState(0)
+
+  useEffect(() => {
+    if (!ads.length) return
+    const key = 'popup_ad_seen_' + ads[0]?.id
+    if (!sessionStorage.getItem(key)) {
+      const t = setTimeout(() => setVisible(true), 1500)
+      return () => clearTimeout(t)
+    }
+  }, [ads])
+
+  if (!visible || !ads[idx]) return null
+  const ad = ads[idx]
+
+  function close() {
+    sessionStorage.setItem('popup_ad_seen_' + ads[0]?.id, '1')
+    setVisible(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      onClick={close}>
+      <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md w-full animate-scaleIn"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Close */}
+        <button onClick={close}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-sm font-bold transition-colors">
+          ✕
+        </button>
+
+        {/* Image */}
+        {ad.image_url ? (
+          <div className="relative aspect-[3/2] w-full">
+            <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <h3 className="text-white font-bold text-xl drop-shadow">{ad.title}</h3>
+              {ad.description && <p className="text-white/85 text-sm mt-1">{ad.description}</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+            <h3 className="font-bold text-xl">{ad.title}</h3>
+            {ad.description && <p className="text-white/85 text-sm mt-1">{ad.description}</p>}
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="p-4 flex gap-3">
+          {ad.target_url ? (
+            <a href={ad.target_url} target="_blank" rel="noopener noreferrer" onClick={close}
+              className="flex-1 text-center py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition-colors">
+              বিস্তারিত দেখুন
+            </a>
+          ) : (
+            <Link to="/shops" onClick={close}
+              className="flex-1 text-center py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition-colors">
+              দোকান দেখুন
+            </Link>
+          )}
+          <button onClick={close}
+            className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+            বন্ধ করুন
+          </button>
+        </div>
+
+        {/* Multi-popup dots */}
+        {ads.length > 1 && (
+          <div className="flex justify-center gap-1.5 pb-3">
+            {ads.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)}
+                className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-5 bg-brand-500' : 'w-1.5 bg-gray-300'}`} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -215,7 +330,17 @@ export default function Home() {
   const { data: categories = [], refetch: refetchCategories } = useCategoryWithCount()
   const { data: ads = [] } = useActiveAds()
 
-  const bannerAds = ads.filter(a => a.ad_type === 'banner')
+  // Filter by date validity
+  const today = new Date().toISOString().slice(0, 10)
+  const validAds = ads.filter(a => {
+    if (a.start_date && a.start_date > today) return false
+    if (a.end_date   && a.end_date   < today) return false
+    return true
+  })
+
+  const bannerAds  = validAds.filter(a => a.ad_type === 'banner')
+  const sidebarAds = validAds.filter(a => a.ad_type === 'sidebar')
+  const popupAds   = validAds.filter(a => a.ad_type === 'popup')
 
   // Real-time subscriptions for auto-updates
   useEffect(() => {
@@ -442,12 +567,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Premium Banner Ads ── */}
-      {bannerAds.length > 0 && (
-        <section className="py-8 bg-white">
-          <PremiumBanner ads={bannerAds} />
-        </section>
-      )}
+      {/* ── Banner Ads ── */}
+      {bannerAds.length > 0 && <BannerAd ads={bannerAds} />}
+
+      {/* ── Sidebar / strip Ads (between categories and featured shops) ── */}
+      {sidebarAds.length > 0 && <SidebarAdStrip ads={sidebarAds} />}
+
+      {/* ── Popup Ad ── */}
+      <PopupAd ads={popupAds} />
 
       {/* ── Featured Shops Section ── */}
       {featuredShops.length > 0 && (

@@ -7,12 +7,15 @@ import toast from 'react-hot-toast'
 const GREEN = '#2563EB'
 
 const EMPTY_FORM = {
-  title:      '',
-  image_url:  '',
-  target_url: '',
-  ad_type:    'banner',
-  is_active:  true,
-  sort_order: 0,
+  title:       '',
+  description: '',
+  image_url:   '',
+  target_url:  '',
+  ad_type:     'banner',
+  is_active:   true,
+  sort_order:  0,
+  start_date:  '',
+  end_date:    '',
 }
 
 const AD_TYPE_LABELS = { banner: '🖼️ ব্যানার', sidebar: '📌 সাইডবার', popup: '🪟 পপআপ' }
@@ -50,12 +53,15 @@ export default function ManageAds() {
   const openEdit = (ad) => {
     setEditing(ad.id)
     setForm({
-      title:      ad.title,
-      image_url:  ad.image_url || '',
-      target_url: ad.target_url || '',
-      ad_type:    ad.ad_type,
-      is_active:  ad.is_active,
-      sort_order: ad.sort_order,
+      title:       ad.title,
+      description: ad.description || '',
+      image_url:   ad.image_url || '',
+      target_url:  ad.target_url || '',
+      ad_type:     ad.ad_type,
+      is_active:   ad.is_active,
+      sort_order:  ad.sort_order,
+      start_date:  ad.start_date || '',
+      end_date:    ad.end_date || '',
     })
     setPreviewUrl(ad.image_url || '')
     setShowForm(true)
@@ -158,6 +164,14 @@ export default function ManageAds() {
                   className="input" placeholder="বিজ্ঞাপনের নাম" />
               </div>
 
+              {/* Description */}
+              <div>
+                <label className="form-label">বিবরণ <span className="text-gray-400 font-normal">(ঐচ্ছিক)</span></label>
+                <textarea value={form.description} onChange={e => set('description', e.target.value)}
+                  className="input resize-none" rows={2}
+                  placeholder="বিজ্ঞাপনের সংক্ষিপ্ত বিবরণ (ব্যানারে দেখাবে)" />
+              </div>
+
               {/* Ad Type — pick FIRST so size hint shows before upload */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -242,6 +256,22 @@ export default function ManageAds() {
                 <input value={form.target_url} onChange={e => set('target_url', e.target.value)}
                   className="input" placeholder="https://example.com" />
               </div>
+
+              {/* Date range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">শুরুর তারিখ</label>
+                  <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)}
+                    className="input" />
+                </div>
+                <div>
+                  <label className="form-label">শেষের তারিখ</label>
+                  <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)}
+                    className="input" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">তারিখ খালি রাখলে মেয়াদ অসীম থাকবে</p>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.is_active}
                   onChange={e => set('is_active', e.target.checked)}
@@ -296,14 +326,17 @@ export default function ManageAds() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-800 text-sm truncate">{ad.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
+                {ad.description && <p className="text-xs text-gray-500 truncate mt-0.5">{ad.description}</p>}
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-xs text-gray-400">{AD_TYPE_LABELS[ad.ad_type]}</span>
                   <span className="text-gray-200">·</span>
                   <span className="text-xs text-gray-400">ক্রম: {ad.sort_order}</span>
+                  {ad.start_date && <span className="text-xs text-gray-400">📅 {ad.start_date} → {ad.end_date || '∞'}</span>}
                   {ad.target_url && (
                     <>
                       <span className="text-gray-200">·</span>
-                      <span className="text-xs text-blue-500 truncate max-w-[120px]">{ad.target_url}</span>
+                      <a href={ad.target_url} target="_blank" rel="noreferrer"
+                        className="text-xs text-blue-500 truncate max-w-[120px] hover:underline">{ad.target_url}</a>
                     </>
                   )}
                 </div>
