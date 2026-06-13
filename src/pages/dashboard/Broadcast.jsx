@@ -9,17 +9,21 @@ import toast from 'react-hot-toast'
 async function fetchShopCustomers(shopId) {
   const { data, error } = await supabase
     .from('orders')
-    .select('user_id, profiles(id, full_name)')
+    .select('customer_id')
     .eq('shop_id', shopId)
-    .not('user_id', 'is', null)
+    .not('customer_id', 'is', null)
   if (error) throw error
 
-  const seen = new Set()
-  return (data || []).filter(r => {
-    if (!r.profiles || seen.has(r.user_id)) return false
-    seen.add(r.user_id)
-    return true
-  }).map(r => r.profiles)
+  const uniqueIds = [...new Set((data || []).map(r => r.customer_id))]
+  if (uniqueIds.length === 0) return []
+
+  const { data: profiles, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', uniqueIds)
+  if (pErr) throw pErr
+
+  return profiles || []
 }
 
 /* ── send broadcast (insert one notification per customer) ── */
@@ -41,20 +45,22 @@ async function sendBroadcast({ shopId, shopName, title, message, customers }) {
 async function fetchHistory(shopId) {
   const { data, error } = await supabase
     .from('notifications')
-    .select('title, message, created_at')
+    .select('title, message, created_at, data')
     .eq('type', 'broadcast')
-    .contains('data', { shop_id: shopId })
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(100)
   if (error) throw error
 
   const seen = new Set()
-  return (data || []).filter(n => {
-    const key = `${n.title}___${n.message}___${n.created_at}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+  return (data || [])
+    .filter(n => n.data?.shop_id === shopId)
+    .filter(n => {
+      const key = `${n.title}___${n.message}___${Math.floor(new Date(n.created_at) / 60000)}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 10)
 }
 
 /* ── Compose Box ── */
