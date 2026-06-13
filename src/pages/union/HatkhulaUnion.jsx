@@ -37,6 +37,11 @@ const STAFF = [
   { name: 'নমিতা পুরকায়স্থ', title: 'উপ-সহকারী কৃষি কর্মকর্তা', phone: '01728456787' },
 ]
 
+const MARKETS = [
+  { name: 'শিবের বাজার',      area: '৩ একর',  stalls: '১৫০ টি' },
+  { name: 'পিঠারগঞ্জ বাজার', area: '১ একর',  stalls: '৪০ টি'  },
+]
+
 const HOTLINES = [
   { label: 'জরুরি সেবা',                  number: '999' },
   { label: 'সরকারি তথ্য ও সেবা',          number: '333' },
@@ -152,6 +157,22 @@ export default function HatkhulaUnion() {
                   <p className="text-xs text-gray-400">{s.title}</p>
                 </div>
                 <PhoneLink phone={s.phone} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* হাট-বাজার */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <SectionTitle icon="🏪" title="হাট-বাজার" />
+          <div className="divide-y divide-gray-50">
+            {MARKETS.map(m => (
+              <div key={m.name} className="flex items-center justify-between py-2.5">
+                <p className="text-sm font-medium text-gray-800">{m.name}</p>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">আয়তন: {m.area}</p>
+                  <p className="text-xs text-gray-400">চান্দিনা ভিটি: {m.stalls}</p>
+                </div>
               </div>
             ))}
           </div>
