@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { playMessageSound, showChatNotification } from '../lib/chatSound'
+import { playMessageSound, showChatNotification, showBrowserNotification } from '../lib/chatSound'
 
 /* ── All conversations for current user ── */
 export function useConversations() {
@@ -165,7 +165,14 @@ export function useRealtimeMessages(conversationId, senderName = '') {
           // Only react to OTHER person's messages, not my own
           if (payload.new?.sender_id !== user?.id) {
             playMessageSound()
+            // In-app toast notification (auto, no permission needed)
             showChatNotification(
+              senderName || 'নতুন বার্তা',
+              payload.new?.content,
+              conversationId,
+            )
+            // Browser notification (only if user enabled it)
+            showBrowserNotification(
               senderName || 'নতুন বার্তা',
               payload.new?.content,
               conversationId,

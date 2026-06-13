@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useConversations, useRealtimeConversations } from '../../hooks/useChat'
-import { requestChatNotificationPermission } from '../../lib/chatSound'
 import ConversationList from '../../components/chat/ConversationList'
 import ChatWindow from '../../components/chat/ChatWindow'
 
@@ -15,9 +14,6 @@ export default function Chat() {
 
   const { data: conversations = [] } = useConversations()
   useRealtimeConversations()
-
-  // Ask for browser notification permission as soon as user opens chat
-  useEffect(() => { requestChatNotificationPermission() }, [])
 
   useEffect(() => {
     if (conversationId && conversations.length) {

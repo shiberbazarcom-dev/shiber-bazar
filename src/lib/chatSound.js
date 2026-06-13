@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast'
+
 /* ── Chat message sound (Web Audio API — no external file needed) ── */
 export function playMessageSound() {
   try {
@@ -28,12 +30,31 @@ export function playMessageSound() {
   } catch {}
 }
 
-/* ── Browser / PWA notification ── */
+/* ── In-app toast notification (auto, no permission needed) ── */
 export function showChatNotification(senderName, messageText, conversationId) {
+  // Only show in-app if tab is NOT visible (if visible, user already sees it)
+  if (document.visibilityState === 'visible') return
+
+  const body = messageText?.length > 60
+    ? messageText.slice(0, 60) + '…'
+    : (messageText || 'নতুন বার্তা')
+
+  toast.success(
+    `💬 ${senderName}\n${body}`,
+    {
+      duration: 5000,
+      position: 'bottom-right',
+    }
+  )
+
+  // Optional: navigate on click by setting window location
+  // User can also just see the toast and click chat icon manually
+}
+
+/* ── Browser notification (only if user explicitly enabled) ── */
+export function showBrowserNotification(senderName, messageText, conversationId) {
   if (!('Notification' in window)) return
   if (Notification.permission !== 'granted') return
-
-  // Don't show if the tab is visible and active
   if (document.visibilityState === 'visible') return
 
   const body = messageText?.length > 80
@@ -44,7 +65,7 @@ export function showChatNotification(senderName, messageText, conversationId) {
     body,
     icon:  '/icons/icon-192.png',
     badge: '/icons/icon-72.png',
-    tag:   `chat-${conversationId}`,   // replaces previous notification for same conversation
+    tag:   `chat-${conversationId}`,
     renotify: true,
   })
 
@@ -55,7 +76,7 @@ export function showChatNotification(senderName, messageText, conversationId) {
   }
 }
 
-/* ── Ask permission (call once when user opens chat) ── */
+/* ── Ask permission (optional, call once when user opens chat) ── */
 export async function requestChatNotificationPermission() {
   if (!('Notification' in window)) return
   if (Notification.permission === 'default') {
