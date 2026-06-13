@@ -9,36 +9,53 @@ import toast from 'react-hot-toast'
 async function fetchShopCustomers(shopId) {
   const { data, error } = await supabase
     .from('orders')
-    .select('customer_id')
+    .select('customer_name, customer_phone')
     .eq('shop_id', shopId)
-    .not('customer_id', 'is', null)
+    .not('customer_phone', 'is', null)
   if (error) throw error
 
-  const uniqueIds = [...new Set((data || []).map(r => r.customer_id))]
-  if (uniqueIds.length === 0) return []
+  // unique by phone
+  const seen = new Set()
+  const unique = (data || []).filter(r => {
+    if (!r.customer_phone || seen.has(r.customer_phone)) return false
+    seen.add(r.customer_phone)
+    return true
+  })
 
-  const { data: profiles, error: pErr } = await supabase
+  if (unique.length === 0) return []
+
+  // find profiles matching these phone numbers
+  const phones = unique.map(r => r.customer_phone)
+  const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, full_name')
-    .in('id', uniqueIds)
-  if (pErr) throw pErr
+    .select('id, full_name, phone')
+    .in('phone', phones)
 
-  return profiles || []
+  // for customers without a profile, still count them (phone-only)
+  const profilePhones = new Set((profiles || []).map(p => p.phone))
+  const phoneOnlyCustomers = unique
+    .filter(r => !profilePhones.has(r.customer_phone))
+    .map(r => ({ id: null, full_name: r.customer_name, phone: r.customer_phone }))
+
+  return [...(profiles || []), ...phoneOnlyCustomers]
 }
 
 /* ── send broadcast (insert one notification per customer) ── */
 async function sendBroadcast({ shopId, shopName, title, message, customers }) {
-  const rows = customers.map(c => ({
-    user_id: c.id,
-    type: 'broadcast',
-    title,
-    message,
-    data: { shop_id: shopId, shop_name: shopName },
-    is_read: false,
-  }))
-  const { error } = await supabase.from('notifications').insert(rows)
-  if (error) throw error
-  return rows.length
+  const withAccount = customers.filter(c => c.id)
+  if (withAccount.length > 0) {
+    const rows = withAccount.map(c => ({
+      user_id: c.id,
+      type: 'broadcast',
+      title,
+      message,
+      data: { shop_id: shopId, shop_name: shopName },
+      is_read: false,
+    }))
+    const { error } = await supabase.from('notifications').insert(rows)
+    if (error) throw error
+  }
+  return customers.length
 }
 
 /* ── past broadcasts (last 10 notifications of type broadcast from this shop) ── */
