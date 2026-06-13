@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { compressImage, validateFileSize } from '../../lib/compressImage'
+import { requestChatNotificationPermission } from '../../lib/chatSound'
 import PushNotificationToggle from '../../components/PushNotificationToggle'
 import toast from 'react-hot-toast'
 
@@ -17,6 +18,9 @@ const ROLE_LABELS = {
 export default function Profile() {
   const { user, profile, updateProfile, loadProfile } = useAuth()
   const fileRef = useRef(null)
+
+  // Auto request notification permission when profile page loads
+  useEffect(() => { requestChatNotificationPermission() }, [])
 
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
