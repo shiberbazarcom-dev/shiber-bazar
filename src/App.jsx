@@ -113,12 +113,12 @@ function WhatsAppButton() {
 }
 
 /* Public layout wrapper */
-function PublicLayout({ children }) {
+function PublicLayout({ children, noFooter = false }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
       <Navbar />
       <main className="flex-1">{children}</main>
-      <Footer />
+      {!noFooter && <Footer />}
       {/* Spacer so content clears the fixed mobile bottom nav (60px) */}
       <div className="md:hidden h-[60px]" aria-hidden="true" />
       <WhatsAppButton />
@@ -149,7 +149,7 @@ export default function App() {
             <Route path="/order"          element={<PublicLayout><OrderPage /></PublicLayout>} />
             <Route path="/order/:shopId"  element={<PublicLayout><OrderPage /></PublicLayout>} />
             <Route path="/track-order"    element={<PublicLayout><TrackOrder /></PublicLayout>} />
-            <Route path="/product/:id"    element={<PublicLayout><ProductDetails /></PublicLayout>} />
+            <Route path="/product/:id"    element={<PublicLayout noFooter><ProductDetails /></PublicLayout>} />
             <Route path="/contact"        element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
