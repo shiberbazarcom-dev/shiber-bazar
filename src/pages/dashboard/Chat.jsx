@@ -5,6 +5,8 @@ import { useConversations, useRealtimeConversations } from '../../hooks/useChat'
 import ConversationList from '../../components/chat/ConversationList'
 import ChatWindow from '../../components/chat/ChatWindow'
 
+const OWNER_ROLES = ['shop_owner', 'market_manager', 'super_admin']
+
 export default function Chat() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
@@ -43,7 +45,12 @@ export default function Chat() {
           <span className="text-xs text-gray-400">{conversations.length} টি কথোপকথন</span>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <ConversationList conversations={conversations} selected={selected} onSelect={handleSelect} />
+          <ConversationList
+          conversations={conversations}
+          selected={selected}
+          onSelect={handleSelect}
+          isOwner={OWNER_ROLES.includes(user?.role)}
+        />
         </div>
       </div>
 
