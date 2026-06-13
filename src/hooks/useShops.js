@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { expandQuery, buildOrFilter } from '../lib/banglish'
+import { logAudit } from '../lib/auditLog'
 
 const SHOP_FIELDS = '*, categories(id,name,icon,slug), profiles(full_name,avatar_url,phone)'
 const PAGE_SIZE   = 12
@@ -294,9 +295,19 @@ export function useAdminShops(filter = 'all') {
 export function useApproveShop() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, approve }) => {
-      const { error } = await supabase.from('shops').update({ status: approve ? 'approved' : 'rejected' }).eq('id', id)
+    mutationFn: async ({ id, approve, shopName, rejectionReason }) => {
+      const newStatus = approve ? 'approved' : 'rejected'
+      const updates = { status: newStatus }
+      if (!approve && rejectionReason) updates.rejection_reason = rejectionReason
+      const { error } = await supabase.from('shops').update(updates).eq('id', id)
       if (error) throw error
+      logAudit({
+        action: approve ? 'shop_approved' : 'shop_rejected',
+        entityType: 'shop',
+        entityId: id,
+        entityName: shopName,
+        details: { status: newStatus, rejection_reason: rejectionReason || null },
+      })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] })

@@ -10,9 +10,10 @@ import { getAvatarUrl } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 export default function ManageShops() {
-  const [filter, setFilter]     = useState('all')
-  const [catFilter, setCatFilter] = useState('')
-  const [search, setSearch]     = useState('')
+  const [filter, setFilter]         = useState('all')
+  const [catFilter, setCatFilter]   = useState('')
+  const [search, setSearch]         = useState('')
+  const [locationFilter, setLocation] = useState('')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
 
@@ -23,10 +24,11 @@ export default function ManageShops() {
   const del      = useDeleteShop()
 
   const filtered = shops.filter(s => {
-    const matchCat    = !catFilter || s.category_id === catFilter
-    const name        = (s.shop_name || '').toLowerCase()
-    const matchSearch = !search || name.includes(search.toLowerCase())
-    return matchCat && matchSearch
+    const matchCat      = !catFilter || s.category_id === catFilter
+    const name          = (s.shop_name || '').toLowerCase()
+    const matchSearch   = !search || name.includes(search.toLowerCase())
+    const matchLocation = !locationFilter || (s.address || '').toLowerCase().includes(locationFilter.toLowerCase())
+    return matchCat && matchSearch && matchLocation
   })
 
   const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
@@ -111,6 +113,10 @@ export default function ManageShops() {
           <option value="">সব ক্যাটাগরি</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+
+        <input type="text" value={locationFilter} onChange={e => setLocation(e.target.value)}
+          placeholder="📍 এলাকা ফিল্টার..."
+          className="input text-sm py-2 w-36" />
 
         <span className="ml-auto text-sm text-slate-400">{filtered.length} টি দোকান</span>
       </div>

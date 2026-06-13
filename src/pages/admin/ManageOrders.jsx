@@ -40,6 +40,8 @@ function buildWhatsAppMsg(order) {
 export default function ManageOrders() {
   const [filter, setFilter]   = useState('')
   const [search, setSearch]   = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo]     = useState('')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
 
@@ -47,14 +49,19 @@ export default function ManageOrders() {
   const { data: shops  = [] } = useShopsForAssignment()
   const updateStatus = useUpdateOrderStatus()
 
-  const filtered = search
-    ? orders.filter(o =>
-        o.order_number?.includes(search) ||
-        o.customer_name?.includes(search) ||
-        o.customer_phone?.includes(search) ||
-        o.product_name?.includes(search)
-      )
-    : orders
+  const singleShop = shops.length === 1 ? shops[0] : null
+
+  const filtered = orders.filter(o => {
+    if (search && !(
+      o.order_number?.includes(search) ||
+      o.customer_name?.includes(search) ||
+      o.customer_phone?.includes(search) ||
+      o.product_name?.includes(search)
+    )) return false
+    if (dateFrom && new Date(o.created_at) < new Date(dateFrom)) return false
+    if (dateTo   && new Date(o.created_at) > new Date(dateTo + 'T23:59:59')) return false
+    return true
+  })
 
   const allSelected = filtered.length > 0 && filtered.every(o => selectedIds.has(o.id))
 
@@ -124,15 +131,32 @@ export default function ManageOrders() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">📦 অর্ডার ব্যবস্থাপনা</h1>
           <p className="text-sm text-gray-400 mt-0.5">মোট {orders.length} টি অর্ডার</p>
         </div>
-        <button onClick={() => refetch()}
-          className="text-sm px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
-          🔄 রিফ্রেশ
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          {singleShop && orders.filter(o => o.status === 'pending' && !o.shop_id).length > 0 && (
+            <button
+              onClick={async () => {
+                const pending = orders.filter(o => o.status === 'pending' && !o.shop_id)
+                setBulkLoading(true)
+                try {
+                  await Promise.all(pending.map(o => updateStatus.mutateAsync({ id: o.id, status: 'forwarded', shop_id: singleShop.id })))
+                  toast.success(`${pending.length}টি অর্ডার "${singleShop.shop_name}" এ Auto-Assign হয়েছে ⚡`)
+                } catch { toast.error('সমস্যা হয়েছে') } finally { setBulkLoading(false) }
+              }}
+              disabled={bulkLoading}
+              className="text-sm px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-60 flex items-center gap-1.5">
+              ⚡ Auto-Assign সব
+            </button>
+          )}
+          <button onClick={() => refetch()}
+            className="text-sm px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
+            🔄 রিফ্রেশ
+          </button>
+        </div>
       </div>
 
       {/* Quick stats */}
@@ -156,13 +180,29 @@ export default function ManageOrders() {
       </div>
 
       {/* Filters row */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-3 flex flex-col sm:flex-row gap-3">
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="অর্ডার নম্বর, নাম বা ফোন দিয়ে খুঁজুন..."
-          className="input flex-1"
-        />
+      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-3 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="অর্ডার নম্বর, নাম বা ফোন দিয়ে খুঁজুন..."
+            className="input flex-1"
+          />
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500 whitespace-nowrap">তারিখ থেকে</label>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              className="input text-sm py-1.5 w-36" />
+            <label className="text-xs text-gray-500 whitespace-nowrap">পর্যন্ত</label>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              className="input text-sm py-1.5 w-36" />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo('') }}
+                className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded border border-red-200 hover:bg-red-50">
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
         <div className="flex gap-2 flex-wrap">
           {STATUSES.map(s => (
             <button key={s} onClick={() => setFilter(s)}
@@ -288,6 +328,15 @@ export default function ManageOrders() {
                     <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                   ))}
                 </select>
+
+                {/* Auto-assign if single shop */}
+                {singleShop && order.status === 'pending' && !order.shop_id && (
+                  <button
+                    onClick={() => handleAssign(order.id, singleShop.id)}
+                    className="text-xs px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5">
+                    ⚡ {singleShop.shop_name} এ Assign
+                  </button>
+                )}
 
                 {/* WhatsApp */}
                 <button
