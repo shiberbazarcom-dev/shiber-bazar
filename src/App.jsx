@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import OfflineBanner from './components/ui/OfflineBanner'
 import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -143,6 +144,7 @@ export default function App() {
       <CartProvider>
       <BrowserRouter>
         <NotificationListener />
+        <OfflineBanner />
         <Suspense fallback={<PageLoader />}>
           <Routes>
 
