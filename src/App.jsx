@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { useRealtimeNotifications } from './hooks/useNotifications'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -82,6 +83,12 @@ function PageLoader() {
   )
 }
 
+/* ── Setup realtime notifications ── */
+function NotificationListener() {
+  useRealtimeNotifications()
+  return null
+}
+
 /* WhatsApp Floating Button */
 function WhatsAppButton() {
   const phone = '8801310012276'
@@ -133,6 +140,7 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
       <BrowserRouter>
+        <NotificationListener />
         <Suspense fallback={<PageLoader />}>
           <Routes>
 
