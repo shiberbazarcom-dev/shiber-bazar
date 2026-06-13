@@ -4,6 +4,7 @@ import { useShop, useReviews, useAddReview, useToggleFavorite, useFavorites } fr
 import { useShopProducts } from '../hooks/useProducts'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useStartConversation } from '../hooks/useChat'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import { productMatchesSearch } from '../lib/banglishSearch'
 import toast from 'react-hot-toast'
@@ -154,8 +155,18 @@ export default function ShopDetail() {
   const { data: reviews = [] }   = useReviews(shop?.id)
   const { data: favorites = [] } = useFavorites()
   const { data: products = [] }  = useShopProducts(shop?.id)
-  const addReview      = useAddReview()
-  const toggleFavorite = useToggleFavorite()
+  const addReview         = useAddReview()
+  const toggleFavorite    = useToggleFavorite()
+  const startConversation = useStartConversation()
+
+  async function handleStartChat() {
+    if (!user) { navigate('/login'); return }
+    if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
+    try {
+      const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
+      navigate(`/dashboard/chat/${conv.id}`)
+    } catch { toast.error('বার্তা শুরু করা যায়নি') }
+  }
 
   const [rating, setRating]       = useState(5)
   const [comment, setComment]     = useState('')
@@ -408,6 +419,16 @@ export default function ShopDetail() {
                 </svg>
                 WhatsApp
               </a>
+            )}
+            {/* In-app chat button */}
+            {shop.owner_id !== user?.id && (
+              <button
+                onClick={handleStartChat}
+                disabled={startConversation.isPending}
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all disabled:opacity-60"
+              >
+                💬 বার্তা পাঠান
+              </button>
             )}
           </div>
         </div>

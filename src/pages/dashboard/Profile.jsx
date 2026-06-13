@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { compressImage, validateFileSize } from '../../lib/compressImage'
+import PushNotificationToggle from '../../components/PushNotificationToggle'
 import toast from 'react-hot-toast'
 
 const GREEN = '#2563EB'
@@ -192,6 +193,16 @@ export default function Profile() {
           </form>
         </div>
       )}
+
+      {/* Push Notifications */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
+        <h3 className="text-base font-semibold text-gray-800 mb-3">🔔 নোটিফিকেশন সেটিংস</h3>
+        <PushNotificationToggle />
+        <p className="text-xs text-gray-400 mt-2">
+          চালু করলে অর্ডার আপডেট, নতুন বার্তা ও অফারের notification পাবেন।
+          PWA হিসেবে install করলে mobile এও notification আসবে।
+        </p>
+      </div>
     </div>
   )
 }

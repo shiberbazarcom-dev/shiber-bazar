@@ -1,0 +1,185 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+
+/* ── All conversations for current user ── */
+export function useConversations() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['conversations', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          customer:customer_id ( id, full_name ),
+          owner:owner_id       ( id, full_name ),
+          shops                ( id, shop_name, logo )
+        `)
+        .or(`customer_id.eq.${user.id},owner_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!user,
+  })
+}
+
+/* ── Messages in one conversation ── */
+export function useMessages(conversationId) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['messages', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return []
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*, sender:sender_id ( id, full_name )')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(100)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!conversationId && !!user,
+  })
+}
+
+/* ── Send a message ── */
+export function useSendMessage() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, content }) => {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({ conversation_id: conversationId, sender_id: user.id, content })
+        .select()
+        .single()
+      if (error) throw error
+      await supabase
+        .from('conversations')
+        .update({ last_message: content, last_message_at: new Date().toISOString() })
+        .eq('id', conversationId)
+      return data
+    },
+    onSuccess: (_, { conversationId }) => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+/* ── Start or get existing conversation with a shop ── */
+export function useStartConversation() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ shopId, ownerId }) => {
+      if (!user) throw new Error('Login করুন')
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('customer_id', user.id)
+        .eq('shop_id', shopId)
+        .maybeSingle()
+      if (existing) return existing
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({ customer_id: user.id, shop_id: shopId, owner_id: ownerId })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] }),
+  })
+}
+
+/* ── Mark messages as read ── */
+export function useMarkMessagesRead(conversationId) {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      if (!conversationId || !user) return
+      await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('is_read', false)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['unread-message-count'] })
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+/* ── Unread message count ── */
+export function useUnreadMessageCount() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['unread-message-count', user?.id],
+    queryFn: async () => {
+      if (!user) return 0
+      const { data: convs } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`customer_id.eq.${user.id},owner_id.eq.${user.id}`)
+      if (!convs?.length) return 0
+      const convIds = convs.map(c => c.id)
+      const { count } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('conversation_id', convIds)
+        .neq('sender_id', user.id)
+        .eq('is_read', false)
+      return count || 0
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  })
+}
+
+/* ── Realtime: new messages in a conversation ── */
+export function useRealtimeMessages(conversationId) {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!conversationId) return
+    const ch = supabase
+      .channel(`messages-${conversationId}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages',
+          filter: `conversation_id=eq.${conversationId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+          qc.invalidateQueries({ queryKey: ['conversations'] })
+          qc.invalidateQueries({ queryKey: ['unread-message-count'] })
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [conversationId, qc])
+}
+
+/* ── Realtime: conversation list updates ── */
+export function useRealtimeConversations() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!user) return
+    const ch = supabase
+      .channel(`conversations-user-${user.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => {
+          qc.invalidateQueries({ queryKey: ['conversations'] })
+          qc.invalidateQueries({ queryKey: ['unread-message-count'] })
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [user, qc])
+}

@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useProduct, useShopProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
+import { recordProductView } from '../hooks/useAnalytics'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
@@ -58,9 +60,18 @@ export default function ProductDetails() {
   const { data: product, isLoading, error } = useProduct(id)
   const { data: related = [] } = useShopProducts(product?.shop_id)
   const { addItem, isInCart } = useCart()
+  const { user } = useAuth()
   const [activeImg, setActiveImg] = useState(0)
   const [imgZoom, setImgZoom] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
+  const viewRecorded = useRef(false)
+
+  useEffect(() => {
+    if (product && !viewRecorded.current) {
+      viewRecorded.current = true
+      recordProductView(product.id, product.shop_id, user?.id || null)
+    }
+  }, [product, user])
 
   const inCart = product ? isInCart(product.id) : false
 

@@ -86,11 +86,24 @@ export function useUpdateOrderStatus() {
     mutationFn: async ({ id, status, shop_id }) => {
       const updates = { status }
       if (shop_id !== undefined) updates.shop_id = shop_id
-      const { error } = await supabase
+      const { data: order, error } = await supabase
         .from('orders')
         .update(updates)
         .eq('id', id)
+        .select('customer_id, shops(shop_name)')
+        .single()
       if (error) throw error
+
+      // Insert in-app notification when order is confirmed
+      if (status === 'confirmed' && order?.customer_id) {
+        await supabase.from('notifications').insert({
+          user_id: order.customer_id,
+          type:    'order_confirmed',
+          title:   'অর্ডার নিশ্চিত হয়েছে ✅',
+          message: `${order.shops?.shop_name || 'দোকান'} আপনার অর্ডার গ্রহণ করেছে।`,
+          data:    { order_id: id },
+        })
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-orders'] })

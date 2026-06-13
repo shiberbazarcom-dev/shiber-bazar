@@ -1,5 +1,5 @@
 // Bump this version on EVERY deploy to force SW update
-const CACHE = 'shiberbazar-v5'
+const CACHE = 'shiberbazar-v6'
 
 self.addEventListener('install', e => {
   // Skip waiting immediately — take over all tabs right away
@@ -54,4 +54,34 @@ self.addEventListener('fetch', e => {
 
   // Everything else (images, manifests, etc.) → network-first
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)))
+})
+
+/* ── Push Notifications ── */
+self.addEventListener('push', e => {
+  let data = { title: 'শিবের বাজার', body: 'নতুন আপডেট আছে' }
+  try { data = e.data?.json() ?? data } catch {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body:  data.body,
+      icon:  '/icons/icon-192.png',
+      badge: '/icons/icon-72.png',
+      data:  { url: data.url || '/' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close()
+  const url = e.notification.data?.url || '/'
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes(self.location.origin) && 'focus' in c) {
+          c.navigate(url)
+          return c.focus()
+        }
+      }
+      return clients.openWindow(url)
+    })
+  )
 })

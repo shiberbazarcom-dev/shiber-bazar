@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '../../lib/utils'
 import { useOrderStats, useShopOrderStats } from '../../hooks/useOrders'
+import { useUnreadMessageCount } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -190,6 +191,7 @@ export default function DashboardLayout({ type = 'user' }) {
   /* ── Badge counts ── */
   const { data: adminStats }     = useOrderStats()        // admin pending count
   const { data: shopOwnerStats } = useShopOrderStats()    // shop owner forwarded count
+  const { data: unreadMessages = 0 } = useUnreadMessageCount()
 
   const adminBadge     = type === 'admin'               ? (adminStats?.pending    || 0) : 0
   const ownerBadge     = type !== 'admin' && isShopOwner ? (shopOwnerStats?.confirmed || 0) : 0
@@ -341,6 +343,7 @@ export default function DashboardLayout({ type = 'user' }) {
   const userLinks = [
     { to: '/dashboard',              icon: '📊', label: 'ওভারভিউ',        end: true },
     { to: '/dashboard/favorites',    icon: '❤️', label: 'পছন্দের দোকান' },
+    { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
     { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
     { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
   ]
@@ -351,6 +354,8 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/add-shop',     icon: '➕', label: 'নতুন দোকান' },
     { to: '/dashboard/products',     icon: '🛍️', label: 'পণ্য আপলোড' },
     { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
+    { to: '/dashboard/analytics',    icon: '📈', label: 'অ্যানালিটিক্স' },
+    { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
     { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },
     { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
     { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
@@ -393,6 +398,7 @@ export default function DashboardLayout({ type = 'user' }) {
     if (to === '/admin/shop-requests')  return pendingRequestsCount
     if (to === '/admin/services')       return pendingServicesCount
     if (to === '/dashboard/orders')     return ownerBadge
+    if (to === '/dashboard/chat')       return unreadMessages
     return 0
   }
 
