@@ -53,6 +53,10 @@ const MARKETS = [
   { name: 'পিঠারগঞ্জ বাজার', area: '১ একর',  stalls: '৪০ টি'  },
 ]
 
+const POLICE = [
+  { name: 'জালালাবাদ থানা', phone: '01320067594', note: 'হাটখোলা ইউনিয়নের আওতাভুক্ত' },
+]
+
 const HOTLINES = [
   { label: 'জরুরি সেবা',                  number: '999' },
   { label: 'সরকারি তথ্য ও সেবা',          number: '333' },
@@ -205,6 +209,22 @@ export default function HatkhulaUnion() {
                   <p className="text-xs text-gray-500">আয়তন: {m.area}</p>
                   <p className="text-xs text-gray-400">চান্দিনা ভিটি: {m.stalls}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* পুলিশ */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <SectionTitle icon="👮" title="পুলিশ" />
+          <div className="divide-y divide-gray-50">
+            {POLICE.map(p => (
+              <div key={p.phone} className="flex items-center justify-between py-2.5">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{p.name}</p>
+                  {p.note && <p className="text-xs text-gray-400">{p.note}</p>}
+                </div>
+                <PhoneLink phone={p.phone} />
               </div>
             ))}
           </div>
