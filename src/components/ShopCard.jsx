@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 
-export default function ShopCard({ shop }) {
+export default function ShopCard({ shop, delay = 0 }) {
   const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.name)}&background=16a34a&color=fff&size=200&font-size=0.4`
 
   return (
-    <Link to={`/shop/${shop.id}`} className="card block group">
+    <Link to={`/shop/${shop.id}`}
+      className="card block group animate-fadeUp"
+      style={{ animationDelay: `${delay * 0.1}s` }}>
       {/* Image */}
       <div className="h-40 overflow-hidden bg-gray-100">
         <img
