@@ -29,7 +29,7 @@ export default function ChatWindow({ conversation, otherName }) {
   const sendMsg  = useSendMessage()
   const markRead = useMarkMessagesRead(conversation?.id)
 
-  useRealtimeMessages(conversation?.id)
+  useRealtimeMessages(conversation?.id, otherName)
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line

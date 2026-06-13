@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { playMessageSound, showChatNotification } from '../lib/chatSound'
 
 /* ── All conversations for current user ── */
 export function useConversations() {
@@ -146,7 +147,8 @@ export function useUnreadMessageCount() {
 }
 
 /* ── Realtime: new messages in a conversation ── */
-export function useRealtimeMessages(conversationId) {
+export function useRealtimeMessages(conversationId, senderName = '') {
+  const { user } = useAuth()
   const qc = useQueryClient()
   useEffect(() => {
     if (!conversationId) return
@@ -155,14 +157,24 @@ export function useRealtimeMessages(conversationId) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages',
           filter: `conversation_id=eq.${conversationId}` },
-        () => {
+        (payload) => {
           qc.invalidateQueries({ queryKey: ['messages', conversationId] })
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count'] })
+
+          // Only react to OTHER person's messages, not my own
+          if (payload.new?.sender_id !== user?.id) {
+            playMessageSound()
+            showChatNotification(
+              senderName || 'নতুন বার্তা',
+              payload.new?.content,
+              conversationId,
+            )
+          }
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [conversationId, qc])
+  }, [conversationId, senderName, qc, user?.id])
 }
 
 /* ── Realtime: conversation list updates ── */
