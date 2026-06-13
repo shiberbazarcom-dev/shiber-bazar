@@ -34,6 +34,14 @@ function SidebarLink({ to, icon, label, end, badge, onClose }) {
   )
 }
 
+function SidebarSection({ label }) {
+  return (
+    <p className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 select-none">
+      {label}
+    </p>
+  )
+}
+
 /* ── Notification sound ── */
 function playBeep(freq1 = 880, freq2 = 660) {
   try {
@@ -362,22 +370,27 @@ export default function DashboardLayout({ type = 'user' }) {
   ]
 
   const adminLinks = [
-    { to: '/admin',                 icon: '📊', label: 'ড্যাশবোর্ড',       end: true },
-    { to: '/admin/analytics',       icon: '📈', label: 'অ্যানালিটিক্স' },
-    { to: '/admin/shop-requests',   icon: '🏪', label: 'দোকান আবেদন' },   // ← badge here
-    { to: '/admin/shops',           icon: '🏬', label: 'দোকান' },
-    { to: '/admin/categories',      icon: '📋', label: 'বিভাগ' },
-    { to: '/admin/users',           icon: '👥', label: 'ব্যবহারকারী' },
-    { to: '/admin/roles',           icon: '🛡️', label: 'Role' },
-    { to: '/admin/orders',          icon: '📦', label: 'অর্ডার' },        // ← badge here
-    { to: '/admin/products',        icon: '🛍️', label: 'পণ্য' },
-    { to: '/admin/verifications',   icon: '🔏', label: 'যাচাইকরণ' },
-    { to: '/admin/services',        icon: '🛠️', label: 'সেবা অনুমোদন' },
+    { section: 'ওভারভিউ' },
+    { to: '/admin',                   icon: '📊', label: 'ড্যাশবোর্ড',     end: true },
+    { to: '/admin/analytics',         icon: '📈', label: 'অ্যানালিটিক্স' },
+    { section: 'দোকান ও পণ্য' },
+    { to: '/admin/shop-requests',     icon: '🏪', label: 'দোকান আবেদন' },
+    { to: '/admin/shops',             icon: '🏬', label: 'দোকান' },
+    { to: '/admin/categories',        icon: '📋', label: 'বিভাগ' },
+    { to: '/admin/products',          icon: '🛍️', label: 'পণ্য' },
+    { section: 'ব্যবহারকারী' },
+    { to: '/admin/users',             icon: '👥', label: 'ব্যবহারকারী' },
+    { to: '/admin/roles',             icon: '🛡️', label: 'Role' },
+    { to: '/admin/verifications',     icon: '🔏', label: 'যাচাইকরণ' },
+    { section: 'অপারেশন' },
+    { to: '/admin/orders',            icon: '📦', label: 'অর্ডার' },
+    { to: '/admin/services',          icon: '🛠️', label: 'সেবা অনুমোদন' },
     { to: '/admin/service-directory', icon: '📒', label: 'সেবা ডিরেক্টরি' },
-    { to: '/admin/ads',             icon: '📢', label: 'বিজ্ঞাপন' },
-    { to: '/admin/audit-log',       icon: '🗂️', label: 'Audit Log' },
-    { to: '/admin/error-logs',      icon: '🐛', label: 'Error Logs' },
-    { to: '/admin/settings',        icon: '⚙️', label: 'সেটিংস' },
+    { to: '/admin/ads',               icon: '📢', label: 'বিজ্ঞাপন' },
+    { section: 'সিস্টেম' },
+    { to: '/admin/audit-log',         icon: '🗂️', label: 'Audit Log' },
+    { to: '/admin/error-logs',        icon: '🐛', label: 'Error Logs' },
+    { to: '/admin/settings',          icon: '⚙️', label: 'সেটিংস' },
   ]
 
   let links
@@ -426,15 +439,19 @@ export default function DashboardLayout({ type = 'user' }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {links.map(link => (
-          <SidebarLink
-            key={link.to}
-            {...link}
-            badge={getBadge(link.to)}
-            onClose={() => setSidebarOpen(false)}
-          />
-        ))}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {links.map((link, i) =>
+          link.section ? (
+            <SidebarSection key={`section-${i}`} label={link.section} />
+          ) : (
+            <SidebarLink
+              key={link.to}
+              {...link}
+              badge={getBadge(link.to)}
+              onClose={() => setSidebarOpen(false)}
+            />
+          )
+        )}
       </nav>
 
       {/* Footer */}

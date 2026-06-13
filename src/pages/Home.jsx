@@ -603,7 +603,10 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
-            {categories.map(cat => (
+            {(categories.some(c => (c.shop_count || 0) > 0)
+              ? categories.filter(c => (c.shop_count || 0) > 0)
+              : categories
+            ).map(cat => (
               <CategoryPill key={cat.id} category={cat} />
             ))}
           </div>
