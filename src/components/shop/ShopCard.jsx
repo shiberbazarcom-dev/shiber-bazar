@@ -23,7 +23,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
 
   return (
     <div
-      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col"
+      className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow hover:shadow-lg transition-shadow duration-200 flex flex-col"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {/* ── Cover image ── */}
