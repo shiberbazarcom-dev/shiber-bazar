@@ -6,16 +6,19 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { RatingDisplay } from '../../components/ui/StarRating'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { getAvatarUrl } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 export default function ManageShops() {
-  const [filter, setFilter]         = useState('all')
-  const [catFilter, setCatFilter]   = useState('')
-  const [search, setSearch]         = useState('')
+  const [filter, setFilter]           = useState('all')
+  const [catFilter, setCatFilter]     = useState('')
+  const [search, setSearch]           = useState('')
   const [locationFilter, setLocation] = useState('')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, name }
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const { data: shops = [], isLoading } = useAdminShops(filter)
   const { data: categories = [] }      = useCategories()
@@ -75,10 +78,18 @@ export default function ManageShops() {
     toast.success(shop.is_featured ? 'বিশেষ তালিকা থেকে সরানো হয়েছে' : '⭐ বিশেষ হিসেবে চিহ্নিত')
   }
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`"${name}" মুছে ফেলবেন?`)) return
-    await del.mutateAsync(id)
-    toast.success('দোকান মুছে ফেলা হয়েছে')
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return
+    setDeleteLoading(true)
+    try {
+      await del.mutateAsync(deleteConfirm.id)
+      toast.success('দোকান মুছে ফেলা হয়েছে')
+      setDeleteConfirm(null)
+    } catch {
+      toast.error('সমস্যা হয়েছে')
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   const filters = [
@@ -149,7 +160,13 @@ export default function ManageShops() {
             {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-16 text-center text-slate-400">কোনো দোকান নেই</div>
+          <div className="p-16 text-center">
+            <p className="text-5xl mb-3">🏪</p>
+            <p className="text-slate-500 font-medium">কোনো দোকান পাওয়া যায়নি</p>
+            {(search || locationFilter || catFilter) && (
+              <p className="text-xs text-slate-400 mt-1">ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন</p>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -160,11 +177,11 @@ export default function ManageShops() {
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
                   </th>
                   <th className="table-cell text-left">দোকান</th>
-                  <th className="table-cell text-left">বিভাগ</th>
-                  <th className="table-cell text-left">মালিক</th>
-                  <th className="table-cell text-center">রেটিং</th>
+                  <th className="table-cell text-left hidden sm:table-cell">বিভাগ</th>
+                  <th className="table-cell text-left hidden md:table-cell">মালিক</th>
+                  <th className="table-cell text-center hidden lg:table-cell">রেটিং</th>
                   <th className="table-cell text-center">স্ট্যাটাস</th>
-                  <th className="table-cell text-center">বিশেষ</th>
+                  <th className="table-cell text-center hidden md:table-cell">বিশেষ</th>
                   <th className="table-cell text-center">কার্যক্রম</th>
                 </tr>
               </thead>
@@ -189,13 +206,13 @@ export default function ManageShops() {
                           </div>
                         </div>
                       </td>
-                      <td className="table-cell">
+                      <td className="table-cell hidden sm:table-cell">
                         {shop.categories && (
                           <Badge variant="gray">{shop.categories.icon} {shop.categories.name}</Badge>
                         )}
                       </td>
-                      <td className="table-cell text-slate-500">{shop.profiles?.full_name || '—'}</td>
-                      <td className="table-cell text-center">
+                      <td className="table-cell text-slate-500 hidden md:table-cell">{shop.profiles?.full_name || '—'}</td>
+                      <td className="table-cell text-center hidden lg:table-cell">
                         {shop.review_count > 0
                           ? <RatingDisplay rating={shop.avg_rating} count={shop.review_count} />
                           : <span className="text-slate-300 dark:text-slate-600">—</span>
@@ -208,7 +225,7 @@ export default function ManageShops() {
                           </Badge>
                         </button>
                       </td>
-                      <td className="table-cell text-center">
+                      <td className="table-cell text-center hidden md:table-cell">
                         <button onClick={() => toggleFeat(shop)}>
                           <Badge variant={shop.is_featured ? 'gold' : 'gray'} className="cursor-pointer hover:opacity-80 transition-opacity">
                             {shop.is_featured ? '⭐ হ্যাঁ' : '— না'}
@@ -222,7 +239,7 @@ export default function ManageShops() {
                               <Button size="xs" variant="secondary">👁️</Button>
                             </Link>
                           )}
-                          <Button size="xs" variant="danger" onClick={() => handleDelete(shop.id, shop.shop_name)}>🗑️</Button>
+                          <Button size="xs" variant="danger" onClick={() => setDeleteConfirm({ id: shop.id, name: shop.shop_name })}>🗑️</Button>
                         </div>
                       </td>
                     </tr>
@@ -233,6 +250,17 @@ export default function ManageShops() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!deleteConfirm}
+        title={`"${deleteConfirm?.name}" মুছে ফেলবেন?`}
+        message="দোকানের সব তথ্য, পণ্য ও ছবি স্থায়ীভাবে মুছে যাবে। এটি পুনরুদ্ধার করা সম্ভব নয়।"
+        confirmLabel="হ্যাঁ, মুছে ফেলুন"
+        confirmVariant="danger"
+        loading={deleteLoading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

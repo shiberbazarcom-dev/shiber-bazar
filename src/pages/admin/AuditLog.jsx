@@ -5,10 +5,17 @@ import { supabase } from '../../lib/supabase'
 const PAGE = 30
 
 const ACTION_META = {
-  shop_approved:        { icon: '✅', label: 'দোকান অনুমোদন',    color: 'bg-green-100 text-green-700' },
-  shop_rejected:        { icon: '❌', label: 'দোকান প্রত্যাখ্যান', color: 'bg-red-100 text-red-700' },
-  order_status_changed: { icon: '📦', label: 'অর্ডার স্ট্যাটাস',  color: 'bg-blue-100 text-blue-700' },
-  role_changed:         { icon: '🛡️', label: 'Role পরিবর্তন',      color: 'bg-purple-100 text-purple-700' },
+  shop_approved:        { icon: '✅', label: 'দোকান অনুমোদন',      color: 'bg-green-100  text-green-700'  },
+  shop_rejected:        { icon: '❌', label: 'দোকান প্রত্যাখ্যান',  color: 'bg-red-100    text-red-700'    },
+  order_status_changed: { icon: '📦', label: 'অর্ডার স্ট্যাটাস',    color: 'bg-blue-100   text-blue-700'   },
+  role_changed:         { icon: '🛡️', label: 'Role পরিবর্তন',        color: 'bg-purple-100 text-purple-700' },
+  shop_deleted:         { icon: '🗑️', label: 'দোকান মুছে ফেলা',      color: 'bg-red-100    text-red-700'    },
+  shop_featured:        { icon: '⭐', label: 'বিশেষ চিহ্নিত',         color: 'bg-amber-100  text-amber-700'  },
+  user_banned:          { icon: '🚫', label: 'ব্যবহারকারী বন্ধ',       color: 'bg-gray-100   text-gray-700'   },
+  ad_created:           { icon: '📢', label: 'বিজ্ঞাপন তৈরি',         color: 'bg-pink-100   text-pink-700'   },
+  ad_deleted:           { icon: '🗑️', label: 'বিজ্ঞাপন মুছে ফেলা',    color: 'bg-red-100    text-red-700'    },
+  service_approved:     { icon: '🛠️', label: 'সেবা অনুমোদন',          color: 'bg-teal-100   text-teal-700'   },
+  service_rejected:     { icon: '🛠️', label: 'সেবা প্রত্যাখ্যান',      color: 'bg-red-100    text-red-700'    },
 }
 
 function useAuditLogs({ page = 0, action = '' } = {}) {
@@ -80,8 +87,14 @@ export default function AuditLog() {
         ) : logs.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-5xl mb-3">📋</p>
-            <p className="text-gray-400 text-sm">কোনো লগ নেই</p>
-            <p className="text-gray-300 text-xs mt-1">Supabase এ migration_audit_log.sql রান করুন</p>
+            <p className="text-gray-500 font-medium">
+              {actionFilter ? 'এই ধরনের কোনো লগ নেই' : 'কোনো লগ নেই'}
+            </p>
+            <p className="text-gray-300 text-xs mt-1">
+              {actionFilter
+                ? 'অন্য ফিল্টার বেছে নিন'
+                : 'Supabase এ migration_audit_log.sql রান করুন'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

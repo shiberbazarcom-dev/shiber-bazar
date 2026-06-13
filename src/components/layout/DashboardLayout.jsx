@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -39,6 +39,61 @@ function SidebarSection({ label }) {
     <p className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 select-none">
       {label}
     </p>
+  )
+}
+
+/* ── Unified topbar: mobile hamburger + desktop breadcrumb ── */
+function TopBar({ type, profile, signOut, setSidebarOpen, mobileBadge, links }) {
+  const location = useLocation()
+
+  // Find current page label from links
+  const currentLink = links.filter(l => l.to).find(l => {
+    if (l.end) return location.pathname === l.to
+    return location.pathname.startsWith(l.to)
+  })
+  const pageLabel = currentLink?.label || (type === 'admin' ? 'Admin' : 'Dashboard')
+  const pageIcon  = currentLink?.icon  || (type === 'admin' ? '⚙️' : '📊')
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
+      {/* Hamburger — mobile only */}
+      <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-xl p-1 text-gray-500 hover:text-gray-800">
+        ☰
+      </button>
+
+      {/* Breadcrumb — shows on all sizes */}
+      <div className="flex items-center gap-2 min-w-0">
+        <Link to="/" className="hidden lg:block text-xs text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0">
+          শিবের বাজার
+        </Link>
+        <span className="hidden lg:block text-gray-300 text-xs">/</span>
+        <span className="text-sm font-semibold text-gray-800 truncate">
+          {pageIcon} {pageLabel}
+        </span>
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Mobile: pending badge */}
+      {mobileBadge > 0 && (
+        <NavLink
+          to={type === 'admin' ? '/admin/orders' : '/dashboard/orders'}
+          className="lg:hidden flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold rounded-full px-3 py-1 flex-shrink-0">
+          📦 {mobileBadge} নতুন
+        </NavLink>
+      )}
+
+      {/* Desktop: user info + sign out */}
+      <div className="hidden lg:flex items-center gap-3">
+        <span className="text-xs text-gray-400">{profile?.full_name}</span>
+        <button
+          onClick={signOut}
+          className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50">
+          লগআউট
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -484,20 +539,8 @@ export default function DashboardLayout({ type = 'user' }) {
       {sidebar}
 
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Mobile top bar */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-          <button onClick={() => setSidebarOpen(true)} className="text-xl p-1">☰</button>
-          <span className="font-semibold text-gray-800">
-            {type === 'admin' ? '⚙️ Admin' : '👤 Dashboard'}
-          </span>
-          {mobileBadge > 0 && (
-            <NavLink
-              to={type === 'admin' ? '/admin/orders' : '/dashboard/orders'}
-              className="ml-auto flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold rounded-full px-3 py-1">
-              📦 {mobileBadge} নতুন
-            </NavLink>
-          )}
-        </div>
+        {/* Unified topbar (mobile + desktop) */}
+        <TopBar type={type} profile={profile} signOut={signOut} setSidebarOpen={setSidebarOpen} mobileBadge={mobileBadge} links={links} />
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
           <Outlet />
