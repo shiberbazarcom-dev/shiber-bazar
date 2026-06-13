@@ -37,6 +37,17 @@ const STAFF = [
   { name: 'নমিতা পুরকায়স্থ', title: 'উপ-সহকারী কৃষি কর্মকর্তা', phone: '01728456787' },
 ]
 
+const SERVICES = [
+  { icon: '👶', name: 'জন্ম নিবন্ধন সনদ',   fee: 'বিনামূল্যে' },
+  { icon: '🕊️', name: 'মৃত্যু নিবন্ধন সনদ',  fee: 'বিনামূল্যে' },
+  { icon: '📄', name: 'নাগরিক সনদ',           fee: '৳ ৫০' },
+  { icon: '✅', name: 'চারিত্রিক সনদ',         fee: '৳ ৫০' },
+  { icon: '👨‍👩‍👧', name: 'ওয়ারিশ সনদ',         fee: '৳ ১০০' },
+  { icon: '🏠', name: 'ভূমিহীন সনদ',           fee: 'বিনামূল্যে' },
+  { icon: '🏪', name: 'ট্রেড লাইসেন্স',        fee: '৳ ৫০০+' },
+  { icon: '💔', name: 'তালাকনামা প্রত্যয়ন',   fee: '৳ ১০০' },
+]
+
 const MARKETS = [
   { name: 'শিবের বাজার',      area: '৩ একর',  stalls: '১৫০ টি' },
   { name: 'পিঠারগঞ্জ বাজার', area: '১ একর',  stalls: '৪০ টি'  },
@@ -160,6 +171,27 @@ export default function HatkhulaUnion() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* সেবাসমূহ */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <SectionTitle icon="📋" title="ইউনিয়ন পরিষদের সেবাসমূহ" />
+          <div className="divide-y divide-gray-50">
+            {SERVICES.map(s => (
+              <div key={s.name} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-base">{s.icon}</span>
+                  <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  s.fee === 'বিনামূল্যে'
+                    ? 'bg-green-50 text-green-600'
+                    : 'bg-blue-50 text-blue-600'
+                }`}>{s.fee}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-gray-300 mt-3">* ফি পরিবর্তনযোগ্য, অফিসে যাচাই করুন</p>
         </div>
 
         {/* হাট-বাজার */}
