@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useApproveShop, useAdminShops } from '../../hooks/useShops'
@@ -23,15 +24,18 @@ export default function AdminDashboard() {
   const { data: pending = [] } = useAdminShops('pending')
   const approve = useApproveShop()
 
-  const { data: stats } = useQuery({
+  const queryClient = useQueryClient()
+
+  const { data: stats, dataUpdatedAt } = useQuery({
     queryKey: ['admin-full-stats'],
     queryFn: async () => {
-      const [total, approved, users, cats, reviews] = await Promise.all([
+      const [total, approved, users, cats, reviews, orders] = await Promise.all([
         supabase.from('shops').select('*', { count: 'exact', head: true }),
         supabase.from('shops').select('*', { count: 'exact', head: true }).eq('is_approved', true),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('categories').select('*', { count: 'exact', head: true }),
         supabase.from('reviews').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
       ])
       return {
         total: total.count || 0,
@@ -40,9 +44,27 @@ export default function AdminDashboard() {
         users: users.count || 0,
         categories: cats.count || 0,
         reviews: reviews.count || 0,
+        orders: orders.count || 0,
       }
     },
+    refetchInterval: 30_000, // auto-refresh every 30s
   })
+
+  // Realtime: invalidate stats on new orders or shops
+  useEffect(() => {
+    const channel = supabase.channel('admin-dashboard-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-full-stats'] })
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shops' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-full-stats'] })
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'shops' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-full-stats'] })
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [queryClient])
 
   const handleApprove = async (id) => {
     await approve.mutateAsync({ id, approve: true })
@@ -55,18 +77,23 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { icon: '🏪', label: 'মোট দোকান', value: stats?.total || 0, color: 'bg-blue-100 dark:bg-blue-900/30' },
-    { icon: '✅', label: 'অনুমোদিত', value: stats?.approved || 0, color: 'bg-green-100 dark:bg-green-900/30' },
-    { icon: '⏳', label: 'অপেক্ষমান', value: stats?.pending || 0, color: 'bg-amber-100 dark:bg-amber-900/30' },
-    { icon: '👥', label: 'ব্যবহারকারী', value: stats?.users || 0, color: 'bg-purple-100 dark:bg-purple-900/30' },
-    { icon: '📋', label: 'ক্যাটাগরি', value: stats?.categories || 0, color: 'bg-teal-100 dark:bg-teal-900/30' },
-    { icon: '⭐', label: 'রিভিউ', value: stats?.reviews || 0, color: 'bg-rose-100 dark:bg-rose-900/30' },
+    { icon: '🏪', label: 'মোট দোকান',    value: stats?.total || 0,      color: 'bg-blue-100 dark:bg-blue-900/30'   },
+    { icon: '✅', label: 'অনুমোদিত',     value: stats?.approved || 0,   color: 'bg-green-100 dark:bg-green-900/30' },
+    { icon: '⏳', label: 'অপেক্ষমান',    value: stats?.pending || 0,    color: 'bg-amber-100 dark:bg-amber-900/30' },
+    { icon: '📦', label: 'মোট অর্ডার',   value: stats?.orders || 0,     color: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { icon: '👥', label: 'ব্যবহারকারী',  value: stats?.users || 0,      color: 'bg-purple-100 dark:bg-purple-900/30'},
+    { icon: '⭐', label: 'রিভিউ',         value: stats?.reviews || 0,    color: 'bg-rose-100 dark:bg-rose-900/30'   },
   ]
+
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('bn-BD') : null
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">📊 অ্যাডমিন ড্যাশবোর্ড</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">📊 অ্যাডমিন ড্যাশবোর্ড</h1>
+          {lastUpdated && <p className="text-xs text-slate-400 mt-0.5">সর্বশেষ আপডেট: {lastUpdated} · প্রতি ৩০ সেকেন্ডে স্বয়ংক্রিয় রিফ্রেশ</p>}
+        </div>
         <Badge variant="gold">শিবের বাজার অ্যাডমিন</Badge>
       </div>
 

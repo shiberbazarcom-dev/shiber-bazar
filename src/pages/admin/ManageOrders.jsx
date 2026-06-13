@@ -40,6 +40,8 @@ function buildWhatsAppMsg(order) {
 export default function ManageOrders() {
   const [filter, setFilter]   = useState('')
   const [search, setSearch]   = useState('')
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const { data: orders = [], isLoading, refetch } = useAdminOrders(filter)
   const { data: shops  = [] } = useShopsForAssignment()
@@ -53,6 +55,39 @@ export default function ManageOrders() {
         o.product_name?.includes(search)
       )
     : orders
+
+  const allSelected = filtered.length > 0 && filtered.every(o => selectedIds.has(o.id))
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(o => o.id)))
+    }
+  }
+
+  async function bulkAction(status) {
+    const ids = [...selectedIds]
+    if (!ids.length) return
+    setBulkLoading(true)
+    try {
+      await Promise.all(ids.map(id => updateStatus.mutateAsync({ id, status })))
+      toast.success(`${ids.length}টি অর্ডার আপডেট হয়েছে ✅`)
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('সমস্যা হয়েছে')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   const handleAssign = async (orderId, shopId) => {
     if (!shopId) return
@@ -121,7 +156,7 @@ export default function ManageOrders() {
       </div>
 
       {/* Filters row */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-5 flex flex-col sm:flex-row gap-3">
+      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-3 flex flex-col sm:flex-row gap-3">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -141,6 +176,41 @@ export default function ManageOrders() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 ? (
+        <div className="bg-blue-600 text-white rounded-xl px-4 py-3 mb-3 flex items-center gap-3 flex-wrap animate-fadeIn">
+          <span className="text-sm font-semibold">{selectedIds.size}টি নির্বাচিত</span>
+          <div className="flex gap-2 flex-wrap ml-auto">
+            <button onClick={() => bulkAction('accepted')} disabled={bulkLoading}
+              className="px-3 py-1.5 bg-green-500 hover:bg-green-400 rounded-lg text-xs font-semibold disabled:opacity-60">
+              ✅ সব গ্রহণ
+            </button>
+            <button onClick={() => bulkAction('delivered')} disabled={bulkLoading}
+              className="px-3 py-1.5 bg-purple-500 hover:bg-purple-400 rounded-lg text-xs font-semibold disabled:opacity-60">
+              🎉 সব ডেলিভারি
+            </button>
+            <button onClick={() => bulkAction('rejected')} disabled={bulkLoading}
+              className="px-3 py-1.5 bg-red-500 hover:bg-red-400 rounded-lg text-xs font-semibold disabled:opacity-60">
+              ❌ সব বাতিল
+            </button>
+            <button onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold">
+              বাতিল
+            </button>
+          </div>
+        </div>
+      ) : (
+        filtered.length > 0 && (
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+              সব নির্বাচন করুন ({filtered.length}টি)
+            </label>
+          </div>
+        )
+      )}
+
       {/* Orders list */}
       {isLoading ? (
         <div className="text-center py-20">
@@ -155,10 +225,12 @@ export default function ManageOrders() {
       ) : (
         <div className="space-y-4">
           {filtered.map(order => (
-            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div key={order.id} className={`bg-white rounded-2xl border overflow-hidden transition-all ${selectedIds.has(order.id) ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-100'}`}>
               {/* Order card header */}
               <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
+                  <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer flex-shrink-0" />
                   <span className="font-bold text-gray-800">{order.order_number}</span>
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
                     {STATUS_LABELS[order.status] || order.status}

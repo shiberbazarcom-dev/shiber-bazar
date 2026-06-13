@@ -13,6 +13,8 @@ export default function ManageShops() {
   const [filter, setFilter]     = useState('all')
   const [catFilter, setCatFilter] = useState('')
   const [search, setSearch]     = useState('')
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const { data: shops = [], isLoading } = useAdminShops(filter)
   const { data: categories = [] }      = useCategories()
@@ -26,6 +28,39 @@ export default function ManageShops() {
     const matchSearch = !search || name.includes(search.toLowerCase())
     return matchCat && matchSearch
   })
+
+  const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(s => s.id)))
+    }
+  }
+
+  async function bulkApprove(isApprove) {
+    const ids = [...selectedIds]
+    if (!ids.length) return
+    setBulkLoading(true)
+    try {
+      await Promise.all(ids.map(id => approve.mutateAsync({ id, approve: isApprove })))
+      toast.success(`${ids.length}টি দোকান ${isApprove ? 'অনুমোদন' : 'বাতিল'} হয়েছে ✅`)
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('সমস্যা হয়েছে')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   const toggleApprove = async (shop) => {
     const isApproved = shop.status === 'approved'
@@ -80,6 +115,27 @@ export default function ManageShops() {
         <span className="ml-auto text-sm text-slate-400">{filtered.length} টি দোকান</span>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-blue-600 text-white rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap animate-fadeIn">
+          <span className="text-sm font-semibold">{selectedIds.size}টি নির্বাচিত</span>
+          <div className="flex gap-2 flex-wrap ml-auto">
+            <button onClick={() => bulkApprove(true)} disabled={bulkLoading}
+              className="px-3 py-1.5 bg-green-500 hover:bg-green-400 rounded-lg text-xs font-semibold disabled:opacity-60">
+              ✅ সব অনুমোদন
+            </button>
+            <button onClick={() => bulkApprove(false)} disabled={bulkLoading}
+              className="px-3 py-1.5 bg-red-500 hover:bg-red-400 rounded-lg text-xs font-semibold disabled:opacity-60">
+              ❌ সব বাতিল
+            </button>
+            <button onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold">
+              বাতিল
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="card overflow-hidden">
         {isLoading ? (
@@ -93,6 +149,10 @@ export default function ManageShops() {
             <table className="w-full text-sm">
               <thead className="table-head">
                 <tr>
+                  <th className="table-cell w-10">
+                    <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                  </th>
                   <th className="table-cell text-left">দোকান</th>
                   <th className="table-cell text-left">বিভাগ</th>
                   <th className="table-cell text-left">মালিক</th>
@@ -106,7 +166,11 @@ export default function ManageShops() {
                 {filtered.map(shop => {
                   const fallback = getAvatarUrl(shop.shop_name || '?')
                   return (
-                    <tr key={shop.id} className="table-row">
+                    <tr key={shop.id} className={`table-row transition-colors ${selectedIds.has(shop.id) ? 'bg-blue-50' : ''}`}>
+                      <td className="table-cell">
+                        <input type="checkbox" checked={selectedIds.has(shop.id)} onChange={() => toggleSelect(shop.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                      </td>
                       <td className="table-cell">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex-shrink-0">
