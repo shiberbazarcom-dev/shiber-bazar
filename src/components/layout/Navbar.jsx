@@ -55,7 +55,6 @@ export default function Navbar() {
   // PWA install prompt — UA already checked in useState above
   // This effect only handles: standalone check, beforeinstallprompt, appinstalled
   useEffect(() => {
-    // If running as installed PWA, hide the banner
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true
     if (isStandalone || window.__pwaInstalled) {
@@ -448,7 +447,7 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             }
-            <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
+            <span className="text-[10px] font-semibold leading-none">{user ? 'প্রোফাইল' : 'লগইন'}</span>
             {(pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')) && (
               <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />
             )}

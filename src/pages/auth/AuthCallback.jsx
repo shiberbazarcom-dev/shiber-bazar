@@ -7,8 +7,6 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('লগইন হচ্ছে...')
 
   useEffect(() => {
-    // Supabase puts access_token in URL hash after email confirm / OAuth
-    // getSession() processes the hash automatically
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         setMessage('সমস্যা হয়েছে। আবার চেষ্টা করুন।')
@@ -18,13 +16,11 @@ export default function AuthCallback() {
       if (session) {
         navigate('/', { replace: true })
       } else {
-        // Wait for onAuthStateChange to fire (implicit flow token in hash)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if (session) {
             navigate('/', { replace: true })
           }
         })
-        // Fallback redirect after 4s
         const timer = setTimeout(() => {
           navigate('/login', { replace: true })
         }, 4000)

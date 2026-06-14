@@ -25,7 +25,6 @@ export function CartProvider({ children }) {
     setItems(prev => {
       const exists = prev.find(i => i.id === product.id)
       if (exists) {
-        // Increase qty
         return prev.map(i => i.id === product.id ? { ...i, qty: (i.qty || 1) + 1 } : i)
       }
       return [...prev, { ...product, qty: 1 }]
