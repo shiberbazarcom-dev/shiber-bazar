@@ -583,6 +583,40 @@ export default function Home() {
         </button>
       </section>
 
+      {/* ── Sponsor Banner ── */}
+      <section className="py-5 sm:py-6" style={{ background: '#fff5f5' }}>
+        <div className="container-app">
+          <a
+            href="https://www.microvex.net/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow"
+            style={{ background: 'linear-gradient(135deg, #fff0f0 0%, #ffe4e4 100%)', border: '1.5px solid #ffc5c5' }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-xl flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #ff5757, #ff8c42)' }}>
+                M
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-0.5">Sponsored by</p>
+                <p className="text-lg font-bold" style={{ color: '#ff5757' }}>Microvex<span className="text-gray-800">.</span></p>
+                <p className="text-xs text-gray-500 hidden sm:block">Product Promotion &amp; Digital Solutions</p>
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #ff5757, #ff8c42)' }}
+            >
+              Visit Website
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+        </div>
+      </section>
+
       {/* ── Categories Section ── */}
       <section className="py-10 sm:py-14 bg-gray-50/50">
         <div className="container-app">

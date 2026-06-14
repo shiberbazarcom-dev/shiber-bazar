@@ -100,14 +100,6 @@ export default function Footer() {
           <p className="text-xs text-gray-400">
             © {YEAR} শিবের বাজার। সর্বস্বত্ব সংরক্ষিত।
           </p>
-          <a
-            href="https://www.microvex.net/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
-          >
-            Sponsored by <span className="font-semibold text-blue-600">Microvex</span>
-          </a>
           <div className="flex gap-4">
             <Link to="/policy" className="text-xs text-gray-400 hover:text-blue-600 transition-colors">
               গোপনীয়তা নীতি
