@@ -132,17 +132,50 @@ export default function HatkhulaUnion() {
           </div>
         </div>
 
-        {/* Chairman */}
+        {/* Chairman + Secretary */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
-          <SectionTitle icon="👤" title="চেয়ারম্যান" />
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xl flex items-center justify-center flex-shrink-0">
-              {CHAIRMAN.name[0]}
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Chairman */}
             <div>
-              <p className="font-bold text-gray-900">{CHAIRMAN.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{CHAIRMAN.title} • {CHAIRMAN.district}</p>
-              <PhoneLink phone={CHAIRMAN.phone} />
+              <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wide mb-2">চেয়ারম্যান</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 font-bold text-base flex items-center justify-center flex-shrink-0">
+                  {CHAIRMAN.name[0]}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{CHAIRMAN.name}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{CHAIRMAN.district}</p>
+                  <PhoneLink phone={CHAIRMAN.phone} />
+                </div>
+              </div>
+            </div>
+            {/* Secretary */}
+            <div className="border-l border-gray-100 pl-4">
+              <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-2">পরিষদ সচিব</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 font-bold text-base flex items-center justify-center flex-shrink-0">
+                  {STAFF[0].name[0]}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{STAFF[0].name}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">সচিব</p>
+                  <PhoneLink phone={STAFF[0].phone} />
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Krishi Officer */}
+          <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col items-center text-center">
+            <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-2">কৃষি কর্মকর্তা</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-700 font-bold text-base flex items-center justify-center flex-shrink-0">
+                {STAFF[STAFF.length - 1].name[0]}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-900 leading-tight">{STAFF[STAFF.length - 1].name}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{STAFF[STAFF.length - 1].title}</p>
+                <PhoneLink phone={STAFF[STAFF.length - 1].phone} />
+              </div>
             </div>
           </div>
         </div>
