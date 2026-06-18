@@ -262,11 +262,6 @@ export default function Navbar() {
                 সেবাসমূহ
               </NavLink>
 
-              <NavLink to="/hatkhula-union" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
-                🏛️ ইউনিয়ন
-              </NavLink>
-
               <NavLink to="/shops" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 সব দোকান
@@ -275,6 +270,11 @@ export default function Navbar() {
               <NavLink to="/track-order" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 অর্ডার ট্র্যাক
+              </NavLink>
+
+              <NavLink to="/hatkhula-union" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
+                ইউনিয়ন
               </NavLink>
 
               <NavLink to="/contact" className={({ isActive }) =>
@@ -379,15 +379,17 @@ export default function Navbar() {
               {[
                 { to: '/categories',  label: 'ক্যাটাগরি' },
                 { to: '/services',       label: 'সেবাসমূহ' },
-                { to: '/hatkhula-union', label: '🏛️ ইউনিয়ন' },
                 { to: '/shops',          label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/contact',     label: 'যোগাযোগ' },
+                { to: '/hatkhula-union', label: 'ইউনিয়ন', color: 'emerald' },
               ].map(item => (
                 <NavLink key={item.to} to={item.to}
                   className={({ isActive }) =>
                     `py-3.5 px-1 text-sm font-medium border-b border-gray-50 transition-colors ${
-                      isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
+                      item.color === 'emerald'
+                        ? isActive ? 'text-emerald-700' : 'text-emerald-600 active:text-emerald-700'
+                        : isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
                     }`}>
                   {item.label}
                 </NavLink>
