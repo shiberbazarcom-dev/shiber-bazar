@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
+import { useMarketStats } from '../../hooks/useShops'
 import { getAvatarUrl } from '../../lib/utils'
 import SearchDropdown from '../SearchDropdown'
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
   const { totalCount: cartCount } = useCart()
   const { data: categories = [] } = useCategories()
+  const { data: stats } = useMarketStats()
   const navigate  = useNavigate()
   const location  = useLocation()
 
@@ -154,9 +156,32 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Announcement strip — desktop */}
-        <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
-          📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
+        {/* Announcement ticker strip */}
+        <div
+          className="text-white text-xs py-1.5 overflow-hidden hidden sm:block relative"
+          style={{ background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 40%, #3b82f6 70%, #1d4ed8 100%)', backgroundSize: '200% 100%', animation: 'gradientShift 6s ease infinite' }}
+        >
+          <style>{`
+            @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+            @keyframes tickerScroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+            .ticker-track { display:flex; gap:0; white-space:nowrap; animation:tickerScroll 28s linear infinite; }
+            .ticker-track:hover { animation-play-state:paused; }
+          `}</style>
+          <div className="ticker-track">
+            {[
+              `📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়`,
+              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান রেজিস্ট্রেশন হয়েছে` : null,
+              stats?.totalProducts ? `📦 ${stats.totalProducts}+ পণ্য পাওয়া যাচ্ছে` : null,
+              `🛒 সহজে অর্ডার করুন, সরাসরি দোকানদারের সাথে কথা বলুন`,
+              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ সদস্য ইতোমধ্যে যোগ দিয়েছেন` : null,
+              `✅ ডেলিভারি সেবা পাওয়া যাচ্ছে নির্বাচিত দোকানে`,
+            ].filter(Boolean).map((msg, i) => (
+              <span key={i} className="inline-flex items-center px-8 gap-2">
+                {msg}
+                <span className="opacity-40 mx-4">•</span>
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
