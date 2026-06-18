@@ -93,27 +93,31 @@ function SectionTitle({ icon, title }) {
 
 export default function HatkhulaUnion() {
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f0fdf4 0%, #eff6ff 50%, #f8fafc 100%)' }}>
       <SEO
         title="হাটখোলা ইউনিয়ন পরিষদ"
         description="২নং হাটখোলা ইউনিয়ন পরিষদ — চেয়ারম্যান, সদস্য, কর্মচারী ও জরুরি যোগাযোগ নম্বর।"
       />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-10 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-10 space-y-4">
 
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
-          <div className="text-3xl mb-2">🏛️</div>
-          <h1 className="text-lg font-bold text-gray-900">২নং হাটখোলা ইউনিয়ন পরিষদ</h1>
-          <p className="text-xs text-gray-400 mt-1">সিলেট সদর উপজেলা, সিলেট জেলা</p>
+        <div className="rounded-2xl p-6 text-center" style={{ background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}>
+          <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+            </svg>
+          </div>
+          <h1 className="text-lg font-bold text-white">২নং হাটখোলা ইউনিয়ন পরিষদ</h1>
+          <p className="text-xs text-emerald-100 mt-1">সিলেট সদর উপজেলা, সিলেট জেলা</p>
           <a href="mailto:hatkhulaunion@gmail.com"
-            className="inline-flex items-center gap-1 text-xs text-blue-500 mt-2 hover:underline">
+            className="inline-flex items-center gap-1 text-xs text-white/80 mt-2 hover:text-white transition-colors">
             ✉️ hatkhulaunion@gmail.com
           </a>
         </div>
 
         {/* পুলিশ */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="👮" title="পুলিশ" />
           <div className="divide-y divide-gray-50">
             {POLICE.map(p => (
@@ -129,10 +133,10 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* Chairman */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="👤" title="চেয়ারম্যান" />
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-700 font-bold text-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xl flex items-center justify-center flex-shrink-0">
               {CHAIRMAN.name[0]}
             </div>
             <div>
@@ -144,13 +148,13 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* সাধারণ সদস্য */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="🧑‍💼" title="ওয়ার্ড সদস্য" />
           <div className="divide-y divide-gray-50">
             {MEMBERS.map(m => (
               <div key={m.ward} className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  <span className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
                     {m.ward}
                   </span>
                   <p className="text-sm font-medium text-gray-800">{m.name}</p>
@@ -162,7 +166,7 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* সংরক্ষিত মহিলা সদস্য */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="👩" title="সংরক্ষিত মহিলা সদস্য" />
           <div className="divide-y divide-gray-50">
             {WOMEN_MEMBERS.map(m => (
@@ -178,7 +182,7 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* কর্মচারী */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="🗂️" title="কর্মকর্তা ও কর্মচারী" />
           <div className="divide-y divide-gray-50">
             {STAFF.map(s => (
@@ -194,7 +198,7 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* সেবাসমূহ */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="📋" title="ইউনিয়ন পরিষদের সেবাসমূহ" />
           <div className="divide-y divide-gray-50">
             {SERVICES.map(s => (
@@ -205,7 +209,7 @@ export default function HatkhulaUnion() {
                 </div>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                   s.fee === 'বিনামূল্যে'
-                    ? 'bg-green-50 text-green-600'
+                    ? 'bg-emerald-50 text-emerald-600'
                     : 'bg-blue-50 text-blue-600'
                 }`}>{s.fee}</span>
               </div>
@@ -215,7 +219,7 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* হাট-বাজার */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="🏪" title="হাট-বাজার" />
           <div className="divide-y divide-gray-50">
             {MARKETS.map(m => (
@@ -231,14 +235,14 @@ export default function HatkhulaUnion() {
         </div>
 
         {/* জাতীয় জরুরি নম্বর */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="☎️" title="জাতীয় জরুরি নম্বর" />
           <div className="grid grid-cols-2 gap-2">
             {HOTLINES.map(h => (
               <a key={h.number} href={`tel:${h.number}`}
-                className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-xl px-3 py-2.5 transition-colors">
+                className="flex items-center justify-between bg-gray-50/80 hover:bg-emerald-50 rounded-xl px-3 py-2.5 transition-colors">
                 <span className="text-xs text-gray-600 font-medium">{h.label}</span>
-                <span className="text-sm font-bold text-blue-600">{h.number}</span>
+                <span className="text-sm font-bold text-emerald-600">{h.number}</span>
               </a>
             ))}
           </div>
