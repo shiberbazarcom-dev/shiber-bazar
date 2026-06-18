@@ -671,6 +671,12 @@ export default function ShopDetail() {
               WhatsApp
             </a>
           ) : <div />}
+          {shop.owner_id !== user?.id && (
+            <button onClick={handleStartChat} disabled={startConversation.isPending}
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 active:scale-95 transition-all disabled:opacity-60">
+              💬 বার্তা পাঠান
+            </button>
+          )}
         </div>
       </div>
 

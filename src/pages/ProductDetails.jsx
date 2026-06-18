@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useProduct, useShopProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useStartConversation } from '../hooks/useChat'
 import { recordProductView } from '../hooks/useAnalytics'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
@@ -61,6 +62,7 @@ export default function ProductDetails() {
   const { data: related = [] } = useShopProducts(product?.shop_id)
   const { addItem, isInCart } = useCart()
   const { user } = useAuth()
+  const startConversation = useStartConversation()
   const [activeImg, setActiveImg] = useState(0)
   const [imgZoom, setImgZoom] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
@@ -86,6 +88,17 @@ export default function ProductDetails() {
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder() {
     setOrderOpen(true)
+  }
+
+  async function handleStartChat() {
+    if (!user) { navigate('/login'); return }
+    const shop = product?.shops
+    if (!shop) return
+    if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
+    try {
+      const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
+      navigate(`/dashboard/chat/${conv.id}`)
+    } catch { toast.error('বার্তা শুরু করা যায়নি') }
   }
 
   async function handleShare() {
@@ -280,6 +293,17 @@ export default function ProductDetails() {
                   অর্ডার করুন
                 </button>
 
+                {shop?.owner_id !== user?.id && (
+                  <button onClick={handleStartChat} disabled={startConversation.isPending}
+                    className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+                    style={{ background: '#7c3aed' }}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    বার্তা যাও
+                  </button>
+                )}
+
                 {(shop?.whatsapp || shop?.phone) && (
                   <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
                     target="_blank" rel="noreferrer"
@@ -442,13 +466,21 @@ export default function ProductDetails() {
             </svg>
             অর্ডার করুন
           </button>
+          {shop?.owner_id !== user?.id && (
+            <button onClick={handleStartChat} disabled={startConversation.isPending} aria-label="বার্তা যাও"
+              className="w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-60 text-white"
+              style={{ background: '#7c3aed' }}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </button>
+          )}
           {(shop?.whatsapp || shop?.phone) && (
             <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
               target="_blank" rel="noreferrer"
-              className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 text-white active:scale-95 transition-all"
+              className="w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
               {WA_ICON}
-              WhatsApp
             </a>
           )}
         </div>
