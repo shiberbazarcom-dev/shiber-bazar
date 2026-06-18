@@ -560,10 +560,10 @@ export default function Home() {
             </div>
 
             {/* Featured shop quick-links */}
-            {featuredShops.length > 0 && (
+            {(featuredShops.length > 0 || latestShops.length > 0) && (
               <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
                 <span className="text-white/50 text-xs">জনপ্রিয়:</span>
-                {featuredShops.slice(0, 3).map(shop => (
+                {(featuredShops.length > 0 ? featuredShops : latestShops).slice(0, 3).map(shop => (
                   <Link
                     key={shop.id}
                     to={`/shop/${shop.slug || shop.id}`}
