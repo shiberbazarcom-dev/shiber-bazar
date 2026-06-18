@@ -145,6 +145,23 @@ function ProductCard({ product, shop, onOrder }) {
   )
 }
 
+function LiveChatBtn({ onClick, disabled, showPulse }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-2.5 px-4 h-12 rounded-full text-white text-sm font-bold shadow-lg active:scale-95 transition-transform disabled:opacity-60 relative"
+      style={{ background: '#7c3aed' }}
+    >
+      {showPulse && <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: '#7c3aed' }} />}
+      <svg className="w-5 h-5 relative z-10 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+      <span className="relative z-10">লাইভ চ্যাট</span>
+    </button>
+  )
+}
+
 /* ═══════════════════════════════════════════════════════
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════ */
@@ -697,31 +714,29 @@ export default function ShopDetail() {
         </div>
       </div>
 
-      {/* ══ MOBILE FLOATING LIVE CHAT BUTTON ══ */}
+      {/* ══ FLOATING LIVE CHAT BUTTON ══ */}
       {shop?.owner_id !== user?.id && (
-        <div
-          className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
-          style={{
-            bottom: '140px',
-            transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
-            opacity: chatRevealed ? 1 : 0,
-            pointerEvents: chatRevealed ? 'auto' : 'none',
-          }}
-        >
-          <button
-            onClick={handleStartChat}
-            disabled={startConversation.isPending}
-            className="flex items-center gap-2.5 px-4 h-12 rounded-full text-white text-sm font-bold shadow-lg active:scale-95 transition-transform disabled:opacity-60"
-            style={{ background: '#7c3aed' }}
-          >
-            {/* pulse ring — only on fresh reveal */}
-            {showPulse && <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: '#7c3aed' }} />}
-            <svg className="w-5 h-5 relative z-10 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span className="relative z-10">লাইভ চ্যাট</span>
-          </button>
-        </div>
+        <>
+          {/* mobile — above sticky bar */}
+          <div className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
+            style={{
+              bottom: '140px',
+              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
+              opacity: chatRevealed ? 1 : 0,
+              pointerEvents: chatRevealed ? 'auto' : 'none',
+            }}>
+            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
+          </div>
+          {/* desktop — bottom right */}
+          <div className="hidden lg:block fixed right-8 bottom-10 z-50 transition-all duration-700 ease-out"
+            style={{
+              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
+              opacity: chatRevealed ? 1 : 0,
+              pointerEvents: chatRevealed ? 'auto' : 'none',
+            }}>
+            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
+          </div>
+        </>
       )}
 
       {/* ══ ORDER MODAL (bottom sheet) ══ */}
