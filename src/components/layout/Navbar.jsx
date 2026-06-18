@@ -375,7 +375,7 @@ export default function Navbar() {
       {/* ══════════════════════════════════════════════
           MOBILE STICKY BOTTOM NAVIGATION BAR
       ══════════════════════════════════════════════ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-stretch" style={{ height: '60px' }}>
 
           {/* হোম */}
