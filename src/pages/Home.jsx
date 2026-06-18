@@ -584,32 +584,32 @@ export default function Home() {
       </section>
 
       {/* ── Sponsor Banner ── */}
-      <section className="py-2 sm:py-6" style={{ background: '#fff5f5' }}>
+      <section className="py-2" style={{ background: '#fff5f5' }}>
         <div className="container-app">
           <a
             href="https://www.microvex.net/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-row items-center justify-between gap-2 rounded-xl sm:rounded-2xl px-3 py-2 sm:px-6 sm:py-5 shadow-sm hover:shadow-md transition-shadow"
+            className="flex flex-row items-center justify-between gap-2 rounded-xl px-3 py-2 shadow-sm hover:shadow-md transition-shadow"
             style={{ background: 'linear-gradient(135deg, #fff0f0 0%, #ffe4e4 100%)', border: '1.5px solid #ffc5c5' }}
           >
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center font-black text-white text-sm sm:text-xl flex-shrink-0"
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-white text-sm flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #ff5757, #ff8c42)' }}>
                 M
               </div>
               <div>
-                <p className="text-[9px] sm:text-xs font-medium text-gray-400 uppercase tracking-widest mb-0">Sponsored by</p>
-                <p className="text-sm sm:text-lg font-bold leading-tight" style={{ color: '#ff5757' }}>Microvex<span className="text-gray-800">.</span></p>
+                <p className="text-[9px] font-medium text-gray-400 uppercase tracking-widest mb-0">Sponsored by</p>
+                <p className="text-sm font-bold leading-tight" style={{ color: '#ff5757' }}>Microvex<span className="text-gray-800">.</span></p>
                 <p className="text-xs text-gray-500 hidden sm:block">Product Promotion &amp; Digital Solutions</p>
               </div>
             </div>
             <div
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-white text-xs sm:text-sm font-semibold flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #ff5757, #ff8c42)' }}
             >
               Visit Website
-              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </div>
