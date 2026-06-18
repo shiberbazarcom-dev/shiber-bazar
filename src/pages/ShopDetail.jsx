@@ -182,11 +182,20 @@ export default function ShopDetail() {
 
   useEffect(() => {
     if (!shop) return
-    const t = setTimeout(() => {
+    const key = `shopChat_${shop.id}`
+    const last = Number(localStorage.getItem(key) || 0)
+    const fresh = Date.now() - last > 24 * 60 * 60 * 1000
+
+    if (fresh) {
+      const t = setTimeout(() => {
+        setChatRevealed(true)
+        playMessageSound()
+        localStorage.setItem(key, String(Date.now()))
+      }, 1800)
+      return () => clearTimeout(t)
+    } else {
       setChatRevealed(true)
-      playMessageSound()
-    }, 1800)
-    return () => clearTimeout(t)
+    }
   }, [shop?.id])
 
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
@@ -682,24 +691,15 @@ export default function ShopDetail() {
               WhatsApp
             </a>
           ) : <div />}
-          {shop.owner_id !== user?.id && (
-            <button onClick={handleStartChat} disabled={startConversation.isPending}
-              className="w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-all disabled:opacity-60"
-              style={{ background: '#7c3aed' }}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </button>
-          )}
         </div>
       </div>
 
       {/* ══ MOBILE FLOATING LIVE CHAT BUTTON ══ */}
       {shop?.owner_id !== user?.id && (
         <div
-          className="lg:hidden fixed left-4 z-50 transition-all duration-700 ease-out"
+          className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
           style={{
-            bottom: '80px',
+            bottom: '140px',
             transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
             opacity: chatRevealed ? 1 : 0,
             pointerEvents: chatRevealed ? 'auto' : 'none',
