@@ -366,6 +366,8 @@ export default function Home() {
   const [searchTab, setSearchTab] = useState('shops')
   const [isLoaded, setIsLoaded] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [announceDismissed, setAnnounceDismissed] = useState(false)
+  const [announceVisible, setAnnounceVisible] = useState(false)
 
   const { data: stats, refetch: refetchStats } = useMarketStats()
   const { data: featuredShops = [], isLoading: isFeaturedLoading, refetch: refetchFeatured } = useFeaturedShops(8)
@@ -386,6 +388,13 @@ export default function Home() {
   const popupAds   = validAds.filter(a => a.ad_type === 'popup')
 
   // Real-time subscriptions for auto-updates
+  useEffect(() => {
+    if (latestShops.length > 0 && !announceDismissed) {
+      const t = setTimeout(() => setAnnounceVisible(true), 2500)
+      return () => clearTimeout(t)
+    }
+  }, [latestShops.length])
+
   useEffect(() => {
     setIsLoaded(true)
 
@@ -550,9 +559,31 @@ export default function Home() {
               </form>
             </div>
 
+            {/* Featured shop quick-links */}
+            {featuredShops.length > 0 && (
+              <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
+                <span className="text-white/50 text-xs">জনপ্রিয়:</span>
+                {featuredShops.slice(0, 3).map(shop => (
+                  <Link
+                    key={shop.id}
+                    to={`/shop/${shop.slug || shop.id}`}
+                    className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95"
+                  >
+                    {(shop.logo || shop.logo_url)
+                      ? <img src={shop.logo || shop.logo_url} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                      : <span className="w-4 h-4 rounded-full bg-white/30 flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                          {shop.shop_name?.[0]}
+                        </span>
+                    }
+                    {shop.shop_name}
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {/* Animated Stats */}
             {stats && (
-              <div className="flex items-center justify-center gap-4 sm:gap-8 mt-8 flex-wrap">
+              <div className="flex items-center justify-center gap-4 sm:gap-8 mt-6 flex-wrap">
                 {[
                   { value: stats.totalShops, icon: '🏪', label: 'দোকান' },
                   { value: stats.totalProducts, icon: '📦', label: 'পণ্য' },
@@ -616,6 +647,55 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+      {/* ── New Shop Announcement Floating Card ── */}
+      {latestShops.length > 0 && !announceDismissed && (() => {
+        const newest = latestShops[0]
+        return (
+          <div
+            className="fixed bottom-20 left-4 z-50 max-w-[260px] transition-all duration-500 ease-out md:bottom-6"
+            style={{
+              transform: announceVisible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
+              opacity: announceVisible ? 1 : 0,
+              pointerEvents: announceVisible ? 'auto' : 'none',
+            }}
+          >
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="flex items-center gap-2.5 px-3 py-2.5">
+                {(newest.logo || newest.logo_url)
+                  ? <img src={newest.logo || newest.logo_url} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                  : <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600 flex-shrink-0">
+                      {newest.shop_name?.[0]}
+                    </div>
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-green-600 font-semibold">🎉 নতুন দোকান যোগ হয়েছে</p>
+                  <p className="text-xs font-bold text-gray-900 truncate">{newest.shop_name}</p>
+                  {newest.categories?.name && (
+                    <p className="text-[10px] text-gray-400 truncate">{newest.categories.name}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setAnnounceDismissed(true)}
+                  className="text-gray-300 hover:text-gray-500 transition-colors flex-shrink-0 ml-1"
+                  aria-label="বন্ধ করুন"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <Link
+                to={`/shop/${newest.slug || newest.id}`}
+                onClick={() => setAnnounceDismissed(true)}
+                className="block text-center text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 py-1.5 transition-colors"
+              >
+                দোকান দেখুন →
+              </Link>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Categories Section ── */}
       <section className="py-10 sm:py-14 bg-gray-50/50">
