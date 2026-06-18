@@ -268,9 +268,11 @@ export function useToggleFavorite() {
   return useMutation({
     mutationFn: async ({ shopId, isFav }) => {
       if (isFav) {
-        await supabase.from('favorites').delete().eq('user_id', user.id).eq('shop_id', shopId)
+        const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('shop_id', shopId)
+        if (error) throw error
       } else {
-        await supabase.from('favorites').insert({ user_id: user.id, shop_id: shopId })
+        const { error } = await supabase.from('favorites').insert({ user_id: user.id, shop_id: shopId })
+        if (error) throw error
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
@@ -322,7 +324,8 @@ export function useToggleFeatured() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, featured }) => {
-      await supabase.from('shops').update({ is_featured: featured }).eq('id', id)
+      const { error } = await supabase.from('shops').update({ is_featured: featured }).eq('id', id)
+      if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-shops'] }),
   })
