@@ -653,7 +653,7 @@ export default function Home() {
         const newest = latestShops[0]
         return (
           <div
-            className="fixed bottom-20 left-4 z-50 max-w-[260px] transition-all duration-500 ease-out md:bottom-6"
+            className="hidden md:block fixed bottom-20 left-4 z-50 max-w-[260px] transition-all duration-500 ease-out md:bottom-6"
             style={{
               transform: announceVisible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
               opacity: announceVisible ? 1 : 0,
