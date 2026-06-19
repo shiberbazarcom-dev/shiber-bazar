@@ -790,7 +790,7 @@ export default function LandingPage() {
     <>
       <SEO title={lp.title || lp.product_name} description={lp.subheadline || lp.product_description} image={lp.hero_image_url} />
       <div style={{ minHeight: '100vh', background: '#f3f4f6' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto', minHeight: '100vh', background: 'inherit' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto', minHeight: '100vh', background: 'inherit' }}>
           <TemplateComponent lp={lp} color={color} onOrder={handleOrder} />
         </div>
       </div>
