@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 /**
  * Custom confirm modal — replaces browser confirm()
@@ -34,7 +34,7 @@ export default function ConfirmModal({
 
   const confirmCls = confirmVariant === 'danger'
     ? 'bg-red-600 hover:bg-red-700 focus:ring-red-400'
-    : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-400'
+    : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-400'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -42,7 +42,7 @@ export default function ConfirmModal({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fadeIn">
         <div className="flex items-start gap-4 mb-5">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
-            confirmVariant === 'danger' ? 'bg-red-100' : 'bg-purple-100'
+            confirmVariant === 'danger' ? 'bg-red-100' : 'bg-blue-100'
           }`}>
             {confirmVariant === 'danger' ? '🗑️' : '❓'}
           </div>

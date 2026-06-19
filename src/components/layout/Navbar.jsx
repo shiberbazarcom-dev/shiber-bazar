@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
+import { useMarketStats } from '../../hooks/useShops'
 import { getAvatarUrl } from '../../lib/utils'
 import SearchDropdown from '../SearchDropdown'
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
   const { totalCount: cartCount } = useCart()
   const { data: categories = [] } = useCategories()
+  const { data: stats } = useMarketStats()
   const navigate  = useNavigate()
   const location  = useLocation()
 
@@ -55,7 +57,6 @@ export default function Navbar() {
   // PWA install prompt — UA already checked in useState above
   // This effect only handles: standalone check, beforeinstallprompt, appinstalled
   useEffect(() => {
-    // If running as installed PWA, hide the banner
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true
     if (isStandalone || window.__pwaInstalled) {
@@ -155,9 +156,32 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Announcement strip — desktop */}
-        <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
-          📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
+        {/* Announcement ticker strip */}
+        <div
+          className="text-white text-xs py-1.5 overflow-hidden hidden sm:block relative"
+          style={{ background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 40%, #3b82f6 70%, #1d4ed8 100%)', backgroundSize: '200% 100%', animation: 'gradientShift 6s ease infinite' }}
+        >
+          <style>{`
+            @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+            @keyframes tickerScroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+            .ticker-track { display:flex; gap:0; white-space:nowrap; animation:tickerScroll 28s linear infinite; }
+            .ticker-track:hover { animation-play-state:paused; }
+          `}</style>
+          <div className="ticker-track">
+            {[
+              `📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়`,
+              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান রেজিস্ট্রেশন হয়েছে` : null,
+              stats?.totalProducts ? `📦 ${stats.totalProducts}+ পণ্য পাওয়া যাচ্ছে` : null,
+              `🛒 সহজে অর্ডার করুন, সরাসরি দোকানদারের সাথে কথা বলুন`,
+              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ সদস্য ইতোমধ্যে যোগ দিয়েছেন` : null,
+              `✅ ডেলিভারি সেবা পাওয়া যাচ্ছে নির্বাচিত দোকানে`,
+            ].filter(Boolean).map((msg, i) => (
+              <span key={i} className="inline-flex items-center px-8 gap-2">
+                {msg}
+                <span className="opacity-40 mx-4">•</span>
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
@@ -246,6 +270,11 @@ export default function Navbar() {
               <NavLink to="/track-order" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 অর্ডার ট্র্যাক
+              </NavLink>
+
+              <NavLink to="/hatkhula-union" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
+                ইউনিয়ন
               </NavLink>
 
               <NavLink to="/contact" className={({ isActive }) =>
@@ -349,15 +378,18 @@ export default function Navbar() {
             <nav className="max-w-6xl mx-auto px-4 py-1 flex flex-col">
               {[
                 { to: '/categories',  label: 'ক্যাটাগরি' },
-                { to: '/services', label: 'সেবাসমূহ' },
-                { to: '/shops',       label: 'সব দোকান' },
+                { to: '/services',       label: 'সেবাসমূহ' },
+                { to: '/shops',          label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/contact',     label: 'যোগাযোগ' },
+                { to: '/hatkhula-union', label: 'ইউনিয়ন', color: 'emerald' },
               ].map(item => (
                 <NavLink key={item.to} to={item.to}
                   className={({ isActive }) =>
                     `py-3.5 px-1 text-sm font-medium border-b border-gray-50 transition-colors ${
-                      isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
+                      item.color === 'emerald'
+                        ? isActive ? 'text-emerald-700' : 'text-emerald-600 active:text-emerald-700'
+                        : isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
                     }`}>
                   {item.label}
                 </NavLink>
@@ -370,7 +402,7 @@ export default function Navbar() {
       {/* ══════════════════════════════════════════════
           MOBILE STICKY BOTTOM NAVIGATION BAR
       ══════════════════════════════════════════════ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-stretch" style={{ height: '60px' }}>
 
           {/* হোম */}
@@ -442,7 +474,7 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             }
-            <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
+            <span className="text-[10px] font-semibold leading-none">{user ? 'প্রোফাইল' : 'লগইন'}</span>
             {(pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')) && (
               <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />
             )}

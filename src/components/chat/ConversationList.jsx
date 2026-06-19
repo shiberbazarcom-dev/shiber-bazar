@@ -1,19 +1,58 @@
 import { formatDistanceToNow } from 'date-fns'
 import { bn } from 'date-fns/locale'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { cn } from '../../lib/utils'
 
-export default function ConversationList({ conversations, selected, onSelect }) {
+function EmptyState({ isOwner }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center">
+      {/* Illustration */}
+      <div className="relative mb-5">
+        <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
+          <span className="text-4xl">💬</span>
+        </div>
+        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-100 flex items-center justify-center border-2 border-white">
+          <span className="text-sm">✨</span>
+        </div>
+      </div>
+
+      <h3 className="font-bold text-gray-700 text-sm mb-1">
+        কোনো কথোপকথন নেই
+      </h3>
+
+      {isOwner ? (
+        <>
+          <p className="text-xs text-gray-400 leading-relaxed max-w-[200px]">
+            ক্রেতারা আপনার দোকানের পেজ থেকে বার্তা পাঠালে এখানে দেখাবে।
+          </p>
+          <div className="mt-4 px-4 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
+            <p className="text-xs text-blue-600 font-medium">💡 টিপস</p>
+            <p className="text-xs text-blue-500 mt-0.5">দোকানের লিংক শেয়ার করুন বেশি বার্তা পেতে</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-gray-400 leading-relaxed max-w-[200px]">
+            কোনো দোকানের সাথে কথা বলতে দোকানের পেজে যান।
+          </p>
+          <Link
+            to="/shops"
+            className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            🏪 দোকান খুঁজুন
+          </Link>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function ConversationList({ conversations, selected, onSelect, isOwner = false }) {
   const { user } = useAuth()
 
   if (!conversations?.length) {
-    return (
-      <div className="flex flex-col items-center justify-center h-48 text-gray-400 px-4">
-        <div className="text-4xl mb-2">💬</div>
-        <p className="text-sm text-center">এখনো কোনো কথোপকথন নেই</p>
-        <p className="text-xs text-center mt-1">দোকানের পেজ থেকে বার্তা পাঠান</p>
-      </div>
-    )
+    return <EmptyState isOwner={isOwner} />
   }
 
   return (

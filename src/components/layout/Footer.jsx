@@ -14,7 +14,9 @@ export default function Footer() {
           {/* Brand — full width on smallest screens */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0"
+              <img src="/logo.png" alt="শিবের বাজার" className="w-9 h-9 object-contain flex-shrink-0"
+                   onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+              <div className="w-9 h-9 rounded-lg items-center justify-center text-white font-bold flex-shrink-0 hidden"
                    style={{ background: '#2563EB' }}>
                 শ
               </div>

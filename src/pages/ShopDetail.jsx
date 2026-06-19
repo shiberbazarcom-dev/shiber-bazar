@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useShop, useReviews, useAddReview, useToggleFavorite, useFavorites } from '../hooks/useShops'
 import { useShopProducts } from '../hooks/useProducts'
@@ -7,7 +7,9 @@ import { useCart } from '../context/CartContext'
 import { useStartConversation } from '../hooks/useChat'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import { productMatchesSearch } from '../lib/banglishSearch'
+import { getShopTier, getTierProgress } from '../lib/shopTier'
 import toast from 'react-hot-toast'
+import { playMessageSound } from '../lib/chatSound'
 import SEO from '../components/SEO'
 import OrderModal from '../components/order/OrderModal'
 
@@ -143,6 +145,23 @@ function ProductCard({ product, shop, onOrder }) {
   )
 }
 
+function LiveChatBtn({ onClick, disabled, showPulse }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-2.5 px-4 h-12 rounded-full text-white text-sm font-bold shadow-lg active:scale-95 transition-transform disabled:opacity-60 relative"
+      style={{ background: '#7c3aed' }}
+    >
+      {showPulse && <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: '#7c3aed' }} />}
+      <svg className="w-5 h-5 relative z-10 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+      <span className="relative z-10">লাইভ চ্যাট</span>
+    </button>
+  )
+}
+
 /* ═══════════════════════════════════════════════════════
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════ */
@@ -176,6 +195,28 @@ export default function ShopDetail() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
   const [orderProduct, setOrderProduct] = useState(null)
+  const [chatRevealed, setChatRevealed] = useState(false)
+  const [showPulse, setShowPulse] = useState(false)
+
+  useEffect(() => {
+    if (!shop) return
+    const key = `shopChat_${shop.id}`
+    const last = Number(localStorage.getItem(key) || 0)
+    const fresh = Date.now() - last > 24 * 60 * 60 * 1000
+
+    if (fresh) {
+      const t = setTimeout(() => {
+        setChatRevealed(true)
+        setShowPulse(true)
+        playMessageSound()
+        localStorage.setItem(key, String(Date.now()))
+      }, 1800)
+      return () => clearTimeout(t)
+    } else {
+      setChatRevealed(true)
+      setShowPulse(false)
+    }
+  }, [shop?.id])
 
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder(product) {
@@ -365,7 +406,7 @@ export default function ShopDetail() {
 
           {/* Shop info */}
           <div className="mt-2.5">
-            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5">
+            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5 flex-wrap">
               {shop.shop_name}
               {shop.verification_status === 'verified' && (
                 <span className="relative inline-flex flex-shrink-0" title="যাচাইকৃত দোকান">
@@ -373,6 +414,16 @@ export default function ShopDetail() {
                   <VerifiedSeal className="w-5 h-5 text-blue-500 relative" />
                 </span>
               )}
+              {(() => {
+                const tierShop = { ...shop, is_verified: shop.verification_status === 'verified' }
+                const tier = getShopTier(tierShop)
+                if (!tier) return null
+                return (
+                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full border ${tier.bg} ${tier.color} ${tier.border}`}>
+                    {tier.emoji} {tier.label}
+                  </span>
+                )
+              })()}
             </h2>
             {(shop.categories?.name || shop.district || shop.address) && (
               <p className="text-xs text-gray-500 font-medium mt-1">
@@ -419,16 +470,6 @@ export default function ShopDetail() {
                 </svg>
                 WhatsApp
               </a>
-            )}
-            {/* In-app chat button */}
-            {shop.owner_id !== user?.id && (
-              <button
-                onClick={handleStartChat}
-                disabled={startConversation.isPending}
-                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all disabled:opacity-60"
-              >
-                💬 বার্তা পাঠান
-              </button>
             )}
           </div>
         </div>
@@ -662,6 +703,31 @@ export default function ShopDetail() {
           ) : <div />}
         </div>
       </div>
+
+      {/* ══ FLOATING LIVE CHAT BUTTON ══ */}
+      {shop?.owner_id !== user?.id && (
+        <>
+          {/* mobile — above sticky bar */}
+          <div className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
+            style={{
+              bottom: '140px',
+              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
+              opacity: chatRevealed ? 1 : 0,
+              pointerEvents: chatRevealed ? 'auto' : 'none',
+            }}>
+            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
+          </div>
+          {/* desktop — bottom right */}
+          <div className="hidden lg:block fixed right-8 bottom-10 z-50 transition-all duration-700 ease-out"
+            style={{
+              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
+              opacity: chatRevealed ? 1 : 0,
+              pointerEvents: chatRevealed ? 'auto' : 'none',
+            }}>
+            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
+          </div>
+        </>
+      )}
 
       {/* ══ ORDER MODAL (bottom sheet) ══ */}
       <OrderModal

@@ -2,7 +2,28 @@ import { useState, useEffect, useRef } from 'react'
 import { format, formatDistance } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { useAuth } from '../../context/AuthContext'
-import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead } from '../../hooks/useChat'
+import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
+
+function PresenceStatus({ userId }) {
+  const lastSeen = useOtherUserPresence(userId)
+  if (!lastSeen) return null
+
+  const diff = Date.now() - new Date(lastSeen).getTime()
+  const isOnline = diff < 90000 // within 90s = online
+
+  if (isOnline) return (
+    <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+      অনলাইন
+    </p>
+  )
+
+  return (
+    <p className="text-xs text-gray-400">
+      শেষ দেখা {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}
+    </p>
+  )
+}
 
 function MessageGroup({ group, isOwn, senderName, senderInitial }) {
   return (
@@ -45,6 +66,10 @@ export default function ChatWindow({ conversation, otherName }) {
   const [text, setText] = useState('')
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
+
+  const otherUserId = conversation
+    ? (conversation.customer_id === user?.id ? conversation.owner_id : conversation.customer_id)
+    : null
 
   const { data: messages = [] } = useMessages(conversation?.id)
   const sendMsg  = useSendMessage()
@@ -115,12 +140,14 @@ export default function ChatWindow({ conversation, otherName }) {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
-          {otherName?.[0] || '?'}
+        <div className="relative">
+          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+            {otherName?.[0] || '?'}
+          </div>
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm">{otherName}</p>
-          <p className="text-xs text-gray-400">{conversation.shops?.shop_name}</p>
+          <PresenceStatus userId={otherUserId} />
         </div>
       </div>
 

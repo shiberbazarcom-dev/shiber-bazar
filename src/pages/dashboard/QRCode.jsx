@@ -235,6 +235,32 @@ export default function QRCodePage() {
       {/* QR Display Card */}
       {shop && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-5">
+
+          {/* Shop logo + name header */}
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-14 h-14 rounded-2xl border-2 border-gray-100 overflow-hidden flex-shrink-0 bg-blue-50 flex items-center justify-center shadow-sm">
+              {(shop.logo || shop.logo_url)
+                ? <img
+                    src={shop.logo || shop.logo_url}
+                    alt={shop.shop_name}
+                    className="w-full h-full object-cover"
+                    onError={e => {
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                : null}
+              <span className="text-2xl" style={{ display: (shop.logo || shop.logo_url) ? 'none' : 'flex' }}>
+                {shop.categories?.icon || '🏪'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-gray-800 text-base truncate">{shop.shop_name}</p>
+              <p className="text-xs text-blue-600">{shop.categories?.name || shop.category || ''}</p>
+              {shop.phone && <p className="text-xs text-gray-400 mt-0.5">📞 {shop.phone}</p>}
+            </div>
+          </div>
+
           {/* QR Code */}
           <div className="bg-white rounded-2xl shadow-inner border border-gray-100 p-5">
             <img
@@ -244,14 +270,6 @@ export default function QRCodePage() {
               style={{ imageRendering: 'pixelated' }}
             />
             <p className="text-center text-xs text-gray-400 mt-3 max-w-[200px] truncate mx-auto">{shopUrl}</p>
-          </div>
-
-          {/* Shop info summary */}
-          <div className="text-center">
-            <p className="font-bold text-gray-800 text-lg">{shop.shop_name}</p>
-            {shop.category && <p className="text-sm text-blue-600">{shop.category}</p>}
-            {shop.phone && <p className="text-sm text-gray-500 mt-1">📞 {shop.phone}</p>}
-            {shop.address && <p className="text-xs text-gray-400 mt-0.5">📍 {shop.address}</p>}
           </div>
 
           {/* Action button */}

@@ -1,78 +1,160 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useApproveShop, useAdminShops } from '../../hooks/useShops'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
+import ConfirmModal from '../../components/ui/ConfirmModal'
+import { getAvatarUrl } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
-function StatCard({ icon, label, value, color, sub }) {
-  return (
-    <div className="card p-5">
+/* ── Stat card ── */
+function StatCard({ icon, label, value, color, sub, to, loading }) {
+  const inner = (
+    <div className={`card p-5 transition-all ${to ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-2xl`}>{icon}</div>
-        <span className="text-3xl font-bold text-slate-800 dark:text-white">{value}</span>
+        {loading
+          ? <div className="h-9 w-14 bg-gray-100 rounded-lg animate-pulse" />
+          : <span className="text-3xl font-bold text-slate-800 dark:text-white">{value}</span>
+        }
       </div>
-      <p className="font-medium text-slate-600 dark:text-slate-300 text-sm">{label}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      {loading
+        ? <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mt-1" />
+        : <>
+            <p className="font-medium text-slate-600 dark:text-slate-300 text-sm">{label}</p>
+            {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+          </>
+      }
     </div>
+  )
+  return to ? <Link to={to}>{inner}</Link> : inner
+}
+
+/* ── Quick action button ── */
+function QuickAction({ icon, label, to, color }) {
+  return (
+    <Link to={to}
+      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all group`}>
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform`}>
+        {icon}
+      </div>
+      <span className="text-xs font-semibold text-gray-600 text-center leading-tight">{label}</span>
+    </Link>
   )
 }
 
 export default function AdminDashboard() {
-  const { data: pending = [] } = useAdminShops('pending')
-  const approve = useApproveShop()
+  const { data: pending = [], isLoading: pendingLoading } = useAdminShops('pending')
+  const approve  = useApproveShop()
+  const qc       = useQueryClient()
+  const [confirmState, setConfirmState] = useState(null) // { id, name }
+  const [rejectLoading, setRejectLoading] = useState(false)
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading, dataUpdatedAt } = useQuery({
     queryKey: ['admin-full-stats'],
     queryFn: async () => {
-      const [total, approved, users, cats, reviews] = await Promise.all([
+      const [total, approved, users, cats, reviews, orders] = await Promise.all([
         supabase.from('shops').select('*', { count: 'exact', head: true }),
         supabase.from('shops').select('*', { count: 'exact', head: true }).eq('is_approved', true),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('categories').select('*', { count: 'exact', head: true }),
         supabase.from('reviews').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
       ])
       return {
-        total: total.count || 0,
-        approved: approved.count || 0,
-        pending: (total.count || 0) - (approved.count || 0),
-        users: users.count || 0,
-        categories: cats.count || 0,
-        reviews: reviews.count || 0,
+        total:      total.count    || 0,
+        approved:   approved.count || 0,
+        pending:    (total.count   || 0) - (approved.count || 0),
+        users:      users.count    || 0,
+        categories: cats.count     || 0,
+        reviews:    reviews.count  || 0,
+        orders:     orders.count   || 0,
       }
     },
+    refetchInterval: 30_000,
   })
+
+  useEffect(() => {
+    const channel = supabase.channel('admin-dashboard-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () =>
+        qc.invalidateQueries({ queryKey: ['admin-full-stats'] }))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shops' }, () =>
+        qc.invalidateQueries({ queryKey: ['admin-full-stats'] }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'shops' }, () =>
+        qc.invalidateQueries({ queryKey: ['admin-full-stats'] }))
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [qc])
 
   const handleApprove = async (id) => {
     await approve.mutateAsync({ id, approve: true })
     toast.success('দোকান অনুমোদন করা হয়েছে ✅')
   }
-  const handleReject = async (id) => {
-    if (!confirm('এই দোকানটি প্রত্যাখ্যান করবেন?')) return
-    await approve.mutateAsync({ id, approve: false })
-    toast.success('প্রত্যাখ্যান করা হয়েছে')
+
+  const handleRejectConfirm = async () => {
+    if (!confirmState) return
+    setRejectLoading(true)
+    try {
+      await approve.mutateAsync({ id: confirmState.id, approve: false })
+      toast.success('প্রত্যাখ্যান করা হয়েছে')
+      setConfirmState(null)
+    } catch {
+      toast.error('সমস্যা হয়েছে')
+    } finally {
+      setRejectLoading(false)
+    }
   }
 
   const statCards = [
-    { icon: '🏪', label: 'মোট দোকান', value: stats?.total || 0, color: 'bg-blue-100 dark:bg-blue-900/30' },
-    { icon: '✅', label: 'অনুমোদিত', value: stats?.approved || 0, color: 'bg-green-100 dark:bg-green-900/30' },
-    { icon: '⏳', label: 'অপেক্ষমান', value: stats?.pending || 0, color: 'bg-amber-100 dark:bg-amber-900/30' },
-    { icon: '👥', label: 'ব্যবহারকারী', value: stats?.users || 0, color: 'bg-purple-100 dark:bg-purple-900/30' },
-    { icon: '📋', label: 'ক্যাটাগরি', value: stats?.categories || 0, color: 'bg-teal-100 dark:bg-teal-900/30' },
-    { icon: '⭐', label: 'রিভিউ', value: stats?.reviews || 0, color: 'bg-rose-100 dark:bg-rose-900/30' },
+    { icon: '🏪', label: 'মোট দোকান',   value: stats?.total    || 0, color: 'bg-blue-100',   to: '/admin/shops' },
+    { icon: '✅', label: 'অনুমোদিত',    value: stats?.approved || 0, color: 'bg-green-100',  to: '/admin/shops?filter=approved' },
+    { icon: '⏳', label: 'অপেক্ষমান',   value: stats?.pending  || 0, color: 'bg-amber-100',  to: '/admin/shops?filter=pending' },
+    { icon: '📦', label: 'মোট অর্ডার',  value: stats?.orders   || 0, color: 'bg-indigo-100', to: '/admin/orders' },
+    { icon: '👥', label: 'ব্যবহারকারী', value: stats?.users    || 0, color: 'bg-purple-100', to: '/admin/users' },
+    { icon: '⭐', label: 'রিভিউ',        value: stats?.reviews  || 0, color: 'bg-rose-100',   to: '/admin/shops' },
   ]
+
+  const quickActions = [
+    { icon: '📦', label: 'অর্ডার',      to: '/admin/orders',        color: 'bg-indigo-100' },
+    { icon: '🏪', label: 'দোকান',       to: '/admin/shops',         color: 'bg-blue-100'   },
+    { icon: '👥', label: 'ব্যবহারকারী', to: '/admin/users',         color: 'bg-purple-100' },
+    { icon: '📈', label: 'Analytics',   to: '/admin/analytics',     color: 'bg-green-100'  },
+    { icon: '📢', label: 'বিজ্ঞাপন',   to: '/admin/ads',           color: 'bg-pink-100'   },
+    { icon: '🗂️', label: 'Audit Log',   to: '/admin/audit-log',     color: 'bg-gray-100'   },
+  ]
+
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('bn-BD') : null
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">📊 অ্যাডমিন ড্যাশবোর্ড</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">📊 অ্যাডমিন ড্যাশবোর্ড</h1>
+          {lastUpdated && (
+            <p className="text-xs text-slate-400 mt-0.5">
+              সর্বশেষ আপডেট: {lastUpdated} · প্রতি ৩০ সেকেন্ডে স্বয়ংক্রিয় রিফ্রেশ
+            </p>
+          )}
+        </div>
         <Badge variant="gold">শিবের বাজার অ্যাডমিন</Badge>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {statCards.map(c => <StatCard key={c.label} {...c} />)}
+      {/* Stats grid — clickable, with skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        {statCards.map(c => (
+          <StatCard key={c.label} {...c} loading={statsLoading} />
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <div className="card p-5 mb-6">
+        <h2 className="font-semibold text-slate-700 text-sm mb-4">⚡ দ্রুত অ্যাক্সেস</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {quickActions.map(a => <QuickAction key={a.to} {...a} />)}
+        </div>
       </div>
 
       {/* Pending approvals */}
@@ -82,38 +164,92 @@ export default function AdminDashboard() {
             <h2 className="font-semibold text-slate-700 dark:text-slate-200">⏳ অনুমোদনের অপেক্ষায়</h2>
             <p className="text-xs text-slate-400 mt-0.5">{pending.length} টি নতুন আবেদন</p>
           </div>
-          <Link to="/admin/shops">
+          <Link to="/admin/shops?filter=pending">
             <Button size="sm" variant="secondary">সব দেখুন</Button>
           </Link>
         </div>
 
-        {pending.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="text-5xl mb-3">🎉</div>
-            <p className="text-slate-400">সব দোকান যাচাই করা হয়েছে!</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
-            {pending.slice(0, 8).map(shop => (
-              <div key={shop.id} className="flex items-center gap-4 p-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-700 dark:text-slate-200">{shop.shop_name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {shop.categories?.icon} {shop.categories?.name} •{' '}
-                    {shop.phone || 'ফোন নেই'} •{' '}
-                    {shop.address || 'ঠিকানা নেই'}
-                  </p>
-                  <p className="text-xs text-slate-400">মালিক: {shop.profiles?.full_name}</p>
+        {pendingLoading ? (
+          <div className="divide-y divide-slate-100">
+            {Array(3).fill(0).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-4 animate-pulse">
+                <div className="w-12 h-12 rounded-xl bg-gray-100 flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-40" />
+                  <div className="h-3 bg-gray-100 rounded w-56" />
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Button size="xs" onClick={() => handleApprove(shop.id)} loading={approve.isPending}>✅ অনুমোদন</Button>
-                  <Button size="xs" variant="danger" onClick={() => handleReject(shop.id)}>❌</Button>
-                </div>
+                <div className="h-8 w-20 bg-gray-100 rounded-lg" />
               </div>
             ))}
           </div>
+        ) : pending.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="text-5xl mb-3">🎉</div>
+            <p className="text-slate-400 font-medium">সব দোকান যাচাই করা হয়েছে!</p>
+            <p className="text-xs text-slate-300 mt-1">নতুন আবেদন এলে এখানে দেখাবে</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            {pending.slice(0, 8).map(shop => {
+              const fallback = getAvatarUrl(shop.shop_name || '?')
+              const submittedAt = new Date(shop.created_at).toLocaleDateString('bn-BD', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })
+              return (
+                <div key={shop.id} className="flex items-center gap-4 p-4 hover:bg-gray-50/50 transition-colors">
+                  {/* Shop avatar */}
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                    <img
+                      src={shop.cover_image || fallback}
+                      alt={shop.shop_name}
+                      className="w-full h-full object-cover"
+                      onError={e => { e.target.src = fallback }}
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-slate-700 dark:text-slate-200 truncate">{shop.shop_name}</p>
+                      {shop.categories && (
+                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full flex-shrink-0">
+                          {shop.categories.icon} {shop.categories.name}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 truncate">
+                      👤 {shop.profiles?.full_name || '—'} · 📞 {shop.phone || 'নেই'} · 📍 {shop.address || 'নেই'}
+                    </p>
+                    <p className="text-[10px] text-slate-300 mt-0.5">আবেদন: {submittedAt}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button size="xs" onClick={() => handleApprove(shop.id)} loading={approve.isPending}>
+                      ✅ অনুমোদন
+                    </Button>
+                    <Button size="xs" variant="danger" onClick={() => setConfirmState({ id: shop.id, name: shop.shop_name })}>
+                      ❌
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
+
+      {/* Reject confirm modal */}
+      <ConfirmModal
+        open={!!confirmState}
+        title={`"${confirmState?.name}" প্রত্যাখ্যান করবেন?`}
+        message="এই দোকানের আবেদন বাতিল হয়ে যাবে। দোকানদারকে পুনরায় আবেদন করতে হবে।"
+        confirmLabel="হ্যাঁ, প্রত্যাখ্যান করুন"
+        confirmVariant="danger"
+        loading={rejectLoading}
+        onConfirm={handleRejectConfirm}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

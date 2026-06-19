@@ -88,10 +88,10 @@ export default function ShopOrders() {
       const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['my-orders'] })
       qc.invalidateQueries({ queryKey: ['owner-stats'] })
-      if (selectedOrder) setSelectedOrder(o => o ? { ...o, status: updatingId || o.status } : null)
+      if (selectedOrder) setSelectedOrder(o => o ? { ...o, status: variables.status } : null)
       setUpdatingId(null)
     },
     onError: () => setUpdatingId(null),

@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useCategories } from '../../hooks/useCategories'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -143,7 +143,7 @@ export default function QuickAddShop() {
               <input
                 value={form.shop_name} onChange={e => set('shop_name', e.target.value)}
                 placeholder="যেমন: করিম স্টোর"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
               />
             </div>
 
@@ -151,7 +151,7 @@ export default function QuickAddShop() {
               <label className="block text-xs font-semibold text-gray-600 mb-1">ক্যাটাগরি *</label>
               <select
                 value={form.category_id} onChange={e => set('category_id', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 bg-white">
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white">
                 <option value="">বেছে নিন</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
               </select>
@@ -162,7 +162,7 @@ export default function QuickAddShop() {
               <input
                 type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
                 placeholder="01XXXXXXXXX"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
               />
             </div>
 
@@ -171,7 +171,7 @@ export default function QuickAddShop() {
               <input
                 value={form.address} onChange={e => set('address', e.target.value)}
                 placeholder="বিস্তারিত ঠিকানা"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
               />
             </div>
 
@@ -180,7 +180,7 @@ export default function QuickAddShop() {
               <input
                 value={form.district} onChange={e => set('district', e.target.value)}
                 placeholder="যেমন: চাঁপাইনবাবগঞ্জ"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
               />
             </div>
 
@@ -189,7 +189,7 @@ export default function QuickAddShop() {
               <input
                 type="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)}
                 placeholder="খালি রাখলে phone ব্যবহার হবে"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
               />
             </div>
 
@@ -198,7 +198,7 @@ export default function QuickAddShop() {
               <textarea
                 value={form.description} onChange={e => set('description', e.target.value)}
                 rows={2} placeholder="দোকান সম্পর্কে সংক্ষিপ্ত বিবরণ"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50 resize-none"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 resize-none"
               />
             </div>
 
@@ -206,7 +206,7 @@ export default function QuickAddShop() {
               <label className="block text-xs font-semibold text-gray-600 mb-1">মালিক (দোকানদার)</label>
               <select
                 value={form.owner_id} onChange={e => set('owner_id', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 bg-white">
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white">
                 <option value="">নিজের অ্যাকাউন্টে (Admin)</option>
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>
@@ -235,7 +235,7 @@ export default function QuickAddShop() {
                   onChange={e => setProduct(i, 'name', e.target.value)}
                   onKeyDown={e => handleProductKeyDown(e, i)}
                   placeholder="পণ্যের নাম"
-                  className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                  className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
                 />
                 <input
                   value={p.price}
@@ -243,7 +243,7 @@ export default function QuickAddShop() {
                   onKeyDown={e => handleProductKeyDown(e, i)}
                   placeholder="দাম ৳"
                   type="number" min="0" step="0.5"
-                  className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50"
+                  className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
                 />
                 {products.length > 1 && (
                   <button type="button" onClick={() => removeProduct(i)}
@@ -256,7 +256,7 @@ export default function QuickAddShop() {
           </div>
 
           <button type="button" onClick={addProductRow}
-            className="mt-3 flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700 font-medium">
+            className="mt-3 flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
             ➕ আরেকটি পণ্য
           </button>
         </div>
@@ -264,7 +264,7 @@ export default function QuickAddShop() {
         {/* ── Submit ── */}
         <button
           type="submit" disabled={loading}
-          className="w-full py-3.5 bg-purple-600 text-white font-bold rounded-2xl text-sm hover:bg-purple-700 disabled:opacity-60 transition-colors">
+          className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-2xl text-sm hover:bg-blue-700 disabled:opacity-60 transition-colors">
           {loading ? '⏳ যোগ হচ্ছে...' : '✅ দোকান যোগ করুন'}
         </button>
       </form>

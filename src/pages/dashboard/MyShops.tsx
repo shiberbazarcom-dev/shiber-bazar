@@ -315,19 +315,43 @@ export default function MyShops() {
                   
                   {/* Status Warning Messages */}
                   {shop.status === 'pending_approval' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
-                      <p className="text-xs text-amber-700 flex items-start gap-1.5">
-                        <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        অনুমোদনের অপেক্ষায়। পণ্য যোগ করা সাময়িকভাবে নিষ্ক্রিয়।
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-amber-700 flex items-start gap-1.5 font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                        অনুমোদনের অপেক্ষায়
+                      </p>
+                      <p className="text-xs text-amber-600 mt-1 ml-5">
+                        অ্যাডমিন যাচাই করার পর দোকান চালু হবে। পণ্য যোগ করা এখন নিষ্ক্রিয়।
                       </p>
                     </div>
                   )}
                   {shop.status === 'rejected' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
-                      <p className="text-xs text-red-700 flex items-start gap-1.5">
-                        <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        প্রত্যাখ্যাত। তথ্য সংশোধন করে পুনরায় জমা দিন।
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-red-700 flex items-start gap-1.5 font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                        দোকান প্রত্যাখ্যাত হয়েছে
                       </p>
+                      {shop.rejection_reason ? (
+                        <p className="text-xs text-red-600 mt-1 ml-5 leading-relaxed">
+                          <span className="font-semibold">কারণ:</span> {shop.rejection_reason}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-red-500 mt-1 ml-5">তথ্য সংশোধন করে সম্পাদনা থেকে পুনরায় জমা দিন।</p>
+                      )}
+                    </div>
+                  )}
+                  {shop.status === 'suspended' && (
+                    <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-gray-700 flex items-start gap-1.5 font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                        দোকান সাময়িক স্থগিত
+                      </p>
+                      {shop.suspension_reason && (
+                        <p className="text-xs text-gray-600 mt-1 ml-5">
+                          <span className="font-semibold">কারণ:</span> {shop.suspension_reason}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1 ml-5">বিস্তারিত জানতে অ্যাডমিনের সাথে যোগাযোগ করুন।</p>
                     </div>
                   )}
                   
