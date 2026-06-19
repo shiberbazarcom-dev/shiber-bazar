@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { usePlaceOrder } from '../../hooks/useOrders'
 import { useShopProducts } from '../../hooks/useProducts'
@@ -8,8 +8,8 @@ import { whatsappUrl } from '../../lib/utils'
 import { productMatchesSearch } from '../../lib/banglishSearch'
 import toast from 'react-hot-toast'
 
-const BLUE = 'var(--primary)'
-const BLUE_GRADIENT = 'linear-gradient(135deg,var(--primary-dark),var(--primary),#3b82f6)'
+const BLUE = '#2563EB'
+const BLUE_GRADIENT = 'linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)'
 const DRAFT_KEY = 'sb_order_draft'
 
 function loadDraft() {
@@ -171,7 +171,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
     (items.length ? items.map(i => `• ${i.name} ×${i.qty}`).join('\n') : `• ${query || 'পণ্য'}`) +
     (total > 0 ? `\nমোট: ৳${total.toLocaleString('bn-BD')}` : '')
 
-  const inputCls = 'w-full h-12 px-4 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all'
+  const inputCls = 'w-full h-12 px-4 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all'
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
@@ -201,7 +201,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
             <h3 className="text-lg font-bold text-gray-900 mb-1">অর্ডার সফল!</h3>
             <p className="text-xs text-gray-400 mb-4">আপনার অর্ডার নম্বর সংরক্ষণ করুন</p>
 
-            <div className="rounded-2xl px-6 py-4 mb-4 border-2 border-dashed border-purple-300" style={{ background: '#eff6ff' }}>
+            <div className="rounded-2xl px-6 py-4 mb-4 border-2 border-dashed border-blue-300" style={{ background: '#eff6ff' }}>
               <p className="text-xs text-gray-400 mb-1">অর্ডার নম্বর</p>
               <p className="text-3xl font-bold tracking-widest" style={{ color: BLUE }}>{success.order_number}</p>
             </div>
@@ -283,7 +283,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                         return (
                           <button key={p.id} type="button"
                             onMouseDown={e => { e.preventDefault(); addProduct(p) }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-purple-50/60 active:bg-purple-50 text-left transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-blue-50/60 active:bg-blue-50 text-left transition-colors">
                             <img src={p.image_url || '/product-placeholder.svg'} alt=""
                               onError={e => { e.target.onerror = null; e.target.src = '/product-placeholder.svg' }}
                               className="w-9 h-9 rounded-lg object-cover bg-gray-50 flex-shrink-0 border border-gray-100" />
@@ -326,7 +326,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                               <span className="text-[10px] text-gray-400">দাম (৳):</span>
                               <input type="number" min="0" value={it.price}
                                 onChange={e => updateItem(it.key, { price: e.target.value })}
-                                className="w-20 h-7 px-2 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-purple-400"
+                                className="w-20 h-7 px-2 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
                                 placeholder="০" />
                             </div>
                           ) : (
@@ -374,13 +374,13 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
                   <p className="text-[10px] text-gray-400 mt-1 px-1">এই নম্বরে অর্ডার ট্র্যাক করতে পারবেন</p>
                 </div>
                 <textarea value={form.customer_address} onChange={e => set('customer_address', e.target.value)} rows={2}
-                  className="w-full px-4 py-3 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all resize-none"
+                  className="w-full px-4 py-3 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
                   placeholder="ডেলিভারি ঠিকানা (গ্রাম/মহল্লা, উপজেলা, জেলা) *" />
               </div>
 
               {/* ── Section 3: Optional note ── */}
               <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2}
-                className="w-full px-4 py-3 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all resize-none"
+                className="w-full px-4 py-3 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
                 placeholder="রং, সাইজ বা বিশেষ নির্দেশনা লিখুন" />
             </div>
 
@@ -388,7 +388,7 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
             <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-gray-50 px-5 py-3.5 space-y-2.5"
               style={{ paddingBottom: 'calc(0.875rem + env(safe-area-inset-bottom))' }}>
               <button type="submit" disabled={placeOrder.isPending}
-                className="w-full h-[52px] text-white font-bold rounded-2xl text-[15px] shadow-md shadow-purple-200 disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full h-[52px] text-white font-bold rounded-2xl text-[15px] shadow-md shadow-blue-200 disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 style={{ background: BLUE_GRADIENT }}>
                 {placeOrder.isPending
                   ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> অর্ডার দেওয়া হচ্ছে...</>

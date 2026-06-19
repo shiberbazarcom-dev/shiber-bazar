@@ -7,12 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
-    "android": "npm run build && npx cap sync android && npx cap open android",
-    "cap:sync": "npm run build && npx cap sync"
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@capacitor/ios": "^8.4.0",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
@@ -23,10 +20,8 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@sentry/react": "^8.0.0",
     "@supabase/supabase-js": "^2.39.0",
-    "@tanstack/query-sync-storage-persister": "^5.101.0",
     "@tanstack/react-query": "^5.17.0",
     "@tanstack/react-query-devtools": "^5.17.0",
-    "@tanstack/react-query-persist-client": "^5.101.0",
     "@tanstack/react-table": "^8.11.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -37,11 +32,9 @@
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.21.0",
     "recharts": "^3.8.1",
-    "tailwind-merge": "^2.2.0",
-    "xlsx": "^0.18.5"
+    "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
@@ -49,7 +42,6 @@
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "terser": "^5.48.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.0"
   }

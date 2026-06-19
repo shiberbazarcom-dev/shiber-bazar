@@ -1,10 +1,10 @@
-﻿import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 const GREEN = '#16a34a'
-const BLUE  = 'var(--primary)'
+const BLUE  = '#2563EB'
 
 export default function CartPage() {
   const { items, removeItem, updateQty, clearCart } = useCart()
@@ -36,7 +36,7 @@ export default function CartPage() {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-gray-800">🛒 আমার কার্ট</h1>
-          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">{items.length}টি পণ্য</span>
+          <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">{items.length}টি পণ্য</span>
         </div>
         <button onClick={() => { clearCart(); toast.success('কার্ট খালি হয়েছে') }}
           className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
@@ -59,7 +59,7 @@ export default function CartPage() {
             {/* Info */}
             <div className="flex-1 min-w-0">
               <Link to={`/product/${item.id}`}>
-                <p className="font-semibold text-sm text-gray-800 line-clamp-2 hover:text-purple-700 transition-colors">
+                <p className="font-semibold text-sm text-gray-800 line-clamp-2 hover:text-blue-700 transition-colors">
                   {item.name}
                 </p>
               </Link>
@@ -189,7 +189,7 @@ export default function CartPage() {
 
       {/* Continue shopping */}
       <Link to="/shops"
-        className="block w-full text-center py-3 rounded-xl border-2 font-semibold text-sm transition-colors hover:bg-purple-50"
+        className="block w-full text-center py-3 rounded-xl border-2 font-semibold text-sm transition-colors hover:bg-blue-50"
         style={{ borderColor: BLUE, color: BLUE }}>
         🏪 আরও কেনাকাটা করুন
       </Link>

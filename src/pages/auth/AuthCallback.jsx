@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
@@ -7,6 +7,8 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('লগইন হচ্ছে...')
 
   useEffect(() => {
+    // Supabase puts access_token in URL hash after email confirm / OAuth
+    // getSession() processes the hash automatically
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         setMessage('সমস্যা হয়েছে। আবার চেষ্টা করুন।')
@@ -16,11 +18,13 @@ export default function AuthCallback() {
       if (session) {
         navigate('/', { replace: true })
       } else {
+        // Wait for onAuthStateChange to fire (implicit flow token in hash)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if (session) {
             navigate('/', { replace: true })
           }
         })
+        // Fallback redirect after 4s
         const timer = setTimeout(() => {
           navigate('/login', { replace: true })
         }, 4000)
@@ -35,7 +39,7 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-gray-600 font-medium">{message}</p>
       </div>
     </div>

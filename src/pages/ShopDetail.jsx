@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useShop, useReviews, useAddReview, useToggleFavorite, useFavorites } from '../hooks/useShops'
 import { useShopProducts } from '../hooks/useProducts'
@@ -7,13 +7,11 @@ import { useCart } from '../context/CartContext'
 import { useStartConversation } from '../hooks/useChat'
 import { whatsappUrl, getAvatarUrl, formatDate } from '../lib/utils'
 import { productMatchesSearch } from '../lib/banglishSearch'
-import { getShopTier, getTierProgress } from '../lib/shopTier'
 import toast from 'react-hot-toast'
-import { playMessageSound } from '../lib/chatSound'
 import SEO from '../components/SEO'
 import OrderModal from '../components/order/OrderModal'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 const GREEN = '#16a34a'
 
 /* ─── Verified seal (rosette) icon ─── */
@@ -68,7 +66,7 @@ function ReviewCard({ review }) {
 /* ═══════════════════════════════════════════════════════
    PRODUCT CARD — premium storefront style
 ═══════════════════════════════════════════════════════ */
-const BLUE_GRADIENT = 'linear-gradient(135deg,var(--primary-dark),var(--primary),#3b82f6)'
+const BLUE_GRADIENT = 'linear-gradient(135deg,#1d4ed8,#2563eb,#3b82f6)'
 
 function ProductCard({ product, shop, onOrder }) {
   const { addItem } = useCart()
@@ -112,7 +110,7 @@ function ProductCard({ product, shop, onOrder }) {
             addItem({ ...product, shops: shop })
             toast.success('কার্টে যোগ হয়েছে', { duration: 1500 })
           }}
-          className="absolute bottom-2 right-2 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-md flex items-center justify-center text-gray-700 hover:bg-purple-600 hover:text-white active:scale-90 transition-all duration-200"
+          className="absolute bottom-2 right-2 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-md flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white active:scale-90 transition-all duration-200"
           title="কার্টে যোগ করুন"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -142,23 +140,6 @@ function ProductCard({ product, shop, onOrder }) {
         </button>
       </div>
     </div>
-  )
-}
-
-function LiveChatBtn({ onClick, disabled, showPulse }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="flex items-center gap-2.5 px-4 h-12 rounded-full text-white text-sm font-bold shadow-lg active:scale-95 transition-transform disabled:opacity-60 relative"
-      style={{ background: '#7c3aed' }}
-    >
-      {showPulse && <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: '#7c3aed' }} />}
-      <svg className="w-5 h-5 relative z-10 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-      </svg>
-      <span className="relative z-10">লাইভ চ্যাট</span>
-    </button>
   )
 }
 
@@ -195,28 +176,6 @@ export default function ShopDetail() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
   const [orderProduct, setOrderProduct] = useState(null)
-  const [chatRevealed, setChatRevealed] = useState(false)
-  const [showPulse, setShowPulse] = useState(false)
-
-  useEffect(() => {
-    if (!shop) return
-    const key = `shopChat_${shop.id}`
-    const last = Number(localStorage.getItem(key) || 0)
-    const fresh = Date.now() - last > 24 * 60 * 60 * 1000
-
-    if (fresh) {
-      const t = setTimeout(() => {
-        setChatRevealed(true)
-        setShowPulse(true)
-        playMessageSound()
-        localStorage.setItem(key, String(Date.now()))
-      }, 1800)
-      return () => clearTimeout(t)
-    } else {
-      setChatRevealed(true)
-      setShowPulse(false)
-    }
-  }, [shop?.id])
 
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder(product) {
@@ -338,7 +297,7 @@ export default function ShopDetail() {
           {searchOpen ? (
             <input autoFocus type="text" placeholder="এই দোকানে খুঁজুন..."
               value={productSearch} onChange={e => setProductSearch(e.target.value)}
-              className="flex-1 text-sm py-2 px-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-purple-400"
+              className="flex-1 text-sm py-2 px-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400"
             />
           ) : (
             <h1 className="flex-1 font-bold text-gray-900 text-base truncate">{shop.shop_name}</h1>
@@ -396,9 +355,9 @@ export default function ShopDetail() {
                 onError={e => { e.target.src = logoUrl }} />
             </div>
             {shop.verification_status === 'verified' && (
-              <span className="mb-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-700 px-3 py-1.5 rounded-full shadow-sm border border-purple-200"
+              <span className="mb-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-700 px-3 py-1.5 rounded-full shadow-sm border border-blue-200"
                 style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)' }}>
-                <VerifiedSeal className="w-4 h-4 text-purple-600" />
+                <VerifiedSeal className="w-4 h-4 text-blue-600" />
                 যাচাইকৃত দোকান
               </span>
             )}
@@ -406,24 +365,14 @@ export default function ShopDetail() {
 
           {/* Shop info */}
           <div className="mt-2.5">
-            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5 flex-wrap">
+            <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5">
               {shop.shop_name}
               {shop.verification_status === 'verified' && (
                 <span className="relative inline-flex flex-shrink-0" title="যাচাইকৃত দোকান">
-                  <span className="absolute inset-0 rounded-full bg-purple-400/50 animate-ping" style={{ animationDuration: '2.5s' }} />
-                  <VerifiedSeal className="w-5 h-5 text-purple-500 relative" />
+                  <span className="absolute inset-0 rounded-full bg-blue-400/50 animate-ping" style={{ animationDuration: '2.5s' }} />
+                  <VerifiedSeal className="w-5 h-5 text-blue-500 relative" />
                 </span>
               )}
-              {(() => {
-                const tierShop = { ...shop, is_verified: shop.verification_status === 'verified' }
-                const tier = getShopTier(tierShop)
-                if (!tier) return null
-                return (
-                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full border ${tier.bg} ${tier.color} ${tier.border}`}>
-                    {tier.emoji} {tier.label}
-                  </span>
-                )
-              })()}
             </h2>
             {(shop.categories?.name || shop.district || shop.address) && (
               <p className="text-xs text-gray-500 font-medium mt-1">
@@ -453,7 +402,7 @@ export default function ShopDetail() {
           {/* Primary actions — desktop only (mobile uses the sticky bottom bar) */}
           <div className="hidden lg:flex gap-2.5 mt-4">
             <button onClick={() => goOrder(null)}
-              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-white shadow-md shadow-purple-200 hover:opacity-90 active:scale-95 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-white shadow-md shadow-blue-200 hover:opacity-90 active:scale-95 transition-all"
               style={{ background: BLUE_GRADIENT }}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
@@ -471,6 +420,16 @@ export default function ShopDetail() {
                 WhatsApp
               </a>
             )}
+            {/* In-app chat button */}
+            {shop.owner_id !== user?.id && (
+              <button
+                onClick={handleStartChat}
+                disabled={startConversation.isPending}
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all disabled:opacity-60"
+              >
+                💬 বার্তা পাঠান
+              </button>
+            )}
           </div>
         </div>
 
@@ -481,16 +440,16 @@ export default function ShopDetail() {
           {TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-semibold transition-colors relative ${
-                activeTab === tab.id ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'
+                activeTab === tab.id ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
               }`}>
               {tab.label}
               {tab.count !== null && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                  activeTab === tab.id ? 'bg-purple-50 text-purple-600' : 'bg-gray-100 text-gray-400'
+                  activeTab === tab.id ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'
                 }`}>{tab.count}</span>
               )}
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-8 right-8 h-0.5 rounded-full bg-purple-600" />
+                <span className="absolute bottom-0 left-8 right-8 h-0.5 rounded-full bg-blue-600" />
               )}
             </button>
           ))}
@@ -592,7 +551,7 @@ export default function ShopDetail() {
 
             <div className="space-y-2">
               {[
-                { show: shop.phone, icon: '📞', bg: 'bg-purple-50', label: 'ফোন',
+                { show: shop.phone, icon: '📞', bg: 'bg-blue-50', label: 'ফোন',
                   content: <a href={`tel:${shop.phone}`} className="font-semibold text-sm text-gray-800">{shop.phone}</a> },
                 { show: shop.whatsapp && shop.whatsapp !== shop.phone, icon: '💬', bg: 'bg-green-50', label: 'WhatsApp',
                   content: <span className="font-semibold text-sm text-gray-800">{shop.whatsapp}</span> },
@@ -600,8 +559,8 @@ export default function ShopDetail() {
                   content: <p className="font-semibold text-sm text-gray-800">{shop.address}{shop.district ? `, ${shop.district}` : ''}</p> },
                 { show: shop.opening_time && shop.closing_time, icon: '🕐', bg: 'bg-yellow-50', label: 'সময়',
                   content: <p className="font-semibold text-sm text-gray-800">{shop.opening_time} — {shop.closing_time}</p> },
-                { show: shop.facebook_url, icon: '📘', bg: 'bg-purple-50', label: 'Facebook',
-                  content: <a href={shop.facebook_url} target="_blank" rel="noreferrer" className="font-semibold text-sm text-purple-600">পেইজ দেখুন →</a> },
+                { show: shop.facebook_url, icon: '📘', bg: 'bg-blue-50', label: 'Facebook',
+                  content: <a href={shop.facebook_url} target="_blank" rel="noreferrer" className="font-semibold text-sm text-blue-600">পেইজ দেখুন →</a> },
               ].filter(r => r.show).map((row, i) => (
                 <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-gray-100">
                   <span className={`w-10 h-10 rounded-xl ${row.bg} flex items-center justify-center text-base flex-shrink-0`}>{row.icon}</span>
@@ -652,7 +611,7 @@ export default function ShopDetail() {
                 <p className="text-sm font-bold text-gray-700">আপনার রিভিউ লিখুন</p>
                 <StarInput value={rating} onChange={setRating} />
                 <textarea value={comment} onChange={e => setComment(e.target.value)} rows={3}
-                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 resize-none bg-gray-50"
+                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none bg-gray-50"
                   placeholder="আপনার অভিজ্ঞতা শেয়ার করুন..." />
                 <button type="submit" disabled={addReview.isPending}
                   className="px-5 py-2.5 text-white text-sm font-bold rounded-2xl disabled:opacity-60 hover:opacity-90 transition-opacity"
@@ -703,31 +662,6 @@ export default function ShopDetail() {
           ) : <div />}
         </div>
       </div>
-
-      {/* ══ FLOATING LIVE CHAT BUTTON ══ */}
-      {shop?.owner_id !== user?.id && (
-        <>
-          {/* mobile — above sticky bar */}
-          <div className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
-            style={{
-              bottom: '140px',
-              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
-              opacity: chatRevealed ? 1 : 0,
-              pointerEvents: chatRevealed ? 'auto' : 'none',
-            }}>
-            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
-          </div>
-          {/* desktop — bottom right */}
-          <div className="hidden lg:block fixed right-8 bottom-10 z-50 transition-all duration-700 ease-out"
-            style={{
-              transform: chatRevealed ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
-              opacity: chatRevealed ? 1 : 0,
-              pointerEvents: chatRevealed ? 'auto' : 'none',
-            }}>
-            <LiveChatBtn onClick={handleStartChat} disabled={startConversation.isPending} showPulse={showPulse} />
-          </div>
-        </>
-      )}
 
       {/* ══ ORDER MODAL (bottom sheet) ══ */}
       <OrderModal

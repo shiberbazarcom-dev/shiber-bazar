@@ -26,13 +26,9 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function loadProfile(uid) {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
-      setProfile(data)
-    } catch {
-    } finally {
-      setLoading(false)
-    }
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
+    setProfile(data)
+    setLoading(false)
   }
 
   /* ── Helpers ── */

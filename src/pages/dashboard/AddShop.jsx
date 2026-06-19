@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCreateShop } from '../../hooks/useShops'
 import { useCategories } from '../../hooks/useCategories'
@@ -116,7 +116,7 @@ export default function AddShop() {
         {/* Step 3: Media */}
         {step === 3 && (
           <>
-            <div className="bg-purple-50 dark:bg-blue-900/20 border border-purple-200 dark:border-blue-800 rounded-xl p-4 text-sm text-purple-700 dark:text-purple-300">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-300">
               ℹ️ ছবির URL দিন। ছবি আপলোড ফিচার শীঘ্রই আসছে।
             </div>
             <Input label="লোগো URL" type="url" value={form.logo}

@@ -1,10 +1,10 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useMyProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, uploadProductImage } from '../../hooks/useProducts'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
-const GREEN = 'var(--primary)'
+const GREEN = '#2563EB'
 
 const EMPTY_FORM = {
   shop_id:     '',
@@ -229,7 +229,7 @@ export default function Products() {
                   <div className="flex-1">
                     <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors text-sm text-gray-500">
                       {uploading
-                        ? <><div className="w-4 h-4 border-2 border-gray-300 border-t-purple-600 rounded-full animate-spin" /> আপলোড হচ্ছে...</>
+                        ? <><div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> আপলোড হচ্ছে...</>
                         : <><span>📁</span> ছবি বেছে নিন</>
                       }
                       <input type="file" accept="image/*" onChange={handleImageUpload}
@@ -250,7 +250,7 @@ export default function Products() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.is_active}
                     onChange={e => set('is_active', e.target.checked)}
-                    className="w-4 h-4 rounded accent-purple-600" />
+                    className="w-4 h-4 rounded accent-blue-600" />
                   <span className="text-sm text-gray-700">সক্রিয়</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -280,7 +280,7 @@ export default function Products() {
       {/* Products grid */}
       {isLoading ? (
         <div className="text-center py-20">
-          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-200">
@@ -331,7 +331,7 @@ export default function Products() {
                     <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">স্টক নেই</span>
                   )}
                   {product.category && (
-                    <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
                       {product.category}
                     </span>
                   )}
@@ -349,7 +349,7 @@ export default function Products() {
                   {product.is_active ? '✅ চালু' : '⏸ বন্ধ'}
                 </button>
                 <button onClick={() => openEdit(product)}
-                  className="flex-1 text-xs py-1.5 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 font-medium">
+                  className="flex-1 text-xs py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium">
                   ✏️ সম্পাদনা
                 </button>
                 <button onClick={() => handleDelete(product.id)}

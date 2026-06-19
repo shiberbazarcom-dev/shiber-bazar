@@ -1,13 +1,12 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { usePlaceOrder } from '../hooks/useOrders'
 import { useAdminWhatsapp } from '../hooks/useSettings'
 import { useAuth } from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
 
-const GREEN = 'var(--primary)'
+const GREEN = '#2563EB'
 
 export default function OrderPage() {
   const { shopId } = useParams()
@@ -47,7 +46,6 @@ export default function OrderPage() {
   const [success, setSuccess] = useState(null)
   const placeOrder     = usePlaceOrder()
   const adminWhatsapp  = useAdminWhatsapp()
-  const { clearCart }  = useCart()
 
   // If profile loads after initial render, fill in name/phone if still empty
   useEffect(() => {
@@ -76,7 +74,6 @@ export default function OrderPage() {
       const { price: _price, ...orderFields } = form
       const data = await placeOrder.mutateAsync({ ...orderFields, total_amount })
       setSuccess(data)
-      clearCart()
     } catch {
       toast.error('অর্ডার দিতে সমস্যা হয়েছে, আবার চেষ্টা করুন')
     }
@@ -92,7 +89,7 @@ export default function OrderPage() {
           <h2 className="text-xl font-bold text-gray-800 mb-1">অর্ডার সফল!</h2>
           <p className="text-gray-400 text-sm mb-4">আপনার অর্ডার নম্বর সংরক্ষণ করুন</p>
 
-          <div className="rounded-xl px-6 py-4 mb-5 border-2 border-dashed border-purple-300"
+          <div className="rounded-xl px-6 py-4 mb-5 border-2 border-dashed border-blue-300"
                style={{ background: '#eff6ff' }}>
             <p className="text-xs text-gray-400 mb-1">অর্ডার নম্বর</p>
             <p className="text-3xl font-bold tracking-widest" style={{ color: GREEN }}>

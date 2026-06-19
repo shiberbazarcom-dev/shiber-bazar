@@ -1,10 +1,10 @@
-﻿import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '../../lib/utils'
 import { useOrderStats, useShopOrderStats } from '../../hooks/useOrders'
-import { useUnreadMessageCount, useUpdateLastSeen } from '../../hooks/useChat'
+import { useUnreadMessageCount } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -18,7 +18,7 @@ function SidebarLink({ to, icon, label, end, badge, onClose }) {
       className={({ isActive }) => cn(
         'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
         isActive
-          ? 'bg-purple-600 text-white shadow-sm'
+          ? 'bg-blue-600 text-white shadow-sm'
           : 'text-gray-600 hover:bg-gray-100'
       )}
     >
@@ -31,69 +31,6 @@ function SidebarLink({ to, icon, label, end, badge, onClose }) {
         </span>
       )}
     </NavLink>
-  )
-}
-
-function SidebarSection({ label }) {
-  return (
-    <p className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 select-none">
-      {label}
-    </p>
-  )
-}
-
-/* ── Unified topbar: mobile hamburger + desktop breadcrumb ── */
-function TopBar({ type, profile, signOut, setSidebarOpen, mobileBadge, links }) {
-  const location = useLocation()
-
-  // Find current page label from links
-  const currentLink = links.filter(l => l.to).find(l => {
-    if (l.end) return location.pathname === l.to
-    return location.pathname.startsWith(l.to)
-  })
-  const pageLabel = currentLink?.label || (type === 'admin' ? 'Admin' : 'Dashboard')
-  const pageIcon  = currentLink?.icon  || (type === 'admin' ? '⚙️' : '📊')
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
-      {/* Hamburger — mobile only */}
-      <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-xl p-1 text-gray-500 hover:text-gray-800">
-        ☰
-      </button>
-
-      {/* Breadcrumb — shows on all sizes */}
-      <div className="flex items-center gap-2 min-w-0">
-        <Link to="/" className="hidden lg:block text-xs text-gray-400 hover:text-purple-600 transition-colors flex-shrink-0">
-          শিবের বাজার
-        </Link>
-        <span className="hidden lg:block text-gray-300 text-xs">/</span>
-        <span className="text-sm font-semibold text-gray-800 truncate">
-          {pageIcon} {pageLabel}
-        </span>
-      </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Mobile: pending badge */}
-      {mobileBadge > 0 && (
-        <NavLink
-          to={type === 'admin' ? '/admin/orders' : '/dashboard/orders'}
-          className="lg:hidden flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold rounded-full px-3 py-1 flex-shrink-0">
-          📦 {mobileBadge} নতুন
-        </NavLink>
-      )}
-
-      {/* Desktop: user info + sign out */}
-      <div className="hidden lg:flex items-center gap-3">
-        <span className="text-xs text-gray-400">{profile?.full_name}</span>
-        <button
-          onClick={signOut}
-          className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50">
-          লগআউট
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -152,7 +89,7 @@ function NewOrderToast({ t, order }) {
           {order.customer_name} · {order.customer_phone}
         </p>
         <a href="/admin/orders"
-          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           অর্ডার দেখুন →
         </a>
@@ -167,18 +104,18 @@ function NewOrderToast({ t, order }) {
 function ForwardedOrderToast({ t, order }) {
   return (
     <div className={cn(
-      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-purple-200 p-4 max-w-sm w-full',
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full',
       t.visible ? 'opacity-100' : 'opacity-0'
     )}>
-      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">📤</div>
+      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">📤</div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-800 text-sm">🎉 নতুন অর্ডার এসেছে!</p>
         <p className="text-xs text-gray-500 mt-0.5 truncate">
           {order.order_number}
         </p>
-        <p className="text-xs text-purple-600 mt-0.5">Admin আপনার দোকানে অর্ডার পাঠিয়েছেন</p>
+        <p className="text-xs text-blue-600 mt-0.5">Admin আপনার দোকানে অর্ডার পাঠিয়েছেন</p>
         <a href="/dashboard/orders"
-          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           অর্ডার দেখুন →
         </a>
@@ -217,16 +154,16 @@ function NewServiceToast({ t, service }) {
 function NewShopToast({ t, shop }) {
   return (
     <div className={cn(
-      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-purple-200 p-4 max-w-sm w-full',
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full',
       t.visible ? 'opacity-100' : 'opacity-0'
     )}>
-      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">🏪</div>
+      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">🏪</div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-800 text-sm">নতুন দোকান আবেদন!</p>
         <p className="text-xs text-gray-700 font-medium mt-0.5 truncate">{shop.shop_name}</p>
         <p className="text-xs text-gray-400 truncate">{shop.address || 'ঠিকানা নেই'}</p>
         <a href="/admin/shops"
-          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           দোকান দেখুন →
         </a>
@@ -255,7 +192,6 @@ export default function DashboardLayout({ type = 'user' }) {
   const { data: adminStats }     = useOrderStats()        // admin pending count
   const { data: shopOwnerStats } = useShopOrderStats()    // shop owner forwarded count
   const { data: unreadMessages = 0 } = useUnreadMessageCount()
-  useUpdateLastSeen()
 
   const adminBadge     = type === 'admin'               ? (adminStats?.pending    || 0) : 0
   const ownerBadge     = type !== 'admin' && isShopOwner ? (shopOwnerStats?.confirmed || 0) : 0
@@ -420,36 +356,27 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
     { to: '/dashboard/analytics',    icon: '📈', label: 'অ্যানালিটিক্স' },
     { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
-    { to: '/dashboard/broadcast',    icon: '📢', label: 'ব্রডকাস্ট' },
     { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },
     { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
     { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
   ]
 
   const adminLinks = [
-    { section: 'ওভারভিউ' },
-    { to: '/admin',                   icon: '📊', label: 'ড্যাশবোর্ড',     end: true },
-    { to: '/admin/analytics',         icon: '📈', label: 'অ্যানালিটিক্স' },
-    { section: 'দোকান ও পণ্য' },
-    { to: '/admin/quick-add-shop',    icon: '⚡', label: 'দ্রুত যোগ' },
-    { to: '/admin/bulk-import',       icon: '📥', label: 'Bulk Import' },
-    { to: '/admin/shop-requests',     icon: '🏪', label: 'দোকান আবেদন' },
-    { to: '/admin/shops',             icon: '🏬', label: 'দোকান' },
-    { to: '/admin/categories',        icon: '📋', label: 'বিভাগ' },
-    { to: '/admin/products',          icon: '🛍️', label: 'পণ্য' },
-    { section: 'ব্যবহারকারী' },
-    { to: '/admin/users',             icon: '👥', label: 'ব্যবহারকারী' },
-    { to: '/admin/roles',             icon: '🛡️', label: 'Role' },
-    { to: '/admin/verifications',     icon: '🔏', label: 'যাচাইকরণ' },
-    { section: 'অপারেশন' },
-    { to: '/admin/orders',            icon: '📦', label: 'অর্ডার' },
-    { to: '/admin/services',          icon: '🛠️', label: 'সেবা অনুমোদন' },
+    { to: '/admin',                 icon: '📊', label: 'ড্যাশবোর্ড',       end: true },
+    { to: '/admin/analytics',       icon: '📈', label: 'অ্যানালিটিক্স' },
+    { to: '/admin/shop-requests',   icon: '🏪', label: 'দোকান আবেদন' },   // ← badge here
+    { to: '/admin/shops',           icon: '🏬', label: 'দোকান' },
+    { to: '/admin/categories',      icon: '📋', label: 'বিভাগ' },
+    { to: '/admin/users',           icon: '👥', label: 'ব্যবহারকারী' },
+    { to: '/admin/roles',           icon: '🛡️', label: 'Role' },
+    { to: '/admin/orders',          icon: '📦', label: 'অর্ডার' },        // ← badge here
+    { to: '/admin/products',        icon: '🛍️', label: 'পণ্য' },
+    { to: '/admin/verifications',   icon: '🔏', label: 'যাচাইকরণ' },
+    { to: '/admin/services',        icon: '🛠️', label: 'সেবা অনুমোদন' },
     { to: '/admin/service-directory', icon: '📒', label: 'সেবা ডিরেক্টরি' },
-    { to: '/admin/ads',               icon: '📢', label: 'বিজ্ঞাপন' },
-    { section: 'সিস্টেম' },
-    { to: '/admin/audit-log',         icon: '🗂️', label: 'Audit Log' },
-    { to: '/admin/error-logs',        icon: '🐛', label: 'Error Logs' },
-    { to: '/admin/settings',          icon: '⚙️', label: 'সেটিংস' },
+    { to: '/admin/ads',             icon: '📢', label: 'বিজ্ঞাপন' },
+    { to: '/admin/error-logs',      icon: '🐛', label: 'Error Logs' },
+    { to: '/admin/settings',        icon: '⚙️', label: 'সেটিংস' },
   ]
 
   let links
@@ -487,7 +414,7 @@ export default function DashboardLayout({ type = 'user' }) {
       {/* Header */}
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.full_name?.[0] || 'U'}
           </div>
           <div className="min-w-0">
@@ -498,19 +425,15 @@ export default function DashboardLayout({ type = 'user' }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        {links.map((link, i) =>
-          link.section ? (
-            <SidebarSection key={`section-${i}`} label={link.section} />
-          ) : (
-            <SidebarLink
-              key={link.to}
-              {...link}
-              badge={getBadge(link.to)}
-              onClose={() => setSidebarOpen(false)}
-            />
-          )
-        )}
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {links.map(link => (
+          <SidebarLink
+            key={link.to}
+            {...link}
+            badge={getBadge(link.to)}
+            onClose={() => setSidebarOpen(false)}
+          />
+        ))}
       </nav>
 
       {/* Footer */}
@@ -536,17 +459,29 @@ export default function DashboardLayout({ type = 'user' }) {
   )
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       {sidebar}
 
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Unified topbar (mobile + desktop) */}
-        <TopBar type={type} profile={profile} signOut={signOut} setSidebarOpen={setSidebarOpen} mobileBadge={mobileBadge} links={links} />
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile top bar */}
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
+          <button onClick={() => setSidebarOpen(true)} className="text-xl p-1">☰</button>
+          <span className="font-semibold text-gray-800">
+            {type === 'admin' ? '⚙️ Admin' : '👤 Dashboard'}
+          </span>
+          {mobileBadge > 0 && (
+            <NavLink
+              to={type === 'admin' ? '/admin/orders' : '/dashboard/orders'}
+              className="ml-auto flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold rounded-full px-3 py-1">
+              📦 {mobileBadge} নতুন
+            </NavLink>
+          )}
+        </div>
 
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-8 overflow-auto">
           <Outlet />
         </main>
       </div>

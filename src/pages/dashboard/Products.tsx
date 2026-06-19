@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -291,7 +291,7 @@ export default function Products() {
       header: 'মূল্য',
       cell: ({ row }) => (
         <div>
-          <p className="text-sm font-bold text-purple-700">৳{row.original.price.toLocaleString()}</p>
+          <p className="text-sm font-bold text-blue-700">৳{row.original.price.toLocaleString()}</p>
           {row.original.original_price && (
             <p className="text-xs text-gray-400 line-through">৳{row.original.original_price.toLocaleString()}</p>
           )}
@@ -372,14 +372,14 @@ export default function Products() {
                 type="button"
                 className={`w-full aspect-square rounded-xl border-2 overflow-hidden flex items-center justify-center transition-all
                   ${src
-                    ? 'border-purple-300 bg-gray-50'
-                    : 'border-dashed border-gray-200 bg-gray-50 hover:border-purple-400 hover:bg-purple-50'
+                    ? 'border-blue-300 bg-gray-50'
+                    : 'border-dashed border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
                   }`}
                 onClick={() => imgRefs.current[idx]?.click()}
                 disabled={uploadingIdx !== null}
               >
                 {uploadingIdx === idx ? (
-                  <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 ) : src ? (
                   <img src={src} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -400,7 +400,7 @@ export default function Products() {
               )}
               {idx === 0 && src && (
                 <div className="absolute -bottom-1 left-0 right-0 flex justify-center">
-                  <span className="text-[8px] bg-purple-500 text-white px-1.5 py-0.5 rounded-full leading-tight">মূল</span>
+                  <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full leading-tight">মূল</span>
                 </div>
               )}
             </div>
@@ -461,7 +461,7 @@ export default function Products() {
                       <p className="font-semibold text-sm text-gray-800 truncate">{p.name}</p>
                       {p.shops?.shop_name && <p className="text-xs text-gray-400 truncate">{p.shops.shop_name}</p>}
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-sm font-bold text-purple-700">৳{p.price.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-blue-700">৳{p.price.toLocaleString()}</span>
                         {p.original_price && <span className="text-xs text-gray-400 line-through">৳{p.original_price.toLocaleString()}</span>}
                         <Badge variant={p.is_active ? 'success' : 'secondary'} className="text-xs">{p.is_active ? 'সক্রিয়' : 'বন্ধ'}</Badge>
                         {p.stock === 0 && <span className="text-xs text-red-500 font-medium">স্টক শেষ</span>}
@@ -676,9 +676,9 @@ export default function Products() {
                         onChange={e => handleBulkImageUpload(e, idx)}
                       />
                       <label htmlFor={`bulk-img-${idx}`}
-                        className="flex items-center justify-center w-full h-8 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:border-purple-400 bg-gray-50 overflow-hidden">
+                        className="flex items-center justify-center w-full h-8 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:border-blue-400 bg-gray-50 overflow-hidden">
                         {row._uploading ? (
-                          <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                         ) : row.image_url ? (
                           <img src={row.image_url} alt="" className="h-full w-full object-cover" />
                         ) : (
@@ -710,7 +710,7 @@ export default function Products() {
               </div>
             )}
 
-            <div className="bg-purple-50 border border-purple-100 rounded-lg p-3 text-xs text-purple-700">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-700">
               💡 শুধু নাম ও দাম দিন। ছবি পরেও যোগ করতে পারবেন।
               {bulkRows.filter(r => r.name.trim() && parseFloat(r.price) > 0).length > 0 && (
                 <span className="ml-2 font-bold">

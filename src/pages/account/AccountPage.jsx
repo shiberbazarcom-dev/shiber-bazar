@@ -1,13 +1,13 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTrackOrder } from '../../hooks/useOrders'
 import { useState } from 'react'
 
-const GREEN = 'var(--primary)'
+const GREEN = '#2563EB'
 
 const STATUS_COLORS = {
   pending:   'bg-yellow-100 text-yellow-700',
-  forwarded: 'bg-purple-100 text-purple-700',
+  forwarded: 'bg-blue-100 text-blue-700',
   accepted:  'bg-green-100 text-green-700',
   rejected:  'bg-red-100 text-red-700',
   delivered: 'bg-purple-100 text-purple-700',
@@ -35,7 +35,7 @@ export default function AccountPage() {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-card p-8 max-w-sm w-full text-center">
-          <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center text-3xl mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-3xl mx-auto mb-4">
             👤
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">লগইন করুন</h2>
@@ -62,7 +62,7 @@ export default function AccountPage() {
         <div className="flex items-center gap-4">
           {user.user_metadata?.avatar_url ? (
             <img src={user.user_metadata.avatar_url} alt=""
-              className="w-16 h-16 rounded-full object-cover border-2 border-purple-100" />
+              className="w-16 h-16 rounded-full object-cover border-2 border-blue-100" />
           ) : (
             <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white"
                  style={{ background: GREEN }}>
@@ -74,7 +74,7 @@ export default function AccountPage() {
               {profile?.full_name || user.email?.split('@')[0] || 'ব্যবহারকারী'}
             </h2>
             <p className="text-sm text-gray-400 truncate">{user.email}</p>
-            <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">
+            <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
               {profile?.role === 'shop_owner' ? '🏪 দোকানদার' : '🛒 কাস্টমার'}
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function AccountPage() {
           { icon: '🏪', label: 'দোকান খুঁজুন', to: '/shops' },
         ].map(({ icon, label, to }) => (
           <Link key={to} to={to}
-            className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:border-purple-200 hover:shadow-sm transition-all">
+            className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:border-blue-200 hover:shadow-sm transition-all">
             <p className="text-2xl mb-1">{icon}</p>
             <p className="text-xs font-medium text-gray-700">{label}</p>
           </Link>
@@ -121,7 +121,7 @@ export default function AccountPage() {
 
         {isLoading && (
           <div className="py-6 text-center">
-            <div className="w-6 h-6 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto" />
+            <div className="w-6 h-6 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto" />
           </div>
         )}
 

@@ -37,6 +37,3 @@ yarn-error.log*
 
 # Misc
 .cache/
-
-# Android — machine-specific, do not commit
-android/local.properties

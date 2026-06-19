@@ -1,9 +1,9 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
-const GREEN = 'var(--primary)'
+const GREEN = '#2563EB'
 
 function useSettings() {
   return useQuery({
@@ -115,7 +115,7 @@ export default function Settings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
       </div>
     )
   }
@@ -173,12 +173,12 @@ export default function Settings() {
         ))}
 
         {/* DB Status */}
-        <div className="bg-purple-50 rounded-2xl border border-purple-100 p-5">
+        <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
           <h3 className="font-bold text-blue-800 mb-2">💡 তথ্য</h3>
-          <p className="text-sm text-purple-700">
+          <p className="text-sm text-blue-700">
             সেটিংস পরিবর্তন করার পরে <strong>সংরক্ষণ করুন</strong> বাটনে ক্লিক করুন।
             নতুন সেটিং যোগ করতে Supabase SQL Editor-এ{' '}
-            <code className="bg-purple-100 px-1 rounded text-xs">site_settings</code> টেবিলে ইনসার্ট করুন।
+            <code className="bg-blue-100 px-1 rounded text-xs">site_settings</code> টেবিলে ইনসার্ট করুন।
           </p>
         </div>
       </div>

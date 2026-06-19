@@ -1,11 +1,11 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMyServices, useDeleteService, useUpdateService } from '../../hooks/useServices'
 import { useServiceCategories } from '../../hooks/useServices'
 import { SERVICE_CATEGORIES, CATEGORY_EXTRA_FIELDS } from '../../data/serviceCategories'
 import toast from 'react-hot-toast'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 
 const STATUS_LABEL = {
   pending:  { label: '⏳ অনুমোদনের অপেক্ষায়', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
@@ -59,7 +59,7 @@ function EditModal({ service, cats, onClose, onSave }) {
                   type={type}
                   value={form[k]}
                   onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
                 />
               </div>
             ))}
@@ -70,7 +70,7 @@ function EditModal({ service, cats, onClose, onSave }) {
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 resize-none"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 resize-none"
               />
             </div>
 
@@ -81,7 +81,7 @@ function EditModal({ service, cats, onClose, onSave }) {
                   <select
                     value={extra[field.key] || ''}
                     onChange={e => setExtra(x => ({ ...x, [field.key]: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 bg-white">
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white">
                     <option value="">বেছে নিন</option>
                     {field.options.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
@@ -90,7 +90,7 @@ function EditModal({ service, cats, onClose, onSave }) {
                     value={extra[field.key] || ''}
                     onChange={e => setExtra(x => ({ ...x, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
                   />
                 )}
               </div>
@@ -204,7 +204,7 @@ export default function MyServices() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setEditing(svc)}
-                      className="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg hover:bg-purple-100 transition-colors">
+                      className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
                       ✏️ সম্পাদনা
                     </button>
                     <button

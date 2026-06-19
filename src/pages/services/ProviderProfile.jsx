@@ -1,8 +1,8 @@
-﻿import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useProviderProfile } from '../../hooks/useServices'
 import SEO from '../../components/SEO'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 const BLUE_LIGHT = '#EFF6FF'
 
 const extraLabels = {
@@ -84,7 +84,7 @@ export default function ProviderProfile() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 bg-gray-50">
         <div className="text-6xl mb-4">😔</div>
         <p className="text-gray-700 font-semibold mb-2">প্রোফাইল পাওয়া যায়নি</p>
-        <Link to="/services" className="text-sm text-purple-600 hover:underline mt-1">← সব সেবা</Link>
+        <Link to="/services" className="text-sm text-blue-600 hover:underline mt-1">← সব সেবা</Link>
       </div>
     )
   }
@@ -114,7 +114,7 @@ export default function ProviderProfile() {
       {/* ── Top nav ── */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <div className="max-w-3xl mx-auto">
-          <Link to="/services" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors">
+          <Link to="/services" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition-colors">
             ← সব সেবা
           </Link>
         </div>

@@ -1,55 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { playMessageSound, showChatNotification, showBrowserNotification } from '../lib/chatSound'
-
-/* ── Update current user's last_seen (call on mount + interval) ── */
-export function useUpdateLastSeen() {
-  const { user } = useAuth()
-  useEffect(() => {
-    if (!user) return
-    const update = () =>
-      supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', user.id)
-    update()
-    const iv = setInterval(update, 30000) // every 30s
-    const onVisible = () => { if (!document.hidden) update() }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVisible) }
-  }, [user])
-}
-
-/* ── Fetch other user's last_seen with realtime ── */
-export function useOtherUserPresence(userId) {
-  const qc = useQueryClient()
-  const { data } = useQuery({
-    queryKey: ['presence', userId],
-    queryFn: async () => {
-      if (!userId) return null
-      const { data } = await supabase
-        .from('profiles')
-        .select('last_seen')
-        .eq('id', userId)
-        .single()
-      return data?.last_seen || null
-    },
-    enabled: !!userId,
-    refetchInterval: 30000,
-  })
-
-  useEffect(() => {
-    if (!userId) return
-    const ch = supabase
-      .channel(`presence-${userId}`)
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
-        () => qc.invalidateQueries({ queryKey: ['presence', userId] }))
-      .subscribe()
-    return () => supabase.removeChannel(ch)
-  }, [userId, qc])
-
-  return data || null
-}
 
 /* ── All conversations for current user ── */
 export function useConversations() {

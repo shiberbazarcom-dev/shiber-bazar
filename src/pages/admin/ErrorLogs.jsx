@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const SEV_COLOR = {
@@ -113,7 +113,7 @@ export default function ErrorLogs() {
           <button
             onClick={sendTestError}
             disabled={testSending}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-purple-200 text-sm font-medium text-purple-600 hover:bg-purple-50 transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-200 text-sm font-medium text-blue-600 hover:bg-blue-50 transition disabled:opacity-50"
           >
             {testSending ? '⏳' : '🧪'} Test করুন
           </button>

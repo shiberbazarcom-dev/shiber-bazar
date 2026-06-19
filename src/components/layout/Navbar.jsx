@@ -1,9 +1,8 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useCategories } from '../../hooks/useCategories'
-import { useMarketStats } from '../../hooks/useShops'
 import { getAvatarUrl } from '../../lib/utils'
 import SearchDropdown from '../SearchDropdown'
 
@@ -11,7 +10,6 @@ export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
   const { totalCount: cartCount } = useCart()
   const { data: categories = [] } = useCategories()
-  const { data: stats } = useMarketStats()
   const navigate  = useNavigate()
   const location  = useLocation()
 
@@ -57,6 +55,7 @@ export default function Navbar() {
   // PWA install prompt — UA already checked in useState above
   // This effect only handles: standalone check, beforeinstallprompt, appinstalled
   useEffect(() => {
+    // If running as installed PWA, hide the banner
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true
     if (isStandalone || window.__pwaInstalled) {
@@ -132,56 +131,33 @@ export default function Navbar() {
 
         {/* PWA Install Banner — mobile only */}
         {showInstall && (
-          <div className="md:hidden flex items-center gap-2 px-3 py-2" style={{ background: 'var(--primary-dark)' }}>
+          <div className="md:hidden flex items-center gap-2 px-3 py-2" style={{ background: '#1d4ed8' }}>
             <span className="text-xl flex-shrink-0">📲</span>
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-bold leading-tight">শিবের বাজার অ্যাপ ইন্সটল করুন</p>
               {isIOS
-                ? <p className="text-purple-200 text-[10px] leading-tight">Safari: Share ⬆️ → "Add to Home Screen"</p>
+                ? <p className="text-blue-200 text-[10px] leading-tight">Safari: Share ⬆️ → "Add to Home Screen"</p>
                 : installPrompt
-                  ? <p className="text-purple-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
-                  : <p className="text-purple-200 text-[10px] leading-tight">Menu ⋮ → "Add to Home Screen" চাপুন</p>
+                  ? <p className="text-blue-200 text-[10px] leading-tight">হোমস্ক্রিনে রাখুন — দ্রুত অ্যাক্সেস</p>
+                  : <p className="text-blue-200 text-[10px] leading-tight">Menu ⋮ → "Add to Home Screen" চাপুন</p>
               }
             </div>
             {!isIOS && installPrompt && (
               <button
                 onClick={handleInstall}
-                className="bg-white text-purple-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
+                className="bg-white text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 active:opacity-80">
                 ইন্সটল
               </button>
             )}
-            <button onClick={dismissInstall} className="text-purple-200 hover:text-white text-base leading-none flex-shrink-0 p-1">
+            <button onClick={dismissInstall} className="text-blue-200 hover:text-white text-base leading-none flex-shrink-0 p-1">
               ✕
             </button>
           </div>
         )}
 
-        {/* Announcement ticker strip */}
-        <div
-          className="text-white text-xs py-1.5 overflow-hidden hidden sm:block relative"
-          style={{ background: 'linear-gradient(90deg, var(--primary-dark) 0%, var(--primary) 40%, #3b82f6 70%, var(--primary-dark) 100%)', backgroundSize: '200% 100%', animation: 'gradientShift 6s ease infinite' }}
-        >
-          <style>{`
-            @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-            @keyframes tickerScroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
-            .ticker-track { display:flex; gap:0; white-space:nowrap; animation:tickerScroll 28s linear infinite; }
-            .ticker-track:hover { animation-play-state:paused; }
-          `}</style>
-          <div className="ticker-track">
-            {[
-              `📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়`,
-              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান রেজিস্ট্রেশন হয়েছে` : null,
-              stats?.totalProducts ? `📦 ${stats.totalProducts}+ পণ্য পাওয়া যাচ্ছে` : null,
-              `🛒 সহজে অর্ডার করুন, সরাসরি দোকানদারের সাথে কথা বলুন`,
-              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ সদস্য ইতোমধ্যে যোগ দিয়েছেন` : null,
-              `✅ ডেলিভারি সেবা পাওয়া যাচ্ছে নির্বাচিত দোকানে`,
-            ].filter(Boolean).map((msg, i) => (
-              <span key={i} className="inline-flex items-center px-8 gap-2">
-                {msg}
-                <span className="opacity-40 mx-4">•</span>
-              </span>
-            ))}
-          </div>
+        {/* Announcement strip — desktop */}
+        <div style={{ background: '#2563EB' }} className="text-white text-xs py-1 text-center hidden sm:block">
+          📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়
         </div>
 
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
@@ -193,13 +169,13 @@ export default function Navbar() {
                 className="w-9 h-9 object-contain flex-shrink-0" />
               <span className="hidden sm:flex flex-col leading-tight whitespace-nowrap">
                 <span className="font-semibold text-gray-800 text-[15px]">শিবের বাজার</span>
-                <span className="text-[10px] font-medium text-purple-600 tracking-widest uppercase">Digital Bazar</span>
+                <span className="text-[10px] font-medium text-blue-600 tracking-widest uppercase">Digital Bazar</span>
               </span>
             </Link>
 
             {/* Search bar */}
             <form onSubmit={handleSearch} className="flex-1 min-w-0 mx-1 sm:mx-2 relative">
-              <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all bg-gray-50">
+              <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-gray-50">
                 <input
                   value={query}
                   onChange={e => { setQuery(e.target.value); setShowSuggest(true) }}
@@ -215,7 +191,7 @@ export default function Navbar() {
                 )}
                 <button type="submit"
                   className="flex px-3 sm:px-4 text-white text-sm flex-shrink-0 items-center justify-center"
-                  style={{ background: 'var(--primary)' }}>
+                  style={{ background: '#2563EB' }}>
                   🔍
                 </button>
               </div>
@@ -234,7 +210,7 @@ export default function Navbar() {
               {/* Categories dropdown */}
               <div className="relative" ref={catRef}>
                 <button onClick={() => setCatOpen(o => !o)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-purple-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
                   ক্যাটাগরি <span className="text-xs">{catOpen ? '▲' : '▼'}</span>
                 </button>
                 {catOpen && (
@@ -242,14 +218,14 @@ export default function Navbar() {
                     {categories.slice(0, 12).map(cat => (
                       <Link key={cat.id} to={`/category/${cat.slug}`}
                         onClick={() => setCatOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-purple-700 transition-colors">
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-700 transition-colors">
                         <span className="text-lg">{cat.icon}</span>
                         {cat.name}
                       </Link>
                     ))}
                     <div className="border-t border-gray-100 mt-1 pt-1">
                       <Link to="/categories" onClick={() => setCatOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 transition-colors">
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors">
                         সব বিভাগ দেখুন →
                       </Link>
                     </div>
@@ -258,27 +234,22 @@ export default function Navbar() {
               </div>
 
               <NavLink to="/services" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-gray-50'}`}>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 সেবাসমূহ
               </NavLink>
 
               <NavLink to="/shops" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-gray-50'}`}>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 সব দোকান
               </NavLink>
 
               <NavLink to="/track-order" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-gray-50'}`}>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 অর্ডার ট্র্যাক
               </NavLink>
 
-              <NavLink to="/hatkhula-union" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
-                ইউনিয়ন
-              </NavLink>
-
               <NavLink to="/contact" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-gray-50'}`}>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 যোগাযোগ
               </NavLink>
             </nav>
@@ -289,7 +260,7 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: 'var(--primary)' }}>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: '#2563EB' }}>
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -302,7 +273,7 @@ export default function Navbar() {
                   {/* Mobile: avatar → direct link to dashboard */}
                   <Link to="/dashboard"
                     className="md:hidden flex items-center p-1 rounded-full active:bg-gray-100 transition-colors">
-                    <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-purple-200"
+                    <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
                       onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
                   </Link>
 
@@ -310,7 +281,7 @@ export default function Navbar() {
                   <div className="hidden md:block relative" ref={profileRef}>
                     <button onClick={() => setProfileOpen(o => !o)}
                       className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
-                      <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-purple-200"
+                      <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
                         onError={e => { e.target.src = getAvatarUrl('U', '1a9e3f') }} />
                       <span className="text-sm font-medium text-gray-700 max-w-[80px] truncate">
                         {profile?.full_name || 'প্রোফাইল'}
@@ -334,7 +305,7 @@ export default function Navbar() {
                           className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">❤️ পছন্দের দোকান</Link>
                         {isAdmin && (
                           <Link to="/admin" onClick={() => setProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">⚙️ অ্যাডমিন প্যানেল</Link>
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">⚙️ অ্যাডমিন প্যানেল</Link>
                         )}
                         <div className="border-t border-gray-100 mt-1 pt-1">
                           <button onClick={() => { signOut(); setProfileOpen(false) }}
@@ -354,7 +325,7 @@ export default function Navbar() {
                   </Link>
                   <Link to="/register"
                     className="text-sm font-medium text-white px-3.5 py-1.5 rounded-lg whitespace-nowrap hover:opacity-90 transition-opacity"
-                    style={{ background: 'var(--primary)' }}>
+                    style={{ background: '#2563EB' }}>
                     রেজিস্ট্রেশন
                   </Link>
                 </div>
@@ -378,18 +349,15 @@ export default function Navbar() {
             <nav className="max-w-6xl mx-auto px-4 py-1 flex flex-col">
               {[
                 { to: '/categories',  label: 'ক্যাটাগরি' },
-                { to: '/services',       label: 'সেবাসমূহ' },
-                { to: '/shops',          label: 'সব দোকান' },
+                { to: '/services', label: 'সেবাসমূহ' },
+                { to: '/shops',       label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/contact',     label: 'যোগাযোগ' },
-                { to: '/hatkhula-union', label: 'ইউনিয়ন', color: 'emerald' },
               ].map(item => (
                 <NavLink key={item.to} to={item.to}
                   className={({ isActive }) =>
                     `py-3.5 px-1 text-sm font-medium border-b border-gray-50 transition-colors ${
-                      item.color === 'emerald'
-                        ? isActive ? 'text-emerald-700' : 'text-emerald-600 active:text-emerald-700'
-                        : isActive ? 'text-purple-700' : 'text-gray-700 active:text-purple-700'
+                      isActive ? 'text-blue-700' : 'text-gray-700 active:text-blue-700'
                     }`}>
                   {item.label}
                 </NavLink>
@@ -402,62 +370,62 @@ export default function Navbar() {
       {/* ══════════════════════════════════════════════
           MOBILE STICKY BOTTOM NAVIGATION BAR
       ══════════════════════════════════════════════ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="flex items-stretch" style={{ height: '60px' }}>
 
           {/* হোম */}
           <Link to="/"
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-              pathActive('/') ? 'text-purple-600' : 'text-gray-500'
+              pathActive('/') ? 'text-blue-600' : 'text-gray-500'
             }`}>
             <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span className="text-[10px] font-semibold leading-none">হোম</span>
-            {pathActive('/') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-purple-600" />}
+            {pathActive('/') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
           {/* দোকান */}
           <Link to="/shops"
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
-              pathActive('/shops') || pathActive('/shop/') ? 'text-purple-600' : 'text-gray-500'
+              pathActive('/shops') || pathActive('/shop/') ? 'text-blue-600' : 'text-gray-500'
             }`}>
             <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/shops') || pathActive('/shop/') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
             <span className="text-[10px] font-semibold leading-none">দোকান</span>
-            {(pathActive('/shops') || pathActive('/shop/')) && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-purple-600" />}
+            {(pathActive('/shops') || pathActive('/shop/')) && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
           {/* সেবা — স্থানীয় সেবা ডিরেক্টরি */}
           <Link to="/services"
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
-              pathActive('/services') ? 'text-purple-600' : 'text-gray-500'
+              pathActive('/services') ? 'text-blue-600' : 'text-gray-500'
             }`}>
             <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
             <span className="text-[10px] font-semibold leading-none">সেবা</span>
-            {pathActive('/services') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-purple-600" />}
+            {pathActive('/services') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
           {/* কার্ট */}
           <Link to="/cart"
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
-              pathActive('/cart') ? 'text-purple-600' : 'text-gray-500'
+              pathActive('/cart') ? 'text-blue-600' : 'text-gray-500'
             }`}>
             <div className="relative">
               <svg className="w-5 h-5 flex-shrink-0" fill={pathActive('/cart') ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white flex items-center justify-center bg-purple-600">
+                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white flex items-center justify-center bg-blue-600">
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
             </div>
             <span className="text-[10px] font-semibold leading-none">কার্ট</span>
-            {pathActive('/cart') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-purple-600" />}
+            {pathActive('/cart') && <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />}
           </Link>
 
           {/* আমার / লগইন — direct link, no popup */}
@@ -465,7 +433,7 @@ export default function Navbar() {
             to={user ? '/dashboard' : '/login'}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
               pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')
-                ? 'text-purple-600' : 'text-gray-500'
+                ? 'text-blue-600' : 'text-gray-500'
             }`}>
             {user
               ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-current flex-shrink-0"
@@ -474,9 +442,9 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             }
-            <span className="text-[10px] font-semibold leading-none">{user ? 'প্রোফাইল' : 'লগইন'}</span>
+            <span className="text-[10px] font-semibold leading-none">{user ? 'আমার' : 'লগইন'}</span>
             {(pathActive('/dashboard') || pathActive('/account') || pathActive('/admin')) && (
-              <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-purple-600" />
+              <span className="absolute bottom-0 w-8 h-0.5 rounded-full bg-blue-600" />
             )}
           </Link>
 

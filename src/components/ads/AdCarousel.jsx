@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const GRADIENTS = [
-  'linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%)',
+  'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)',
   'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
   'linear-gradient(135deg, #059669 0%, #34d399 100%)',
   'linear-gradient(135deg, #dc2626 0%, #f87171 100%)',

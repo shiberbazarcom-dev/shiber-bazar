@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   useNotifications, 
@@ -121,7 +121,7 @@ export default function NotificationBell() {
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    !notification.is_read ? 'bg-purple-50/50' : ''
+                    !notification.is_read ? 'bg-blue-50/50' : ''
                   }`}
                 >
                   <div className="flex gap-3">

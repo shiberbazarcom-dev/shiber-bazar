@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useMyShops, useDeleteShop } from '../../hooks/useShops'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -62,7 +62,7 @@ export default function MyShops() {
                           </Badge>
                           {shop.is_featured && <Badge variant="gold">⭐ বিশেষ</Badge>}
                           {shop.verification_status === 'verified' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                               ✅ যাচাইকৃত
                             </span>
                           )}

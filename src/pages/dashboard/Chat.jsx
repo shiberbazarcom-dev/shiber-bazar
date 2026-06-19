@@ -1,11 +1,9 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useConversations, useRealtimeConversations } from '../../hooks/useChat'
 import ConversationList from '../../components/chat/ConversationList'
 import ChatWindow from '../../components/chat/ChatWindow'
-
-const OWNER_ROLES = ['shop_owner', 'market_manager', 'super_admin']
 
 export default function Chat() {
   const { conversationId } = useParams()
@@ -45,12 +43,7 @@ export default function Chat() {
           <span className="text-xs text-gray-400">{conversations.length} টি কথোপকথন</span>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <ConversationList
-          conversations={conversations}
-          selected={selected}
-          onSelect={handleSelect}
-          isOwner={OWNER_ROLES.includes(user?.role)}
-        />
+          <ConversationList conversations={conversations} selected={selected} onSelect={handleSelect} />
         </div>
       </div>
 
@@ -58,7 +51,7 @@ export default function Chat() {
         <div className="lg:hidden px-4 py-2 border-b border-gray-100 flex items-center">
           <button
             onClick={() => { setShowList(true); navigate('/dashboard/chat', { replace: true }) }}
-            className="flex items-center gap-2 text-purple-600 text-sm font-medium"
+            className="flex items-center gap-2 text-blue-600 text-sm font-medium"
           >← ফিরে যান</button>
         </div>
         <ChatWindow conversation={selected} otherName={getOtherName(selected)} />

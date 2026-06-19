@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -88,10 +88,10 @@ export default function ShopOrders() {
       const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
       if (error) throw error
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-orders'] })
       qc.invalidateQueries({ queryKey: ['owner-stats'] })
-      if (selectedOrder) setSelectedOrder(o => o ? { ...o, status: variables.status } : null)
+      if (selectedOrder) setSelectedOrder(o => o ? { ...o, status: updatingId || o.status } : null)
       setUpdatingId(null)
     },
     onError: () => setUpdatingId(null),
@@ -115,7 +115,7 @@ export default function ShopOrders() {
       header: 'অর্ডার নং',
       cell: ({ row }) => (
         <button
-          className="text-purple-600 font-semibold hover:underline text-sm"
+          className="text-blue-600 font-semibold hover:underline text-sm"
           onClick={() => setSelectedOrder(row.original)}
         >
           {row.original.order_number}
@@ -206,7 +206,7 @@ export default function ShopOrders() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${statusFilter === s ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${statusFilter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                 >
                   {s === 'all' ? 'সব' : cfg?.label || s} ({count})
                 </button>
@@ -235,7 +235,7 @@ export default function ShopOrders() {
                 <div key={o.id} className="bg-white rounded-xl border shadow-sm p-4 space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <button
-                      className="text-purple-600 font-bold text-sm hover:underline text-left"
+                      className="text-blue-600 font-bold text-sm hover:underline text-left"
                       onClick={() => setSelectedOrder(o)}
                     >
                       {o.order_number}
@@ -368,9 +368,9 @@ export default function ShopOrders() {
                         <div className="px-4 py-3 text-sm text-gray-400">পণ্যের তথ্য নেই</div>
                       )
                     })()}
-                    <div className="flex justify-between px-4 py-3 bg-purple-50 border-t font-bold text-sm">
+                    <div className="flex justify-between px-4 py-3 bg-blue-50 border-t font-bold text-sm">
                       <span>মোট</span>
-                      <span className="text-purple-700">৳{(selectedOrder.total_amount ?? 0).toLocaleString()}</span>
+                      <span className="text-blue-700">৳{(selectedOrder.total_amount ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -395,7 +395,7 @@ export default function ShopOrders() {
                         )}
                         {showShipped && (
                           <a href={shippedUrl} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">🚚 পাঠানো হয়েছে জানান</Button>
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">🚚 পাঠানো হয়েছে জানান</Button>
                           </a>
                         )}
                       </div>

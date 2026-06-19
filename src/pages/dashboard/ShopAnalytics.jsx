@@ -1,9 +1,9 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useMyShopIds, useShopOverviewStats, useDailyOrders, useTopProducts, useOrderStatusBreakdown } from '../../hooks/useAnalytics'
 
 function StatCard({ icon, label, value, color = 'blue' }) {
-  const colors = { blue: 'bg-purple-50 text-purple-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600', amber: 'bg-amber-50 text-amber-600' }
+  const colors = { blue: 'bg-blue-50 text-blue-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600', amber: 'bg-amber-50 text-amber-600' }
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4">
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${colors[color]}`}>{icon}</div>
@@ -71,12 +71,12 @@ export default function ShopAnalytics() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <select value={selectedShop} onChange={e => setSelectedShop(e.target.value)}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="all">সব দোকান</option>
             {shops.map(s => <option key={s.id} value={s.id}>{s.shop_name}</option>)}
           </select>
           <select value={days} onChange={e => setDays(Number(e.target.value))}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value={7}>গত ৭ দিন</option>
             <option value={14}>গত ১৪ দিন</option>
             <option value={30}>গত ৩০ দিন</option>

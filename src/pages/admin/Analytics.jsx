@@ -1,9 +1,7 @@
-﻿import { useQuery } from '@tanstack/react-query'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { format, subDays, eachDayOfInterval } from 'date-fns'
 
-const GREEN = 'var(--primary)'
+const GREEN = '#2563EB'
 
 function useAnalytics() {
   return useQuery({
@@ -14,56 +12,39 @@ function useAnalytics() {
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('categories').select('*', { count: 'exact', head: true }),
+
+        // Recent orders
         supabase.from('orders')
           .select('order_number, customer_name, status, created_at, product_name')
           .order('created_at', { ascending: false })
           .limit(8),
+
+        // Recent approved shops
         supabase.from('shops')
           .select('shop_name, status, created_at, categories(name, icon)')
           .order('created_at', { ascending: false })
           .limit(6),
       ])
 
+      // Orders by status
       const statusCounts = await Promise.all(
         ['pending','forwarded','accepted','rejected','delivered'].map(s =>
           supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', s)
         )
       )
 
+      // Approved vs pending shops
       const [approvedShops, pendingShops] = await Promise.all([
         supabase.from('shops').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
         supabase.from('shops').select('*', { count: 'exact', head: true }).eq('status', 'pending_approval'),
       ])
 
+      // Users by role
       const roleCounts = await Promise.all(
         ['user','shop_owner','market_manager','super_admin'].map(r =>
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', r)
         )
       )
-
-      // Last 30 days orders for trend chart
-      const since = subDays(new Date(), 29).toISOString()
-      const { data: recentOrdersForChart } = await supabase
-        .from('orders')
-        .select('created_at, total_amount, status')
-        .gte('created_at', since)
-        .neq('status', 'rejected')
-
-      // Build day-by-day data
-      const days = eachDayOfInterval({ start: subDays(new Date(), 29), end: new Date() })
-      const dailyMap = {}
-      days.forEach(d => {
-        const key = format(d, 'MM/dd')
-        dailyMap[key] = { date: key, orders: 0, revenue: 0 }
-      })
-      ;(recentOrdersForChart || []).forEach(o => {
-        const key = format(new Date(o.created_at), 'MM/dd')
-        if (dailyMap[key]) {
-          dailyMap[key].orders += 1
-          dailyMap[key].revenue += Number(o.total_amount) || 0
-        }
-      })
-      const dailyTrend = Object.values(dailyMap)
 
       return {
         totals: {
@@ -84,37 +65,22 @@ function useAnalytics() {
           pending:  pendingShops.count  || 0,
         },
         roles: {
-          user:           roleCounts[0].count || 0,
-          shop_owner:     roleCounts[1].count || 0,
-          market_manager: roleCounts[2].count || 0,
-          super_admin:    roleCounts[3].count || 0,
+          user:          roleCounts[0].count || 0,
+          shop_owner:    roleCounts[1].count || 0,
+          market_manager:roleCounts[2].count || 0,
+          super_admin:   roleCounts[3].count || 0,
         },
         recentOrders: recentOrders.data || [],
         recentShops:  recentShops.data  || [],
-        dailyTrend,
       }
     },
-    refetchInterval: 60_000,
+    refetchInterval: 60_000, // auto-refresh every minute
   })
-}
-
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
-      {payload.map(p => (
-        <p key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: {p.dataKey === 'revenue' ? `৳${Number(p.value).toLocaleString()}` : p.value}
-        </p>
-      ))}
-    </div>
-  )
 }
 
 const ORDER_STATUS_COLORS = {
   pending:   { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '⏳ অপেক্ষমান' },
-  forwarded: { bg: 'bg-purple-100',   text: 'text-purple-700',   label: '📤 ফরওয়ার্ড' },
+  forwarded: { bg: 'bg-blue-100',   text: 'text-blue-700',   label: '📤 ফরওয়ার্ড' },
   accepted:  { bg: 'bg-green-100',  text: 'text-green-700',  label: '✅ গ্রহণ' },
   rejected:  { bg: 'bg-red-100',    text: 'text-red-700',    label: '❌ বাতিল' },
   delivered: { bg: 'bg-purple-100', text: 'text-purple-700', label: '🎉 ডেলিভারি' },
@@ -122,7 +88,7 @@ const ORDER_STATUS_COLORS = {
 
 function StatCard({ icon, label, value, sub, color = 'blue' }) {
   const colors = {
-    blue:   'from-purple-500 to-purple-600',
+    blue:   'from-blue-500 to-blue-600',
     green:  'from-green-500 to-green-600',
     purple: 'from-purple-500 to-purple-600',
     orange: 'from-orange-500 to-orange-600',
@@ -141,7 +107,7 @@ function StatCard({ icon, label, value, sub, color = 'blue' }) {
   )
 }
 
-function SimpleBarChart({ data, max, colorClass }) {
+function BarChart({ data, max, colorClass }) {
   return (
     <div className="space-y-2.5">
       {data.map(({ label, value, icon }) => (
@@ -166,7 +132,7 @@ export default function Analytics() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
       </div>
     )
   }
@@ -195,44 +161,15 @@ export default function Analytics() {
         <StatCard icon="📋" label="বিভাগ"           value={data.totals.categories} sub="সক্রিয় বিভাগ"                          color="orange" />
       </div>
 
-      {/* Revenue Trend Chart */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-bold text-gray-700">📈 অর্ডার ট্রেন্ড (গত ৩০ দিন)</h3>
-            <p className="text-xs text-gray-400 mt-0.5">প্রতিদিনের অর্ডার ও রাজস্ব</p>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-purple-500 inline-block rounded" /> অর্ডার</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-green-500 inline-block rounded" /> রাজস্ব (৳)</span>
-          </div>
-        </div>
-        {data.dailyTrend?.length ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={data.dailyTrend} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis yAxisId="orders" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={28} />
-              <YAxis yAxisId="revenue" orientation="right" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={40} tickFormatter={v => v > 0 ? `৳${v}` : ''} />
-              <Tooltip content={<ChartTooltip />} />
-              <Line yAxisId="orders" type="monotone" dataKey="orders" name="অর্ডার" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-              <Line yAxisId="revenue" type="monotone" dataKey="revenue" name="রাজস্ব" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-36 text-gray-400 text-sm">কোনো ডেটা নেই</div>
-        )}
-      </div>
-
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
 
         {/* Orders by status */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <h3 className="font-bold text-gray-700 mb-4">📦 অর্ডারের অবস্থা</h3>
-          <SimpleBarChart
+          <BarChart
             max={orderTotal || 1}
-            colorClass="bg-purple-500"
+            colorClass="bg-blue-500"
             data={[
               { icon: '⏳', label: 'অপেক্ষমান',  value: data.orders.pending   },
               { icon: '📤', label: 'ফরওয়ার্ড',    value: data.orders.forwarded },
@@ -250,7 +187,7 @@ export default function Analytics() {
         {/* Shops */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <h3 className="font-bold text-gray-700 mb-4">🏪 দোকানের অবস্থা</h3>
-          <SimpleBarChart
+          <BarChart
             max={data.totals.shops || 1}
             colorClass="bg-green-500"
             data={[
@@ -273,7 +210,7 @@ export default function Analytics() {
         {/* Users by role */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <h3 className="font-bold text-gray-700 mb-4">👥 ব্যবহারকারীর ভূমিকা</h3>
-          <SimpleBarChart
+          <BarChart
             max={data.totals.users || 1}
             colorClass="bg-purple-500"
             data={[

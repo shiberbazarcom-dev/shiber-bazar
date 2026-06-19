@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useShops } from '../hooks/useShops'
 import { useSearchProducts } from '../hooks/useProducts'
@@ -9,7 +9,7 @@ import { whatsappUrl } from '../lib/utils'
 import { getBengaliMatch } from '../lib/banglish'
 import SEO from '../components/SEO'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 const GREEN = '#16a34a'
 
 function ProductCard({ product }) {
@@ -50,7 +50,7 @@ function ProductCard({ product }) {
               ? <img src={shop.logo_url} alt="" className="w-5 h-5 rounded object-cover" />
               : <span className="text-xs">🏪</span>
             }
-            <span className="text-xs text-gray-500 group-hover:text-purple-600 transition-colors truncate">
+            <span className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors truncate">
               {shop.shop_name}
             </span>
           </Link>
@@ -82,15 +82,15 @@ function DirectoryResultCard({ entry }) {
     <div className="bg-white rounded-xl shadow-card p-3.5 flex items-center gap-3">
       {entry.photo_url
         ? <img src={entry.photo_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0 bg-gray-50 border border-gray-100" />
-        : <span className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 font-bold text-lg flex items-center justify-center flex-shrink-0">{(entry.full_name || '?')[0]}</span>
+        : <span className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 font-bold text-lg flex items-center justify-center flex-shrink-0">{(entry.full_name || '?')[0]}</span>
       }
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-900 text-sm leading-tight truncate">
           {entry.full_name}
-          {entry.is_verified && <span className="ml-1 text-purple-500 text-xs">✔</span>}
+          {entry.is_verified && <span className="ml-1 text-blue-500 text-xs">✔</span>}
         </p>
         {cat && (
-          <Link to={`/services/${cat.slug}`} className="text-xs text-purple-600 font-medium hover:underline">
+          <Link to={`/services/${cat.slug}`} className="text-xs text-blue-600 font-medium hover:underline">
             {cat.icon} {cat.name_bn}{entry.additional_info ? ` • ${entry.additional_info}` : ''}
           </Link>
         )}
@@ -175,7 +175,7 @@ export default function SearchPage() {
         noindex={true}
       />
       {/* ── Search hero ── */}
-      <section style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%)' }} className="py-8 sm:py-10">
+      <section style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }} className="py-8 sm:py-10">
         <div className="container-app">
           <h1 className="text-xl sm:text-2xl font-bold text-white mb-4 text-center">🔍 খুঁজুন</h1>
           <div className="max-w-2xl mx-auto">
@@ -190,7 +190,7 @@ export default function SearchPage() {
                 <button onClick={() => setInputVal('')}
                   className="px-3 text-gray-400 hover:text-gray-600 text-lg">✕</button>
               )}
-              <button className="px-5 py-3 text-white font-semibold text-sm flex-shrink-0" style={{ background: 'var(--primary-dark)' }}>
+              <button className="px-5 py-3 text-white font-semibold text-sm flex-shrink-0" style={{ background: '#1d4ed8' }}>
                 🔍
               </button>
             </div>
@@ -209,13 +209,13 @@ export default function SearchPage() {
                 <button key={t.key} onClick={() => setTab(t.key)}
                   className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                     tab === t.key
-                      ? 'bg-white text-purple-700 shadow'
+                      ? 'bg-white text-blue-700 shadow'
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}>
                   {t.label}
                   {t.count !== null && (
                     <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                      tab === t.key ? 'bg-purple-100 text-purple-600' : 'bg-white/30 text-white'
+                      tab === t.key ? 'bg-blue-100 text-blue-600' : 'bg-white/30 text-white'
                     }`}>{t.count}</span>
                   )}
                 </button>
@@ -232,7 +232,7 @@ export default function SearchPage() {
             <p className="text-sm text-gray-500">
               "<span className="font-semibold text-gray-800">{query}</span>"
               {bengaliMatch && (
-                <> → <span className="font-semibold text-purple-700">{bengaliMatch}</span></>
+                <> → <span className="font-semibold text-blue-700">{bengaliMatch}</span></>
               )}
               {' — '}
               {tab === 'shops'
@@ -241,7 +241,7 @@ export default function SearchPage() {
               } পাওয়া গেছে
             </p>
             {bengaliMatch && (
-              <span className="text-[10px] bg-purple-50 text-purple-600 border border-purple-200 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
                 🔤 Banglish → বাংলা
               </span>
             )}
@@ -262,7 +262,7 @@ export default function SearchPage() {
                 : ['chal', 'murgi', 'alu', 'dim', 'sabji', 'tel']
               ).map(ex => (
                 <button key={ex} onClick={() => setInputVal(ex)}
-                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 transition-all">
+                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 transition-all">
                   {ex}
                 </button>
               ))}

@@ -1,8 +1,8 @@
-﻿import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useServiceDetail } from '../../hooks/useServices'
 import SEO from '../../components/SEO'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 
 const extraLabels = {
   subjects:       { label: 'বিষয়সমূহ',           icon: '📚' },
@@ -28,7 +28,7 @@ export default function ServiceDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
       </div>
     )
   }
@@ -38,7 +38,7 @@ export default function ServiceDetail() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
         <p className="text-5xl mb-4">😔</p>
         <p className="text-gray-600 font-semibold mb-4 text-center">সেবাটি পাওয়া যায়নি</p>
-        <Link to="/services" className="text-purple-600 hover:underline text-sm">← সব সেবা দেখুন</Link>
+        <Link to="/services" className="text-blue-600 hover:underline text-sm">← সব সেবা দেখুন</Link>
       </div>
     )
   }
@@ -64,7 +64,7 @@ export default function ServiceDetail() {
       />
 
       {/* ── Top gradient ── */}
-      <div style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%)' }} className="h-28 sm:h-36 relative">
+      <div style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }} className="h-28 sm:h-36 relative">
         <div className="absolute top-4 left-4">
           <Link to={`/services/${cat?.slug || ''}`} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors">
             ← <span className="text-xs">{cat?.name_bn || 'সেবাসমূহ'}</span>

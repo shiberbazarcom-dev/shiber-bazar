@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { expandQuery, buildOrFilter } from '../lib/banglish'
-import { logAudit } from '../lib/auditLog'
 
 const SHOP_FIELDS = '*, categories(id,name,icon,slug), profiles(full_name,avatar_url,phone)'
 const PAGE_SIZE   = 12
@@ -268,11 +267,9 @@ export function useToggleFavorite() {
   return useMutation({
     mutationFn: async ({ shopId, isFav }) => {
       if (isFav) {
-        const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('shop_id', shopId)
-        if (error) throw error
+        await supabase.from('favorites').delete().eq('user_id', user.id).eq('shop_id', shopId)
       } else {
-        const { error } = await supabase.from('favorites').insert({ user_id: user.id, shop_id: shopId })
-        if (error) throw error
+        await supabase.from('favorites').insert({ user_id: user.id, shop_id: shopId })
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
@@ -297,19 +294,9 @@ export function useAdminShops(filter = 'all') {
 export function useApproveShop() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, approve, shopName, rejectionReason }) => {
-      const newStatus = approve ? 'approved' : 'rejected'
-      const updates = { status: newStatus }
-      if (!approve && rejectionReason) updates.rejection_reason = rejectionReason
-      const { error } = await supabase.from('shops').update(updates).eq('id', id)
+    mutationFn: async ({ id, approve }) => {
+      const { error } = await supabase.from('shops').update({ status: approve ? 'approved' : 'rejected' }).eq('id', id)
       if (error) throw error
-      logAudit({
-        action: approve ? 'shop_approved' : 'shop_rejected',
-        entityType: 'shop',
-        entityId: id,
-        entityName: shopName,
-        details: { status: newStatus, rejection_reason: rejectionReason || null },
-      })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] })
@@ -324,8 +311,7 @@ export function useToggleFeatured() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, featured }) => {
-      const { error } = await supabase.from('shops').update({ is_featured: featured }).eq('id', id)
-      if (error) throw error
+      await supabase.from('shops').update({ is_featured: featured }).eq('id', id)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-shops'] }),
   })

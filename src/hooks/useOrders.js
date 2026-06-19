@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { logAudit } from '../lib/auditLog'
 
 /* ── Place order (public, no auth needed) ── */
 export function usePlaceOrder() {
@@ -91,18 +90,9 @@ export function useUpdateOrderStatus() {
         .from('orders')
         .update(updates)
         .eq('id', id)
-        .select('customer_id, order_number, shops(shop_name)')
+        .select('customer_id, shops(shop_name)')
         .single()
       if (error) throw error
-
-      // Audit log
-      logAudit({
-        action: 'order_status_changed',
-        entityType: 'order',
-        entityId: id,
-        entityName: order?.order_number,
-        details: { status, shop_id },
-      })
 
       // Insert in-app notification when order is confirmed
       if (status === 'confirmed' && order?.customer_id) {

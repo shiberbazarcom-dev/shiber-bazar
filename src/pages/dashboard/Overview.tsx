@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
@@ -8,7 +8,7 @@ import { whatsappUrl } from '../../lib/utils'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
-const BLUE = 'var(--primary)'
+const BLUE = '#2563EB'
 
 /* ─── Pending orders count for shop owner ─── */
 function usePendingOrderCount(userId: string | undefined) {
@@ -104,7 +104,7 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
               type="text"
               value={form.full_name}
               onChange={e => set('full_name', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="আপনার পুরো নাম"
             />
           </div>
@@ -117,7 +117,7 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
               type="tel"
               value={form.phone}
               onChange={e => set('phone', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="01XXXXXXXXX"
             />
           </div>
@@ -131,7 +131,7 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
               type="text"
               value={form.business_type}
               onChange={e => set('business_type', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="যেমন: কাপড়, মুদিখানা, ইলেকট্রনিক্স..."
             />
           </div>
@@ -145,7 +145,7 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
               type="text"
               value={form.shop_name}
               onChange={e => set('shop_name', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="দোকানের নাম থাকলে লিখুন"
             />
           </div>
@@ -159,7 +159,7 @@ function ShopRequestModal({ onClose }: { onClose: () => void }) {
               type="text"
               value={form.location}
               onChange={e => set('location', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="যেমন: সিলেট, রাজশাহী..."
             />
           </div>
@@ -235,7 +235,7 @@ export default function DashboardOverview() {
               { to: '/dashboard/qr-code',  icon: '🔲', label: 'QR কোড' },
             ].map(item => (
               <Link key={item.to} to={item.to}
-                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all flex items-center gap-3">
+                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex items-center gap-3">
                 <span className="text-2xl">{item.icon}</span>
                 <span className="text-sm font-semibold text-gray-700">{item.label}</span>
               </Link>
@@ -303,7 +303,7 @@ export default function DashboardOverview() {
                 </div>
               </div>
               <button onClick={() => setShowForm(true)}
-                className="w-full py-3 font-bold text-sm rounded-xl border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-colors">
+                className="w-full py-3 font-bold text-sm rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors">
                 আবার আবেদন করুন
               </button>
             </div>

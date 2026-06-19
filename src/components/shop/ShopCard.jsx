@@ -1,5 +1,4 @@
-﻿import { Link } from 'react-router-dom'
-import { getShopTier } from '../../lib/shopTier'
+import { Link } from 'react-router-dom'
 
 /* ── helpers ── */
 function toWhatsApp(phone) {
@@ -12,17 +11,6 @@ function toWhatsApp(phone) {
 
 function avatarUrl(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent((name || 'দ')[0])}&size=80&background=e0e7ff&color=3730a3&bold=true`
-}
-
-/* ── Tier Badge ── */
-function TierBadge({ shop }) {
-  const tier = getShopTier(shop)
-  if (!tier) return null
-  return (
-    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0 ${tier.bg} ${tier.color} ${tier.border}`}>
-      {tier.emoji} {tier.label}
-    </span>
-  )
 }
 
 /* ── ShopCard — Clean minimal style ── */
@@ -78,10 +66,10 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
       {/* ── Body ── */}
       <div className="flex flex-col flex-1 pt-7 pb-3 px-4 gap-2">
 
-        {/* Name + Verified + Tier */}
+        {/* Name + Verified */}
         <Link to={shopUrl} className="group">
           <div className="flex items-start gap-1.5 flex-wrap">
-            <h3 className="font-bold text-gray-900 text-sm leading-snug group-hover:text-purple-600 transition-colors">
+            <h3 className="font-bold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors">
               {shop.shop_name}
             </h3>
             {shop.is_verified && (
@@ -92,7 +80,6 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
                 ভেরিফাইড
               </span>
             )}
-            <TierBadge shop={shop} />
           </div>
           {shop.categories?.name && (
             <p className="text-[11px] text-gray-400 mt-0.5">
@@ -166,7 +153,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
       {/* দোকান দেখুন — bottom border CTA */}
       <Link
         to={shopUrl}
-        className="flex items-center justify-center gap-1.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-gray-500 hover:text-purple-600 hover:bg-gray-50 transition-colors"
+        className="flex items-center justify-center gap-1.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors"
       >
         দোকান দেখুন
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -196,7 +183,7 @@ export function ShopListItem({ shop }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900 text-sm truncate group-hover:text-purple-600 transition-colors">
+        <h3 className="font-semibold text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
           {shop.shop_name}
         </h3>
         {shop.categories?.name && (

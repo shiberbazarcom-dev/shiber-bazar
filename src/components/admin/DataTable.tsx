@@ -1,4 +1,4 @@
-﻿import {
+import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
@@ -89,7 +89,7 @@ export function DataTable<TData>({
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() && (
-                          <ArrowUpDown className={cn('h-3.5 w-3.5 text-gray-400', header.column.getIsSorted() && 'text-purple-600')} />
+                          <ArrowUpDown className={cn('h-3.5 w-3.5 text-gray-400', header.column.getIsSorted() && 'text-blue-600')} />
                         )}
                       </div>
                     )}

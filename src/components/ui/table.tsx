@@ -1,4 +1,4 @@
-﻿import * as React from 'react'
+import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
@@ -35,7 +35,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b border-gray-100 transition-colors hover:bg-gray-50/50 data-[state=selected]:bg-purple-50', className)}
+      className={cn('border-b border-gray-100 transition-colors hover:bg-gray-50/50 data-[state=selected]:bg-blue-50', className)}
       {...props}
     />
   )

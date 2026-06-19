@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -109,7 +109,7 @@ class ErrorBoundary extends React.Component {
             <button
               onClick={() => window.location.reload()}
               style={{
-                background: 'var(--primary)', color: 'white', border: 'none',
+                background: '#2563EB', color: 'white', border: 'none',
                 borderRadius: '12px', padding: '12px 28px', fontSize: '14px',
                 fontWeight: 'bold', cursor: 'pointer',
               }}

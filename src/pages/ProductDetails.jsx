@@ -1,9 +1,8 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useProduct, useShopProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
-import { useStartConversation } from '../hooks/useChat'
 import { recordProductView } from '../hooks/useAnalytics'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
@@ -11,7 +10,7 @@ import SEO from '../components/SEO'
 import OrderModal from '../components/order/OrderModal'
 
 const GREEN = '#16a34a'
-const BLUE  = 'var(--primary)'
+const BLUE  = '#2563EB'
 
 const WA_ICON = (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -28,7 +27,7 @@ function RelatedCard({ product }) {
     ? Math.round((1 - product.price / product.original_price) * 100) : 0
   return (
     <Link to={`/product/${product.id}`}
-      className="group rounded-2xl border border-gray-100 overflow-hidden hover:border-purple-200 hover:shadow-md transition-all bg-white flex flex-col">
+      className="group rounded-2xl border border-gray-100 overflow-hidden hover:border-blue-200 hover:shadow-md transition-all bg-white flex flex-col">
       <div className="relative overflow-hidden bg-gray-50">
         {product.image_url
           ? <img src={product.image_url} alt={product.name}
@@ -42,7 +41,7 @@ function RelatedCard({ product }) {
         )}
       </div>
       <div className="p-3 flex flex-col flex-1">
-        <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-purple-700 leading-snug mb-1.5 flex-1">{product.name}</p>
+        <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-700 leading-snug mb-1.5 flex-1">{product.name}</p>
         <div className="flex items-baseline gap-1.5">
           <p className="text-sm font-bold" style={{ color: GREEN }}>৳{Number(product.price).toLocaleString('bn-BD')}</p>
           {discount > 0 && <p className="text-xs text-gray-400 line-through">৳{Number(product.original_price).toLocaleString('bn-BD')}</p>}
@@ -62,7 +61,6 @@ export default function ProductDetails() {
   const { data: related = [] } = useShopProducts(product?.shop_id)
   const { addItem, isInCart } = useCart()
   const { user } = useAuth()
-  const startConversation = useStartConversation()
   const [activeImg, setActiveImg] = useState(0)
   const [imgZoom, setImgZoom] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
@@ -88,17 +86,6 @@ export default function ProductDetails() {
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder() {
     setOrderOpen(true)
-  }
-
-  async function handleStartChat() {
-    if (!user) { navigate('/login'); return }
-    const shop = product?.shops
-    if (!shop) return
-    if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
-    try {
-      const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
-      navigate(`/dashboard/chat/${conv.id}`)
-    } catch { toast.error('বার্তা শুরু করা যায়নি') }
   }
 
   async function handleShare() {
@@ -201,7 +188,7 @@ export default function ProductDetails() {
                   {allImages.map((img, i) => (
                     <button key={i} onClick={() => setActiveImg(i)}
                       className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                        activeImg === i ? 'border-purple-500 shadow-md' : 'border-transparent hover:border-gray-300 bg-gray-50'
+                        activeImg === i ? 'border-blue-500 shadow-md' : 'border-transparent hover:border-gray-300 bg-gray-50'
                       }`}>
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -293,17 +280,6 @@ export default function ProductDetails() {
                   অর্ডার করুন
                 </button>
 
-                {shop?.owner_id !== user?.id && (
-                  <button onClick={handleStartChat} disabled={startConversation.isPending}
-                    className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
-                    style={{ background: '#7c3aed' }}>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    বার্তা যাও
-                  </button>
-                )}
-
                 {(shop?.whatsapp || shop?.phone) && (
                   <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
                     target="_blank" rel="noreferrer"
@@ -319,7 +295,7 @@ export default function ProductDetails() {
               <button onClick={handleAddToCart}
                 className={`w-full h-11 font-semibold rounded-2xl text-sm hidden md:flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
                   inCart
-                    ? 'bg-purple-600 border-purple-600 text-white'
+                    ? 'bg-blue-600 border-blue-600 text-white'
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                 }`}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -384,7 +360,7 @@ export default function ProductDetails() {
         {shop && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Shop header strip */}
-            <div className="h-12 w-full" style={{ background: 'linear-gradient(135deg,#1e3a8a,var(--primary),#3b82f6)' }} />
+            <div className="h-12 w-full" style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6)' }} />
             <div className="px-5 pb-5 pt-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-shrink-0">
@@ -395,7 +371,7 @@ export default function ProductDetails() {
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
                   <p className="font-bold text-gray-900 text-sm sm:text-base leading-tight">{shop.shop_name}</p>
-                  {shop.categories?.name && <p className="text-xs text-purple-600 font-medium mt-0.5">{shop.categories.name}</p>}
+                  {shop.categories?.name && <p className="text-xs text-blue-600 font-medium mt-0.5">{shop.categories.name}</p>}
                   {shop.address && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {shop.address}</p>}
                 </div>
                 <Link to={`/shop/${shop.slug || shop.id}`}
@@ -407,7 +383,7 @@ export default function ProductDetails() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-gray-100 pt-4">
               {shop.phone && (
                 <a href={`tel:${shop.phone}`}
-                  className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/40 transition-all">
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all">
                   <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm" style={{ background: '#eff6ff' }}>📞</span>
                   <div className="min-w-0">
                     <p className="text-[10px] text-gray-400">প্রধান ফোন নম্বর</p>
@@ -452,7 +428,7 @@ export default function ProductDetails() {
         <div className="flex gap-2.5 max-w-lg mx-auto">
           <button onClick={handleAddToCart} aria-label="কার্টে যোগ করুন"
             className={`w-12 h-12 flex-shrink-0 rounded-2xl border-2 flex items-center justify-center transition-all active:scale-95 ${
-              inCart ? 'bg-purple-600 border-purple-600 text-white' : 'border-purple-600 text-purple-600 bg-white'
+              inCart ? 'bg-blue-600 border-blue-600 text-white' : 'border-blue-600 text-blue-600 bg-white'
             }`}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -469,9 +445,10 @@ export default function ProductDetails() {
           {(shop?.whatsapp || shop?.phone) && (
             <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
               target="_blank" rel="noreferrer"
-              className="w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-white active:scale-95 transition-all"
+              className="flex-1 h-12 font-bold rounded-2xl text-sm flex items-center justify-center gap-1.5 text-white active:scale-95 transition-all"
               style={{ background: '#25d366' }}>
               {WA_ICON}
+              WhatsApp
             </a>
           )}
         </div>

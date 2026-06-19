@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { supabase } from '@/lib/supabase'
@@ -215,7 +215,7 @@ export default function ManageCategories() {
               </div>
               <div className="flex items-end">
                 <label className="flex items-center gap-2 cursor-pointer pb-1">
-                  <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                  <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} className="w-4 h-4 accent-blue-600" />
                   <span className="text-sm text-gray-700">Active</span>
                 </label>
               </div>

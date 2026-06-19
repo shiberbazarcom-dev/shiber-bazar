@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useGlobalSearch } from '../hooks/useShops'
 
@@ -115,7 +115,7 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
                     to={`/shop/${shop.slug || shop.id}`}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      selectedIndex === idx ? 'bg-purple-50 border-l-4 border-brand-600' : ''
+                      selectedIndex === idx ? 'bg-blue-50 border-l-4 border-brand-600' : ''
                     }`}
                   >
                     <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center text-lg flex-shrink-0">
@@ -154,7 +154,7 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
                     to={`/product/${product.id}`}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      selectedIndex === idx ? 'bg-purple-50 border-l-4 border-brand-600' : ''
+                      selectedIndex === idx ? 'bg-blue-50 border-l-4 border-brand-600' : ''
                     }`}
                   >
                     <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-lg flex-shrink-0">
@@ -193,7 +193,7 @@ export default function SearchDropdown({ query, onClose, searchTab }) {
                     to={`/category/${cat.slug}`}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      selectedIndex === idx ? 'bg-purple-50 border-l-4 border-brand-600' : ''
+                      selectedIndex === idx ? 'bg-blue-50 border-l-4 border-brand-600' : ''
                     }`}
                   >
                     <span className="text-2xl">{cat.icon || '📋'}</span>
