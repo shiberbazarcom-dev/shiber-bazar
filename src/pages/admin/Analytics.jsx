@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+﻿import { useQuery } from '@tanstack/react-query'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { format, subDays, eachDayOfInterval } from 'date-fns'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 function useAnalytics() {
   return useQuery({
@@ -114,7 +114,7 @@ function ChartTooltip({ active, payload, label }) {
 
 const ORDER_STATUS_COLORS = {
   pending:   { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '⏳ অপেক্ষমান' },
-  forwarded: { bg: 'bg-blue-100',   text: 'text-blue-700',   label: '📤 ফরওয়ার্ড' },
+  forwarded: { bg: 'bg-purple-100',   text: 'text-purple-700',   label: '📤 ফরওয়ার্ড' },
   accepted:  { bg: 'bg-green-100',  text: 'text-green-700',  label: '✅ গ্রহণ' },
   rejected:  { bg: 'bg-red-100',    text: 'text-red-700',    label: '❌ বাতিল' },
   delivered: { bg: 'bg-purple-100', text: 'text-purple-700', label: '🎉 ডেলিভারি' },
@@ -122,7 +122,7 @@ const ORDER_STATUS_COLORS = {
 
 function StatCard({ icon, label, value, sub, color = 'blue' }) {
   const colors = {
-    blue:   'from-blue-500 to-blue-600',
+    blue:   'from-purple-500 to-purple-600',
     green:  'from-green-500 to-green-600',
     purple: 'from-purple-500 to-purple-600',
     orange: 'from-orange-500 to-orange-600',
@@ -166,7 +166,7 @@ export default function Analytics() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
       </div>
     )
   }
@@ -203,7 +203,7 @@ export default function Analytics() {
             <p className="text-xs text-gray-400 mt-0.5">প্রতিদিনের অর্ডার ও রাজস্ব</p>
           </div>
           <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> অর্ডার</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-purple-500 inline-block rounded" /> অর্ডার</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-green-500 inline-block rounded" /> রাজস্ব (৳)</span>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function Analytics() {
           <h3 className="font-bold text-gray-700 mb-4">📦 অর্ডারের অবস্থা</h3>
           <SimpleBarChart
             max={orderTotal || 1}
-            colorClass="bg-blue-500"
+            colorClass="bg-purple-500"
             data={[
               { icon: '⏳', label: 'অপেক্ষমান',  value: data.orders.pending   },
               { icon: '📤', label: 'ফরওয়ার্ড',    value: data.orders.forwarded },

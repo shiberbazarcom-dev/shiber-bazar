@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useMyShopRequest, useSubmitShopRequest } from '../../hooks/useShopRequests'
@@ -8,7 +8,7 @@ import { whatsappUrl } from '../../lib/utils'
 import { getShopTier, getTierProgress, TIERS } from '../../lib/shopTier'
 import toast from 'react-hot-toast'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 /* ─────────────────────────────────────────────
    Shop Request Form Modal
@@ -80,7 +80,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
             <input
               value={form.full_name}
               onChange={e => set('full_name', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               placeholder="আপনার পুরো নাম লিখুন"
             />
           </div>
@@ -91,7 +91,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
               type="tel"
               value={form.phone}
               onChange={e => set('phone', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               placeholder="01XXXXXXXXX"
             />
           </div>
@@ -101,7 +101,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
             <input
               value={form.business_type}
               onChange={e => set('business_type', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               placeholder="যেমন: কাপড়, মুদিখানা, ইলেকট্রনিক্স..."
             />
           </div>
@@ -113,7 +113,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
             <input
               value={form.shop_name}
               onChange={e => set('shop_name', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               placeholder="দোকানের নাম থাকলে লিখুন"
             />
           </div>
@@ -123,7 +123,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
             <input
               value={form.location}
               onChange={e => set('location', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
               placeholder="যেমন: সিলেট, শিবগঞ্জ, রাজশাহী..."
             />
           </div>
@@ -136,7 +136,7 @@ function ShopRequestModal({ onClose, onSuccess }) {
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
               rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 resize-none"
               placeholder="যেকোনো অতিরিক্ত তথ্য..."
             />
           </div>
@@ -368,7 +368,7 @@ export default function DashboardOverview() {
                 </div>
                 <button
                   onClick={() => setShowForm(true)}
-                  className="w-full py-3 font-bold text-sm rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors">
+                  className="w-full py-3 font-bold text-sm rounded-xl border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-colors">
                   আবার আবেদন করুন
                 </button>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useServices, useServiceCategories } from '../../hooks/useServices'
 import { SERVICE_CATEGORIES } from '../../data/serviceCategories'
@@ -6,7 +6,7 @@ import ServiceCard from '../../components/services/ServiceCard'
 import ServiceCategoryCard from '../../components/services/ServiceCategoryCard'
 import SEO from '../../components/SEO'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 function CardSkeleton() {
   return (
@@ -57,7 +57,7 @@ export default function ServicesPage() {
       />
 
       {/* ── Hero banner ── */}
-      <div style={{ background: 'linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)' }} className="pt-6 pb-8 px-4">
+      <div style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%)' }} className="pt-6 pb-8 px-4">
         {/* Breadcrumb */}
         {activeCat && (
           <div className="flex items-center gap-1.5 text-white/70 text-xs mb-3">
@@ -111,7 +111,7 @@ export default function ServicesPage() {
           <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide -mx-4 px-4">
             <Link
               to="/services"
-              className="flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-blue-300 whitespace-nowrap"
+              className="flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-purple-300 whitespace-nowrap"
             >
               সব সেবা
             </Link>
@@ -121,8 +121,8 @@ export default function ServicesPage() {
                 to={`/services/${cat.slug}`}
                 className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full whitespace-nowrap transition-all ${
                   cat.slug === slug
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
                 }`}
               >
                 <span>{cat.icon}</span>

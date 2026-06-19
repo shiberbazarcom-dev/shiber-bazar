@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { compressImage, validateFileSize } from '../../lib/compressImage'
 import PushNotificationToggle from '../../components/PushNotificationToggle'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const ROLE_LABELS = {
-  user:           { icon: '🛒', label: 'কাস্টমার',       color: 'bg-blue-100 text-blue-700' },
+  user:           { icon: '🛒', label: 'কাস্টমার',       color: 'bg-purple-100 text-purple-700' },
   shop_owner:     { icon: '🏪', label: 'দোকানদার',        color: 'bg-green-100 text-green-700' },
   market_manager: { icon: '🟠', label: 'Market Manager',  color: 'bg-orange-100 text-orange-700' },
   super_admin:    { icon: '🔴', label: 'Super Admin',      color: 'bg-red-100 text-red-700' },
@@ -108,7 +108,7 @@ export default function Profile() {
           <div className="relative">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt=""
-                className="w-20 h-20 rounded-full object-cover border-2 border-blue-100" />
+                className="w-20 h-20 rounded-full object-cover border-2 border-purple-100" />
             ) : (
               <div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white"
                    style={{ background: GREEN }}>

@@ -1,12 +1,12 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTrackOrder } from '../hooks/useOrders'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const STATUS_MAP = {
   pending:   { label: '⏳ অপেক্ষমান',             bg: 'bg-yellow-50',  text: 'text-yellow-700',  border: 'border-yellow-200', step: 1 },
-  forwarded: { label: '📤 দোকানে পাঠানো হয়েছে',  bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',   step: 2 },
+  forwarded: { label: '📤 দোকানে পাঠানো হয়েছে',  bg: 'bg-purple-50',    text: 'text-purple-700',    border: 'border-purple-200',   step: 2 },
   accepted:  { label: '✅ দোকান গ্রহণ করেছে',     bg: 'bg-green-50',   text: 'text-green-700',   border: 'border-green-200',  step: 3 },
   rejected:  { label: '❌ বাতিল করা হয়েছে',       bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',    step: 0 },
   delivered: { label: '🎉 ডেলিভারি সম্পন্ন',      bg: 'bg-purple-50',  text: 'text-purple-700',  border: 'border-purple-200', step: 4 },
@@ -143,7 +143,7 @@ export default function TrackOrder() {
       {/* Results */}
       {isLoading && (
         <div className="text-center py-16">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-400 text-sm">অর্ডার খোঁজা হচ্ছে...</p>
         </div>
       )}

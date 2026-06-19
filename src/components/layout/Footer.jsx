@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useCategories } from '../../hooks/useCategories'
 
 const YEAR = new Date().getFullYear()
@@ -17,7 +17,7 @@ export default function Footer() {
               <img src="/logo.png" alt="শিবের বাজার" className="w-9 h-9 object-contain flex-shrink-0"
                    onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
               <div className="w-9 h-9 rounded-lg items-center justify-center text-white font-bold flex-shrink-0 hidden"
-                   style={{ background: '#2563EB' }}>
+                   style={{ background: 'var(--primary)' }}>
                 শ
               </div>
               <div>
@@ -43,7 +43,7 @@ export default function Footer() {
                 { to: '/policy',     label: 'গোপনীয়তা নীতি' },
               ].map(link => (
                 <li key={link.to}>
-                  <Link to={link.to} className="text-sm text-gray-500 hover:text-blue-700 transition-colors">
+                  <Link to={link.to} className="text-sm text-gray-500 hover:text-purple-700 transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -58,7 +58,7 @@ export default function Footer() {
               {categories.slice(0, 6).map(cat => (
                 <li key={cat.id}>
                   <Link to={`/category/${cat.slug}`}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-700 transition-colors">
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-purple-700 transition-colors">
                     <span>{cat.icon}</span>
                     {cat.name}
                   </Link>
@@ -77,7 +77,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="flex-shrink-0">📞</span>
-                <a href="tel:+8801310012276" className="hover:text-blue-700 transition-colors">
+                <a href="tel:+8801310012276" className="hover:text-purple-700 transition-colors">
                   ০১৩১০-০১২২৭৬
                 </a>
               </li>
@@ -101,10 +101,10 @@ export default function Footer() {
             © {YEAR} শিবের বাজার। সর্বস্বত্ব সংরক্ষিত।
           </p>
           <div className="flex gap-4">
-            <Link to="/policy" className="text-xs text-gray-400 hover:text-blue-600 transition-colors">
+            <Link to="/policy" className="text-xs text-gray-400 hover:text-purple-600 transition-colors">
               গোপনীয়তা নীতি
             </Link>
-            <Link to="/policy#terms" className="text-xs text-gray-400 hover:text-blue-600 transition-colors">
+            <Link to="/policy#terms" className="text-xs text-gray-400 hover:text-purple-600 transition-colors">
               শর্তাবলী
             </Link>
           </div>

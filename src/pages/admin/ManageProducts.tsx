@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { supabase } from '@/lib/supabase'
@@ -176,7 +176,7 @@ export default function ManageProducts() {
     <select
       value={shopFilter}
       onChange={e => setShopFilter(e.target.value)}
-      className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500"
     >
       <option value="">All Shops</option>
       {shops.map((s: any) => <option key={s.id} value={s.id}>{s.shop_name}</option>)}

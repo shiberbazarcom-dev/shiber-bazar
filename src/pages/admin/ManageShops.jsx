@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdminShops, useApproveShop, useToggleFeatured, useDeleteShop } from '../../hooks/useShops'
 import { useCategories } from '../../hooks/useCategories'
@@ -134,7 +134,7 @@ export default function ManageShops() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-blue-600 text-white rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap animate-fadeIn">
+        <div className="bg-purple-600 text-white rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap animate-fadeIn">
           <span className="text-sm font-semibold">{selectedIds.size}টি নির্বাচিত</span>
           <div className="flex gap-2 flex-wrap ml-auto">
             <button onClick={() => bulkApprove(true)} disabled={bulkLoading}
@@ -174,7 +174,7 @@ export default function ManageShops() {
                 <tr>
                   <th className="table-cell w-10">
                     <input type="checkbox" checked={allSelected} onChange={toggleAll}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                      className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer" />
                   </th>
                   <th className="table-cell text-left">দোকান</th>
                   <th className="table-cell text-left hidden sm:table-cell">বিভাগ</th>
@@ -189,10 +189,10 @@ export default function ManageShops() {
                 {filtered.map(shop => {
                   const fallback = getAvatarUrl(shop.shop_name || '?')
                   return (
-                    <tr key={shop.id} className={`table-row transition-colors ${selectedIds.has(shop.id) ? 'bg-blue-50' : ''}`}>
+                    <tr key={shop.id} className={`table-row transition-colors ${selectedIds.has(shop.id) ? 'bg-purple-50' : ''}`}>
                       <td className="table-cell">
                         <input type="checkbox" checked={selectedIds.has(shop.id)} onChange={() => toggleSelect(shop.id)}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                          className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer" />
                       </td>
                       <td className="table-cell">
                         <div className="flex items-center gap-3">

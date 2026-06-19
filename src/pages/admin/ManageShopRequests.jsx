@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useAllShopRequests, useUpdateShopRequest } from '../../hooks/useShopRequests'
 import { useAdminWhatsapp } from '../../hooks/useSettings'
 import { whatsappUrl } from '../../lib/utils'
@@ -101,7 +101,7 @@ function RequestModal({ req, onClose }) {
                 value={adminNote}
                 onChange={e => setAdminNote(e.target.value)}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 resize-none"
                 placeholder="প্রত্যাখ্যানের কারণ বা যেকোনো নোট..."
               />
             </div>
@@ -119,7 +119,7 @@ function RequestModal({ req, onClose }) {
               <button
                 onClick={() => handle('approved')}
                 disabled={acting}
-                className="py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60">
+                className="py-3 rounded-xl font-bold text-sm text-white bg-purple-600 hover:bg-purple-700 transition-colors disabled:opacity-60">
                 ✅ অনুমোদন
               </button>
             </div>
@@ -168,7 +168,7 @@ export default function ManageShopRequests() {
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
               filter === tab.key
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-purple-600 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
             }`}>
             {tab.label}
@@ -179,7 +179,7 @@ export default function ManageShopRequests() {
       {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
         </div>
       ) : requests.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
@@ -195,7 +195,7 @@ export default function ManageShopRequests() {
               className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center text-lg font-bold text-blue-600 flex-shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center text-lg font-bold text-purple-600 flex-shrink-0">
                     {req.full_name?.[0] || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -216,7 +216,7 @@ export default function ManageShopRequests() {
               </div>
               <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
                 <span className="text-xs text-gray-400">📍 {req.location}</span>
-                <span className="text-xs text-blue-600 font-semibold">বিস্তারিত দেখুন →</span>
+                <span className="text-xs text-purple-600 font-semibold">বিস্তারিত দেখুন →</span>
               </div>
             </div>
           ))}

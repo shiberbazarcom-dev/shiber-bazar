@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useDirectoryCategory, useDirectoryEntries, entryMatches } from '../../hooks/useServiceDirectory'
 import { whatsappUrl } from '../../lib/utils'
 import SEO from '../../components/SEO'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 const PAGE_SIZE = 20
 
 const WA_ICON = (
@@ -18,7 +18,7 @@ function Avatar({ entry, size = 'w-11 h-11' }) {
     ? <img src={entry.photo_url} alt="" loading="lazy"
         className={`${size} rounded-full object-cover flex-shrink-0 bg-gray-50 border border-gray-100`}
         onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling?.classList?.remove('hidden') }} />
-    : <span className={`${size} rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center flex-shrink-0`}>
+    : <span className={`${size} rounded-full bg-purple-50 text-purple-600 font-bold flex items-center justify-center flex-shrink-0`}>
         {(entry.full_name || '?')[0]}
       </span>
 }
@@ -121,7 +121,7 @@ export default function LocalServiceCategory() {
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
             placeholder="নাম বা মোবাইল নম্বর দিয়ে খুঁজুন..."
-            className="w-full h-12 pl-11 pr-4 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+            className="w-full h-12 pl-11 pr-4 text-[15px] bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all"
           />
           <svg className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
@@ -151,13 +151,13 @@ export default function LocalServiceCategory() {
                     <p className="font-bold text-gray-900 text-[15px] leading-tight flex items-center gap-1">
                       {e.full_name}
                       {e.is_verified && (
-                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-purple-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                         </svg>
                       )}
                     </p>
                     {e.additional_info && (
-                      <p className="text-xs text-blue-600 font-medium mt-0.5">{e.additional_info}</p>
+                      <p className="text-xs text-purple-600 font-medium mt-0.5">{e.additional_info}</p>
                     )}
                     {e.address && (
                       <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {e.address}</p>
@@ -191,7 +191,7 @@ export default function LocalServiceCategory() {
                 </thead>
                 <tbody>
                   {visible.map(e => (
-                    <tr key={e.id} className="border-t border-gray-50 hover:bg-blue-50/30 transition-colors">
+                    <tr key={e.id} className="border-t border-gray-50 hover:bg-purple-50/30 transition-colors">
                       <td className="px-4 py-2.5"><Avatar entry={e} size="w-9 h-9" /></td>
                       <td className="px-3 py-2.5">
                         <p className="font-semibold text-gray-800">{e.full_name}</p>
@@ -219,7 +219,7 @@ export default function LocalServiceCategory() {
                     <Avatar entry={e} />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm leading-tight">{e.full_name}</p>
-                      {e.additional_info && <p className="text-[11px] text-blue-600 font-medium mt-0.5">{e.additional_info}</p>}
+                      {e.additional_info && <p className="text-[11px] text-purple-600 font-medium mt-0.5">{e.additional_info}</p>}
                       <p className="text-xs text-gray-500 mt-0.5">📞 {e.phone_number}</p>
                       {e.address && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {e.address}</p>}
                     </div>

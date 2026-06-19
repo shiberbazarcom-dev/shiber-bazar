@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { useMyShops } from '../../hooks/useShops'
 
 const SITE_URL = 'https://shiber-bazar.vercel.app'
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 function qrUrl(url, size = 300) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&color=000000&bgcolor=ffffff&margin=10&qzone=1&format=png`
@@ -39,8 +39,8 @@ export default function QRCodePage() {
 
       /* ── Top blue wave header ── */
       const headerGrad = ctx.createLinearGradient(0, 0, W, 200)
-      headerGrad.addColorStop(0, '#1d4ed8')
-      headerGrad.addColorStop(1, '#2563eb')
+      headerGrad.addColorStop(0, 'var(--primary-dark)')
+      headerGrad.addColorStop(1, 'var(--primary)')
       ctx.fillStyle = headerGrad
       ctx.beginPath()
       ctx.moveTo(0, 0)
@@ -127,7 +127,7 @@ export default function QRCodePage() {
       }
 
       /* ── Bottom URL strip ── */
-      ctx.fillStyle = '#2563eb'
+      ctx.fillStyle = 'var(--primary)'
       ctx.fillRect(0, H - 70, W, 70)
       ctx.fillStyle = '#ffffff'
       ctx.textAlign = 'center'
@@ -192,7 +192,7 @@ export default function QRCodePage() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
     </div>
   )
 
@@ -222,7 +222,7 @@ export default function QRCodePage() {
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
                   selectedIdx === i
                     ? 'text-white border-transparent shadow-sm'
-                    : 'text-gray-600 border-gray-200 hover:border-blue-300 bg-white'
+                    : 'text-gray-600 border-gray-200 hover:border-purple-300 bg-white'
                 }`}
                 style={selectedIdx === i ? { background: BLUE } : {}}>
                 {s.shop_name}
@@ -238,7 +238,7 @@ export default function QRCodePage() {
 
           {/* Shop logo + name header */}
           <div className="flex items-center gap-3 w-full">
-            <div className="w-14 h-14 rounded-2xl border-2 border-gray-100 overflow-hidden flex-shrink-0 bg-blue-50 flex items-center justify-center shadow-sm">
+            <div className="w-14 h-14 rounded-2xl border-2 border-gray-100 overflow-hidden flex-shrink-0 bg-purple-50 flex items-center justify-center shadow-sm">
               {(shop.logo || shop.logo_url)
                 ? <img
                     src={shop.logo || shop.logo_url}
@@ -256,7 +256,7 @@ export default function QRCodePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-gray-800 text-base truncate">{shop.shop_name}</p>
-              <p className="text-xs text-blue-600">{shop.categories?.name || shop.category || ''}</p>
+              <p className="text-xs text-purple-600">{shop.categories?.name || shop.category || ''}</p>
               {shop.phone && <p className="text-xs text-gray-400 mt-0.5">📞 {shop.phone}</p>}
             </div>
           </div>
@@ -277,9 +277,9 @@ export default function QRCodePage() {
             onClick={downloadPoster}
             disabled={posterDownloading}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base text-white transition-all disabled:opacity-60 hover:opacity-90 hover:shadow-lg"
-            style={{ background: `linear-gradient(135deg, ${BLUE}, #1d4ed8)` }}>
+            style={{ background: `linear-gradient(135deg, ${BLUE}, var(--primary-dark))` }}>
             {posterDownloading
-              ? <span className="w-5 h-5 border-2 border-blue-200 border-t-white rounded-full animate-spin" />
+              ? <span className="w-5 h-5 border-2 border-purple-200 border-t-white rounded-full animate-spin" />
               : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             }
             পোস্টার ডাউনলোড করুন
@@ -292,11 +292,11 @@ export default function QRCodePage() {
         <span className="text-2xl flex-shrink-0 mt-0.5">🖨️</span>
         <div>
           <p className="font-bold text-blue-800 mb-1">কিভাবে ব্যবহার করবেন?</p>
-          <p className="text-sm text-blue-700 leading-relaxed">
+          <p className="text-sm text-purple-700 leading-relaxed">
             QR কোডটি ডাউনলোড করে প্রিন্ট করুন এবং আপনার দোকানে লাগিয়ে দিন।
             ক্রেতারা QR কোড স্ক্যান করে সরাসরি আপনার অনলাইন দোকান দেখতে পারবেন।
           </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-blue-600 font-medium">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-purple-600 font-medium">
             <span className="flex items-center gap-1">✅ প্রিন্ট করুন</span>
             <span className="flex items-center gap-1">✅ দোকানে লাগান</span>
             <span className="flex items-center gap-1">✅ ক্রেতা স্ক্যান করবেন</span>

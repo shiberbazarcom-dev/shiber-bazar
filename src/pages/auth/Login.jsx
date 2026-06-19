@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 export default function Login() {
   const { signInPhone, signInEmail, signInGoogle, user } = useAuth()
@@ -135,7 +135,7 @@ export default function Login() {
                   type="tel"
                   value={form.phone}
                   onChange={e => set('phone', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                   placeholder="01XXXXXXXXX"
                   maxLength={11}
                   autoComplete="tel"
@@ -148,7 +148,7 @@ export default function Login() {
                   type="password"
                   value={form.password}
                   onChange={e => set('password', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                   placeholder="পাসওয়ার্ড লিখুন"
                   autoComplete="current-password"
                 />
@@ -173,7 +173,7 @@ export default function Login() {
                   type="email"
                   value={emailForm.email}
                   onChange={e => setEmail('email', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                   placeholder="example@gmail.com"
                   autoComplete="email"
                 />
@@ -185,7 +185,7 @@ export default function Login() {
                   type="password"
                   value={emailForm.password}
                   onChange={e => setEmail('password', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                   placeholder="পাসওয়ার্ড লিখুন"
                   autoComplete="current-password"
                 />

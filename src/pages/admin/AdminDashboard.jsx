@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -36,7 +36,7 @@ function StatCard({ icon, label, value, color, sub, to, loading }) {
 function QuickAction({ icon, label, to, color }) {
   return (
     <Link to={to}
-      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all group`}>
+      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent hover:border-purple-200 hover:bg-purple-50 transition-all group`}>
       <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { icon: '🏪', label: 'মোট দোকান',   value: stats?.total    || 0, color: 'bg-blue-100',   to: '/admin/shops' },
+    { icon: '🏪', label: 'মোট দোকান',   value: stats?.total    || 0, color: 'bg-purple-100',   to: '/admin/shops' },
     { icon: '✅', label: 'অনুমোদিত',    value: stats?.approved || 0, color: 'bg-green-100',  to: '/admin/shops?filter=approved' },
     { icon: '⏳', label: 'অপেক্ষমান',   value: stats?.pending  || 0, color: 'bg-amber-100',  to: '/admin/shops?filter=pending' },
     { icon: '📦', label: 'মোট অর্ডার',  value: stats?.orders   || 0, color: 'bg-indigo-100', to: '/admin/orders' },
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
 
   const quickActions = [
     { icon: '📦', label: 'অর্ডার',      to: '/admin/orders',        color: 'bg-indigo-100' },
-    { icon: '🏪', label: 'দোকান',       to: '/admin/shops',         color: 'bg-blue-100'   },
+    { icon: '🏪', label: 'দোকান',       to: '/admin/shops',         color: 'bg-purple-100'   },
     { icon: '👥', label: 'ব্যবহারকারী', to: '/admin/users',         color: 'bg-purple-100' },
     { icon: '📈', label: 'Analytics',   to: '/admin/analytics',     color: 'bg-green-100'  },
     { icon: '📢', label: 'বিজ্ঞাপন',   to: '/admin/ads',           color: 'bg-pink-100'   },
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-700 dark:text-slate-200 truncate">{shop.shop_name}</p>
                       {shop.categories && (
-                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full flex-shrink-0">
+                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full flex-shrink-0">
                           {shop.categories.icon} {shop.categories.name}
                         </span>
                       )}

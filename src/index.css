@@ -6,21 +6,26 @@
 
 /* ── Design Tokens ── */
 :root {
-  --green:       #2563EB;
-  --green-dark:  #1d4ed8;
-  --green-light: #eff6ff;
-  --red:         #e53e3e;
-  --red-light:   #fff5f5;
-  --gold:        #d69e2e;
-  --bg:          #f5f5f5;
-  --white:       #ffffff;
-  --dark:        #1a1a2e;
-  --text:        #2d3748;
-  --muted:       #718096;
-  --border:      #e2e8f0;
-  --radius:      8px;
-  --shadow:      0 1px 4px rgba(0,0,0,.10);
-  --shadow-md:   0 4px 20px rgba(0,0,0,.12);
+  --primary:       hsl(262, 83%, 58%);
+  --primary-dark:  hsl(263, 70%, 40%);
+  --primary-light: hsl(270, 100%, 97%);
+  --primary-400:   #c084fc;
+  --green:         hsl(262, 83%, 58%);
+  --green-dark:    hsl(263, 70%, 40%);
+  --green-light:   hsl(270, 100%, 97%);
+  --red:           hsl(0, 84.2%, 60.2%);
+  --red-light:     #fff5f5;
+  --gold:          #d69e2e;
+  --bg:            hsl(220, 14.3%, 95.9%);
+  --white:         hsl(0, 0%, 100%);
+  --dark:          hsl(224, 71.4%, 4.1%);
+  --text:          hsl(224, 71.4%, 4.1%);
+  --muted:         hsl(220, 8.9%, 46.1%);
+  --border:        hsl(220, 13%, 91%);
+  --radius:        0.5rem;
+  --shadow:        0 1px 4px rgba(0,0,0,.10);
+  --shadow-md:     0 4px 20px rgba(0,0,0,.12);
+  --accent-gradient: linear-gradient(135deg, hsl(262, 83%, 58%), #c084fc);
 }
 
 * {
@@ -70,9 +75,9 @@ body {
   .btn-red   { background: var(--red); @apply text-white hover:opacity-90; }
   .btn-ghost { @apply bg-transparent hover:bg-gray-100 text-gray-600; }
   .btn-outline {
-    border: 1.5px solid var(--green);
-    color: var(--green);
-    @apply bg-white hover:bg-green-50;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    @apply bg-white hover:bg-purple-50;
   }
 
   /* ---------- Cards ---------- */
@@ -90,7 +95,7 @@ body {
   .input {
     @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5
            text-gray-800 placeholder:text-gray-400 text-sm
-           focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+           focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200
            transition duration-150;
   }
   .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
@@ -116,7 +121,7 @@ body {
   .cat-pill {
     @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
            text-sm font-medium border border-gray-200 bg-white text-gray-700
-           hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50
+           hover:border-purple-400 hover:text-purple-700 hover:bg-purple-50
            transition-all cursor-pointer whitespace-nowrap;
   }
   .cat-pill-active {
@@ -128,11 +133,11 @@ body {
   /* ---------- Section category bar (like screenshot) ---------- */
   .cat-section-bar {
     @apply flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold text-white mb-3;
-    background: linear-gradient(135deg, #2563EB, #1d4ed8);
+    background: var(--accent-gradient);
   }
 
   /* ---------- Price ---------- */
-  .price-current  { @apply text-base font-bold; color: #2563EB; }
+  .price-current  { @apply text-base font-bold; color: var(--primary); }
   .price-original { @apply text-xs line-through text-gray-400; }
 
   /* ---------- Discount tag ---------- */
@@ -193,14 +198,14 @@ body {
   /* ---------- Link Animations ── */
   .link-smooth {
     @apply smooth-transition
-           hover:text-blue-600
+           hover:text-purple-600
            active:scale-95;
   }
 
   /* ---------- Input Focus Animations ── */
   .input-smooth {
     @apply smooth-transition
-           focus:ring-2 focus:ring-blue-500 focus:scale-105;
+           focus:ring-2 focus:ring-purple-500 focus:scale-105;
   }
 }
 
@@ -274,8 +279,8 @@ body {
 
 /* Pulse animations */
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-  50% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+  50% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
 }
 .animate-pulseGlow { animation: pulseGlow 2s infinite; }
 
@@ -350,7 +355,7 @@ html { scroll-behavior: smooth; }
 
 /* ── Focus Styles ── */
 *:focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 

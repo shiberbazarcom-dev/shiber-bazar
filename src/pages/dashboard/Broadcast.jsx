@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import { useMyShops } from '../../hooks/useShops'
@@ -122,7 +122,7 @@ function ComposeBox({ shop, onSent }) {
         {/* Phone mockup */}
         <div className="p-6 flex justify-center">
           <div className="w-72 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-md">
-            <div className="bg-blue-600 px-4 py-2 flex items-center gap-2">
+            <div className="bg-purple-600 px-4 py-2 flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
                 {shop.shop_name[0]}
               </div>
@@ -146,7 +146,7 @@ function ComposeBox({ shop, onSent }) {
           <button
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !canSend}
-            className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-60 transition-colors">
+            className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 disabled:opacity-60 transition-colors">
             {mutation.isPending ? '⏳ পাঠানো হচ্ছে...' : `📤 ${customers.length} জনকে পাঠান`}
           </button>
         </div>
@@ -164,9 +164,9 @@ function ComposeBox({ shop, onSent }) {
             <p className="text-xs text-gray-400 mt-0.5">{shop.shop_name} থেকে</p>
           </div>
           {loadingCustomers ? (
-            <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
           ) : (
-            <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full">
+            <span className="text-xs bg-purple-50 text-purple-600 font-semibold px-2.5 py-1 rounded-full">
               👥 {customers.length} গ্রাহক
             </span>
           )}
@@ -189,7 +189,7 @@ function ComposeBox({ shop, onSent }) {
             onChange={e => setTitle(e.target.value)}
             maxLength={80}
             placeholder="যেমন: ঈদ অফার! ৩০% ছাড়"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-colors"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50 transition-colors"
           />
           <p className="text-right text-[10px] text-gray-300 mt-1">{title.length}/80</p>
         </div>
@@ -202,7 +202,7 @@ function ComposeBox({ shop, onSent }) {
             maxLength={300}
             rows={4}
             placeholder="বিস্তারিত বার্তা লিখুন..."
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-colors resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-50 transition-colors resize-none"
           />
           <p className="text-right text-[10px] text-gray-300 mt-1">{message.length}/300</p>
         </div>
@@ -219,7 +219,7 @@ function ComposeBox({ shop, onSent }) {
         <button
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending || !canSend}
-          className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-60 transition-colors">
+          className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 disabled:opacity-60 transition-colors">
           {mutation.isPending ? '⏳ পাঠানো হচ্ছে...' : '📤 পাঠান'}
         </button>
       </div>
@@ -291,7 +291,7 @@ export default function Broadcast() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-24">
-      <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
     </div>
   )
 
@@ -321,7 +321,7 @@ export default function Broadcast() {
               onClick={() => setSelectedShopId(s.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                 (activeShop?.id === s.id)
-                  ? 'bg-blue-600 text-white border-blue-600'
+                  ? 'bg-purple-600 text-white border-purple-600'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
               }`}>
               {s.shop_name}

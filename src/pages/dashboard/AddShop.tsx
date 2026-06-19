@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -340,7 +340,7 @@ export default function AddShop() {
         <p className="text-gray-500 mb-1">আপনি সর্বোচ্চ <strong>{MAX_SHOPS}টি</strong> দোকান তৈরি করতে পারবেন।</p>
         <p className="text-sm text-gray-400 mb-6">বর্তমানে আপনার {myShopCount}টি দোকান আছে।</p>
         <button onClick={() => navigate('/dashboard/shops')}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700">
+          className="px-6 py-2.5 bg-purple-600 text-white rounded-xl font-medium text-sm hover:bg-purple-700">
           ← আমার দোকান দেখুন
         </button>
       </div>
@@ -367,8 +367,8 @@ export default function AddShop() {
           const isDone = step > s.id
           return (
             <div key={s.id} className="flex items-center flex-1">
-              <div className={`flex items-center gap-2 flex-shrink-0 ${isActive ? 'text-blue-600' : isDone ? 'text-green-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${isActive ? 'bg-blue-600 border-blue-600 text-white' : isDone ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200 text-gray-400'}`}>
+              <div className={`flex items-center gap-2 flex-shrink-0 ${isActive ? 'text-purple-600' : isDone ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${isActive ? 'bg-purple-600 border-purple-600 text-white' : isDone ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200 text-gray-400'}`}>
                   {isDone ? '✓' : s.id}
                 </div>
                 <span className="hidden sm:block text-xs font-medium">{s.title}</span>
@@ -521,14 +521,14 @@ export default function AddShop() {
                 <Label className="text-xs mb-1.5 block">দোকানের লোগো <span className="text-gray-400 font-normal">(বর্গাকার)</span></Label>
                 <div className="flex items-start gap-4">
                   <div
-                    className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors flex items-center justify-center bg-gray-50 relative flex-shrink-0"
+                    className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-purple-400 transition-colors flex items-center justify-center bg-gray-50 relative flex-shrink-0"
                     onClick={() => logoRef.current?.click()}
                   >
                     {logoUrl
                       ? <img src={logoUrl} alt="logo" className="w-full h-full object-cover" />
                       : <div className="text-center px-2"><Upload className="h-6 w-6 mx-auto text-gray-300 mb-1" /><p className="text-xs text-gray-400 leading-tight">ক্লিক করে আপলোড করুন</p></div>
                     }
-                    {logoUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /></div>}
+                    {logoUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><div className="w-5 h-5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>}
                   </div>
                   <div className="text-xs text-gray-400 mt-2 space-y-1">
                     <p>• PNG, JPG ফরম্যাট</p>
@@ -545,14 +545,14 @@ export default function AddShop() {
               <div>
                 <Label className="text-xs mb-1.5 block">কভার ছবি <span className="text-gray-400 font-normal">(ব্যানার)</span></Label>
                 <div
-                  className="h-32 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors flex items-center justify-center bg-gray-50 relative"
+                  className="h-32 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-purple-400 transition-colors flex items-center justify-center bg-gray-50 relative"
                   onClick={() => coverRef.current?.click()}
                 >
                   {coverUrl
                     ? <img src={coverUrl} alt="cover" className="w-full h-full object-cover" />
                     : <div className="text-center"><Upload className="h-7 w-7 mx-auto text-gray-300 mb-1.5" /><p className="text-sm text-gray-400">ব্যানার ছবি আপলোড করুন</p><p className="text-xs text-gray-300 mt-0.5">1200×400 অনুপাত • সর্বোচ্চ 5MB</p></div>
                   }
-                  {coverUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /></div>}
+                  {coverUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><div className="w-5 h-5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>}
                 </div>
                 <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
                 {errors.cover && <p className="text-xs text-red-500 mt-1">{errors.cover}</p>}
@@ -565,15 +565,15 @@ export default function AddShop() {
           {step === 4 && (
             <>
               {/* Info banner */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
-                <ShieldCheck className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex gap-3">
+                <ShieldCheck className="h-5 w-5 text-purple-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-blue-800 mb-1">যাচাইকরণ কেন করবেন?</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                  <p className="text-xs text-purple-700 leading-relaxed">
                     যাচাইকৃত দোকানগুলো বেশি বিশ্বাসযোগ্য ও অনুসন্ধানে এগিয়ে থাকে।
                     আপনার পরিচয় নথি আপলোড করুন — অ্যাডমিন যাচাই করবেন।
                   </p>
-                  <p className="text-xs text-blue-500 mt-1 font-medium">এই ধাপটি ঐচ্ছিক। আপলোড না করলেও দোকান তৈরি হবে।</p>
+                  <p className="text-xs text-purple-500 mt-1 font-medium">এই ধাপটি ঐচ্ছিক। আপলোড না করলেও দোকান তৈরি হবে।</p>
                 </div>
               </div>
 
@@ -584,7 +584,7 @@ export default function AddShop() {
                   <select
                     value={newDocType}
                     onChange={e => setNewDocType(e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
                   >
                     {DOC_TYPES.map(d => (
                       <option key={d.value} value={d.value}>{d.label}</option>
@@ -593,7 +593,7 @@ export default function AddShop() {
                   <button
                     type="button"
                     onClick={() => verificationFileRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors flex-shrink-0"
                   >
                     <Upload className="h-4 w-4" />
                     <span>ফাইল যোগ করুন</span>
@@ -678,7 +678,7 @@ export default function AddShop() {
                   id="delivery"
                   checked={deliveryAvailable}
                   onChange={e => setDeliveryAvailable(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600"
                 />
                 <label htmlFor="delivery" className="text-sm font-medium text-gray-700 cursor-pointer">হোম ডেলিভারি সুবিধা আছে</label>
               </div>
@@ -690,19 +690,19 @@ export default function AddShop() {
                 </div>
               )}
 
-              <div className="bg-blue-50 rounded-xl p-4 space-y-2 border border-blue-100">
+              <div className="bg-purple-50 rounded-xl p-4 space-y-2 border border-purple-100">
                 <p className="text-sm font-semibold text-blue-800">📋 সারসংক্ষেপ</p>
-                <p className="text-xs text-blue-700"><strong>নাম:</strong> {shopName}</p>
-                <p className="text-xs text-blue-700"><strong>ফোন:</strong> {phone}</p>
-                <p className="text-xs text-blue-700"><strong>ঠিকানা:</strong> {address}</p>
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-purple-700"><strong>নাম:</strong> {shopName}</p>
+                <p className="text-xs text-purple-700"><strong>ফোন:</strong> {phone}</p>
+                <p className="text-xs text-purple-700"><strong>ঠিকানা:</strong> {address}</p>
+                <p className="text-xs text-purple-700">
                   <strong>নথি:</strong>{' '}
                   {verificationDocs.length > 0
                     ? <span className="text-green-700">{verificationDocs.length}টি নথি আপলোড হবে ✅</span>
                     : <span className="text-gray-400">কোনো নথি নেই (ঐচ্ছিক)</span>
                   }
                 </p>
-                <p className="text-xs text-blue-600 mt-2 italic">দোকান জমা দেওয়ার পর অ্যাডমিন অনুমোদন করলে এটি সক্রিয় হবে।</p>
+                <p className="text-xs text-purple-600 mt-2 italic">দোকান জমা দেওয়ার পর অ্যাডমিন অনুমোদন করলে এটি সক্রিয় হবে।</p>
               </div>
 
               {errors.submit && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{errors.submit}</p>}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { supabase } from '@/lib/supabase'
@@ -136,7 +136,7 @@ export default function ManageOrders() {
       accessorKey: 'order_number',
       header: 'Order #',
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium text-blue-600">{row.original.order_number}</span>
+        <span className="font-mono text-xs font-medium text-purple-600">{row.original.order_number}</span>
       ),
     },
     {
@@ -200,7 +200,7 @@ export default function ManageOrders() {
               {/* Send to shop owner */}
               {(shop?.whatsapp || shop?.phone) && (
                 <DropdownMenuItem onClick={() => window.open(shopOwnerWhatsAppUrl(o), '_blank')}>
-                  <Send className="h-4 w-4 text-blue-600" /> Shop'কে পাঠান
+                  <Send className="h-4 w-4 text-purple-600" /> Shop'কে পাঠান
                 </DropdownMenuItem>
               )}
               {/* Send confirmation to customer */}
@@ -262,7 +262,7 @@ export default function ManageOrders() {
           {bnTabs.map(t => (
             <button key={t.value} onClick={() => setStatusFilter(t.value as OrderStatus)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                statusFilter === t.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                statusFilter === t.value ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}>
               {t.label}
             </button>
@@ -281,7 +281,7 @@ export default function ManageOrders() {
           return (
             <div key={o.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <button className="text-blue-600 font-bold text-sm hover:underline text-left"
+                <button className="text-purple-600 font-bold text-sm hover:underline text-left"
                   onClick={() => { setSelectedOrder(o); setAssignShopId((o as any).shop_id || '') }}>
                   {o.order_number}
                 </button>
@@ -345,7 +345,7 @@ export default function ManageOrders() {
                   {getItemsToShow(selectedOrder).length === 0 && (
                     <div className="px-3 py-2 text-gray-400 text-xs">পণ্যের তথ্য নেই</div>
                   )}
-                  <div className="flex justify-between px-3 py-2.5 bg-blue-50 border-t font-bold text-sm">
+                  <div className="flex justify-between px-3 py-2.5 bg-purple-50 border-t font-bold text-sm">
                     <span>Total</span>
                     <span>৳{(selectedOrder.total_amount ?? 0).toLocaleString()}</span>
                   </div>
@@ -373,7 +373,7 @@ export default function ManageOrders() {
                     <div className="flex gap-2 flex-wrap">
                       {shopUrl && (
                         <a href={shopUrl} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5">
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5">
                             <Send className="h-3.5 w-3.5" />
                             📤 Shop'কে পাঠান
                           </Button>
@@ -396,13 +396,13 @@ export default function ManageOrders() {
               })()}
 
               {/* Assign to shop */}
-              <div className="border border-dashed border-blue-200 rounded-lg p-3 space-y-2 bg-blue-50/50">
+              <div className="border border-dashed border-purple-200 rounded-lg p-3 space-y-2 bg-purple-50/50">
                 <p className="font-semibold text-gray-700 flex items-center gap-1.5">
-                  <Store className="h-4 w-4 text-blue-500" /> দোকানে অ্যাসাইন করুন
+                  <Store className="h-4 w-4 text-purple-500" /> দোকানে অ্যাসাইন করুন
                 </p>
                 <div className="flex gap-2">
                   <select
-                    className="flex-1 border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={assignShopId}
                     onChange={e => setAssignShopId(e.target.value)}
                   >

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { supabase } from '@/lib/supabase'
@@ -83,7 +83,7 @@ export default function ManageUsers() {
         const isSelf = u.id === currentUser?.id
         return (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
               {u.avatar_url
                 ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
                 : (u.full_name || '?')[0].toUpperCase()
@@ -92,7 +92,7 @@ export default function ManageUsers() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <p className="font-medium text-gray-900 text-sm truncate">{u.full_name || 'No name'}</p>
-                {isSelf && <span className="text-xs text-blue-600">(You)</span>}
+                {isSelf && <span className="text-xs text-purple-600">(You)</span>}
               </div>
               <p className="text-xs text-gray-400">{u.phone || 'No phone'}</p>
             </div>
@@ -147,7 +147,7 @@ export default function ManageUsers() {
                   key={role}
                   disabled={isSelf || (role === 'super_admin' && !isSuperAdmin) || u.role === role}
                   onClick={() => handleRoleChange(u.id, role)}
-                  className={u.role === role ? 'bg-blue-50 text-blue-700' : ''}
+                  className={u.role === role ? 'bg-purple-50 text-purple-700' : ''}
                 >
                   {ROLE_CONFIG[role].icon} {ROLE_CONFIG[role].label}
                   {u.role === role && <span className="ml-auto text-xs">✓</span>}
@@ -192,7 +192,7 @@ export default function ManageUsers() {
             <button
               key={role}
               onClick={() => setRoleFilter(f => f === role ? 'all' : role)}
-              className={`rounded-xl border-2 p-4 text-left transition-all bg-white ${roleFilter === role ? 'border-blue-400' : 'border-transparent'}`}
+              className={`rounded-xl border-2 p-4 text-left transition-all bg-white ${roleFilter === role ? 'border-purple-400' : 'border-transparent'}`}
             >
               <p className="text-2xl font-bold text-gray-900">{counts[role] ?? 0}</p>
               <Badge variant={r.variant} className="mt-1 text-xs">{r.icon} {r.label}</Badge>

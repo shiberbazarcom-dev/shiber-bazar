@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useShops } from '../hooks/useShops'
 import { useCategories } from '../hooks/useCategories'
@@ -6,7 +6,7 @@ import { ShopCard, ShopListItem } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import SEO from '../components/SEO'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 export default function ShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams()

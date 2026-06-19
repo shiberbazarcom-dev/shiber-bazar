@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import {
   useDirectoryCategories, useDirectoryEntries,
   useSaveDirectoryEntry, useDeleteDirectoryEntry, entryMatches,
@@ -6,7 +6,7 @@ import {
 import { uploadImage } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 const EMPTY = {
   full_name: '', phone_number: '', address: '',
@@ -97,7 +97,7 @@ export default function ServiceDirectory() {
     } catch { toast.error('মুছতে সমস্যা হয়েছে') }
   }
 
-  const inputCls = 'w-full h-11 px-3.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400'
+  const inputCls = 'w-full h-11 px-3.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400'
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl">
@@ -136,7 +136,7 @@ export default function ServiceDirectory() {
       {activeCat && (
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="নাম বা নম্বর খুঁজুন..."
-          className="w-full sm:w-72 h-10 px-3.5 mb-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400" />
+          className="w-full sm:w-72 h-10 px-3.5 mb-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400" />
       )}
 
       {/* Entries list */}
@@ -151,12 +151,12 @@ export default function ServiceDirectory() {
               }`}>
               {e.photo_url
                 ? <img src={e.photo_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                : <span className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center flex-shrink-0">{(e.full_name || '?')[0]}</span>
+                : <span className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 font-bold flex items-center justify-center flex-shrink-0">{(e.full_name || '?')[0]}</span>
               }
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-800 truncate">
                   {e.full_name}
-                  {e.is_verified && <span className="ml-1 text-blue-500 text-xs">✔</span>}
+                  {e.is_verified && <span className="ml-1 text-purple-500 text-xs">✔</span>}
                   {!e.is_active && <span className="ml-2 text-[10px] font-bold text-gray-400">(নিষ্ক্রিয়)</span>}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
@@ -171,7 +171,7 @@ export default function ServiceDirectory() {
                   {e.is_active ? '👁️' : '🚫'}
                 </button>
                 <button onClick={() => openEdit(e)} title="সম্পাদনা"
-                  className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm flex items-center justify-center transition-colors">✏️</button>
+                  className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 text-sm flex items-center justify-center transition-colors">✏️</button>
                 <button onClick={() => handleDelete(e)} title="মুছুন"
                   className="w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 text-sm flex items-center justify-center transition-colors">🗑️</button>
               </div>
@@ -223,16 +223,16 @@ export default function ServiceDirectory() {
               placeholder={activeCat?.display_type === 'profile' ? 'পদবি / বিশেষত্ব (যেমন: মেডিসিন বিশেষজ্ঞ)' : 'অতিরিক্ত তথ্য (যেমন: রক্তের গ্রুপ, বিষয়)'}
               value={form.additional_info} onChange={e => set('additional_info', e.target.value)} />
             <textarea rows={2} placeholder="বিবরণ (ঐচ্ছিক)"
-              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 resize-none"
+              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none"
               value={form.description} onChange={e => set('description', e.target.value)} />
 
             <div className="flex items-center gap-5 pt-1">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} className="w-4 h-4 accent-purple-600" />
                 সক্রিয়
               </label>
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <input type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} className="w-4 h-4 accent-purple-600" />
                 ভেরিফাইড ব্যাজ
               </label>
             </div>

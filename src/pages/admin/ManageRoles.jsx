@@ -1,13 +1,13 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const ROLES = [
-  { value: 'user',           label: 'কাস্টমার',       icon: '🛒', color: 'bg-blue-100 text-blue-700' },
+  { value: 'user',           label: 'কাস্টমার',       icon: '🛒', color: 'bg-purple-100 text-purple-700' },
   { value: 'shop_owner',     label: 'দোকানদার',        icon: '🏪', color: 'bg-green-100 text-green-700' },
   { value: 'market_manager', label: 'Market Manager',  icon: '🟠', color: 'bg-orange-100 text-orange-700' },
   { value: 'super_admin',    label: 'Super Admin',      icon: '🔴', color: 'bg-red-100 text-red-700' },
@@ -91,7 +91,7 @@ export default function ManageRoles() {
           <button key={r.value}
             onClick={() => setRoleFilter(f => f === r.value ? '' : r.value)}
             className={`rounded-xl p-4 text-left border-2 transition-all ${
-              roleFilter === r.value ? 'border-blue-400 shadow-sm' : 'border-transparent'
+              roleFilter === r.value ? 'border-purple-400 shadow-sm' : 'border-transparent'
             } bg-white`}>
             <div className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full mb-2 ${r.color}`}>
               {r.icon} {r.label}
@@ -111,7 +111,7 @@ export default function ManageRoles() {
         />
         {roleFilter && (
           <button onClick={() => setRoleFilter('')}
-            className="text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100">
+            className="text-xs px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg font-medium hover:bg-purple-100">
             ✕ ফিল্টার সরান
           </button>
         )}
@@ -120,7 +120,7 @@ export default function ManageRoles() {
       {/* Users table */}
       {isLoading ? (
         <div className="text-center py-20">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-200">
@@ -144,7 +144,7 @@ export default function ManageRoles() {
               return (
                 <div key={user.id}
                   className={`grid grid-cols-1 sm:grid-cols-[1fr_160px_200px] gap-3 sm:gap-4 px-5 py-4 items-center ${
-                    isSelf ? 'bg-blue-50/40' : 'hover:bg-gray-50'
+                    isSelf ? 'bg-purple-50/40' : 'hover:bg-gray-50'
                   }`}>
 
                   {/* User info */}
@@ -156,7 +156,7 @@ export default function ManageRoles() {
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-800 text-sm truncate">
                         {user.full_name || 'নাম নেই'}
-                        {isSelf && <span className="ml-1.5 text-xs text-blue-600">(আপনি)</span>}
+                        {isSelf && <span className="ml-1.5 text-xs text-purple-600">(আপনি)</span>}
                       </p>
                       <p className="text-xs text-gray-400">{user.phone || 'ফোন নেই'}</p>
                     </div>
@@ -178,7 +178,7 @@ export default function ManageRoles() {
                         value={user.role}
                         onChange={e => handleRoleChange(user.id, e.target.value)}
                         disabled={updateRole.isPending}
-                        className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer w-full sm:w-auto">
+                        className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-300 cursor-pointer w-full sm:w-auto">
                         {ROLES.map(r => (
                           <option key={r.value} value={r.value}>
                             {r.icon} {r.label}

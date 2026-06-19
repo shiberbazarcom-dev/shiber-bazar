@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 export default function ServiceCard({ service }) {
   const {
@@ -54,7 +54,7 @@ export default function ServiceCard({ service }) {
 
         {/* Category */}
         {cat && (
-          <span className="mt-0.5 text-[10px] sm:text-[11px] text-blue-600 font-medium text-center line-clamp-1">
+          <span className="mt-0.5 text-[10px] sm:text-[11px] text-purple-600 font-medium text-center line-clamp-1">
             {cat.icon} {cat.name_bn}
           </span>
         )}

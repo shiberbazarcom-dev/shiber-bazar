@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -70,7 +70,7 @@ export default function AddShop() {
         </div>
       )}
 
-      <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-6 text-sm">
+      <div className="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-3 rounded-lg mb-6 text-sm">
         ℹ️ আপনার দোকানটি অ্যাডমিন অনুমোদনের পরে সাইটে দেখা যাবে।
       </div>
 

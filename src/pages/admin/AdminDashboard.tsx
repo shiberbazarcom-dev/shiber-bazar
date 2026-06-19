@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+﻿import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Store}        label="মোট দোকান"     value={d.totalShops}    sub={pendingShops ? `${pendingShops} pending` : undefined} color="bg-blue-600" />
+        <StatCard icon={Store}        label="মোট দোকান"     value={d.totalShops}    sub={pendingShops ? `${pendingShops} pending` : undefined} color="bg-purple-600" />
         <StatCard icon={ShoppingCart} label="মোট অর্ডার"    value={d.totalOrders}   sub={`${d.orderStatusCounts['pending'] ?? 0} pending`}    color="bg-orange-500" />
         <StatCard icon={Users}        label="মোট ব্যবহারকারী" value={d.totalUsers}  color="bg-purple-600" />
         <StatCard icon={Package}      label="মোট পণ্য"      value={d.totalProducts} color="bg-green-600" />

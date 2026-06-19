@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -152,7 +152,7 @@ function DocViewerModal({ path, onClose }: { path: string; onClose: () => void }
         <div className="p-4 flex items-center justify-center min-h-[300px] bg-gray-50">
           {loading && (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
               <p className="text-xs text-gray-400">লোড হচ্ছে...</p>
             </div>
           )}
@@ -173,7 +173,7 @@ function DocViewerModal({ path, onClose }: { path: string; onClose: () => void }
         {url && (
           <div className="px-5 py-3 border-t flex justify-end">
             <a href={url} target="_blank" rel="noreferrer"
-              className="text-xs text-blue-600 hover:underline font-medium">
+              className="text-xs text-purple-600 hover:underline font-medium">
               নতুন ট্যাবে খুলুন ↗
             </a>
           </div>
@@ -282,7 +282,7 @@ function VerificationCard({ doc }: { doc: Verification }) {
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setViewingPath(doc.document_url)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors flex-1 justify-center"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors flex-1 justify-center"
             >
               <Eye className="h-3.5 w-3.5" />
               দেখুন
@@ -333,7 +333,7 @@ export default function ManageVerifications() {
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
           <ShieldCheck className="h-5 w-5 text-white" />
         </div>
         <div>
@@ -350,8 +350,8 @@ export default function ManageVerifications() {
             onClick={() => setFilter(t.key)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
               filter === t.key
-                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-600'
             }`}
           >
             {t.icon} {t.label}

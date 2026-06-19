@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 export default function Register() {
   const { signUp, signInPhone, signInGoogle, user } = useAuth()
@@ -144,7 +144,7 @@ export default function Register() {
                 required
                 value={form.fullName}
                 onChange={e => set('fullName', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 placeholder="আপনার নাম লিখুন"
               />
             </div>
@@ -157,7 +157,7 @@ export default function Register() {
                 type="tel"
                 value={form.phone}
                 onChange={e => set('phone', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 placeholder="01XXXXXXXXX"
                 maxLength={11}
               />
@@ -172,7 +172,7 @@ export default function Register() {
                 type="password"
                 value={form.password}
                 onChange={e => set('password', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 placeholder="কমপক্ষে ৬ অক্ষর"
                 minLength={6}
               />
@@ -186,7 +186,7 @@ export default function Register() {
                 type="password"
                 value={form.confirm}
                 onChange={e => set('confirm', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 placeholder="পাসওয়ার্ড আবার লিখুন"
               />
             </div>

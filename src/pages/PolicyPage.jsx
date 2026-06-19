@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import SEO from '../components/SEO'
 
@@ -34,15 +34,15 @@ export default function PolicyPage() {
         noindex={true}
       />
       {/* Header */}
-      <div className="py-8 px-4" style={{ background: '#2563EB' }}>
+      <div className="py-8 px-4" style={{ background: 'var(--primary)' }}>
         <div className="container-app">
           <div className="flex items-center gap-3 mb-2">
-            <Link to="/" className="text-blue-200 hover:text-white text-sm transition-colors">হোম</Link>
-            <span className="text-blue-300">›</span>
+            <Link to="/" className="text-purple-200 hover:text-white text-sm transition-colors">হোম</Link>
+            <span className="text-purple-300">›</span>
             <span className="text-white text-sm">নীতিমালা</span>
           </div>
           <h1 className="text-2xl font-bold text-white">গোপনীয়তা ও শর্তাবলী</h1>
-          <p className="text-blue-200 text-sm mt-1">সর্বশেষ আপডেট: জুন {YEAR}</p>
+          <p className="text-purple-200 text-sm mt-1">সর্বশেষ আপডেট: জুন {YEAR}</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default function PolicyPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 max-w-3xl">
 
           {/* Intro */}
-          <div className="bg-blue-50 rounded-xl p-4 mb-8 flex gap-3">
+          <div className="bg-purple-50 rounded-xl p-4 mb-8 flex gap-3">
             <span className="text-2xl flex-shrink-0">🛡️</span>
             <p className="text-sm text-blue-800">
               শিবের বাজার ব্যবহার করার আগে দয়া করে এই নীতিমালা পড়ুন।
@@ -139,7 +139,7 @@ export default function PolicyPage() {
               </p>
               <p className="flex items-center gap-2">
                 <span>📞</span>
-                <a href="tel:+8801310012276" className="text-blue-600 hover:underline font-medium">
+                <a href="tel:+8801310012276" className="text-purple-600 hover:underline font-medium">
                   ০১৩১০-০১২২৭৬
                 </a>
               </p>

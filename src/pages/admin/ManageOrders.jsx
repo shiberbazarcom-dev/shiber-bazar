@@ -1,9 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useAdminOrders, useUpdateOrderStatus, useShopsForAssignment } from '../../hooks/useOrders'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const STATUSES = ['', 'pending', 'forwarded', 'accepted', 'rejected', 'delivered']
 const STATUS_LABELS = {
@@ -16,7 +16,7 @@ const STATUS_LABELS = {
 }
 const STATUS_COLORS = {
   pending:   'bg-yellow-100 text-yellow-700',
-  forwarded: 'bg-blue-100 text-blue-700',
+  forwarded: 'bg-purple-100 text-purple-700',
   accepted:  'bg-green-100 text-green-700',
   rejected:  'bg-red-100 text-red-700',
   delivered: 'bg-purple-100 text-purple-700',
@@ -165,14 +165,14 @@ export default function ManageOrders() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
         {[
           { key: 'pending',   label: 'অপেক্ষমান',   color: 'bg-yellow-50 text-yellow-700', icon: '⏳' },
-          { key: 'forwarded', label: 'ফরওয়ার্ড',     color: 'bg-blue-50 text-blue-700',    icon: '📤' },
+          { key: 'forwarded', label: 'ফরওয়ার্ড',     color: 'bg-purple-50 text-purple-700',    icon: '📤' },
           { key: 'accepted',  label: 'গ্রহণ',         color: 'bg-green-50 text-green-700',  icon: '✅' },
           { key: 'delivered', label: 'ডেলিভারি',      color: 'bg-purple-50 text-purple-700',icon: '🎉' },
           { key: 'rejected',  label: 'বাতিল',         color: 'bg-red-50 text-red-700',      icon: '❌' },
         ].map(({ key, label, color, icon }) => (
           <button key={key} onClick={() => setFilter(f => f === key ? '' : key)}
             className={`rounded-xl p-3 text-center border-2 transition-all ${
-              filter === key ? 'border-blue-400 shadow-sm' : 'border-transparent'
+              filter === key ? 'border-purple-400 shadow-sm' : 'border-transparent'
             } ${color}`}>
             <p className="text-xl">{icon}</p>
             <p className="text-lg font-bold">{counts[key] || 0}</p>
@@ -220,7 +220,7 @@ export default function ManageOrders() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 ? (
-        <div className="bg-blue-600 text-white rounded-xl px-4 py-3 mb-3 flex items-center gap-3 flex-wrap animate-fadeIn">
+        <div className="bg-purple-600 text-white rounded-xl px-4 py-3 mb-3 flex items-center gap-3 flex-wrap animate-fadeIn">
           <span className="text-sm font-semibold">{selectedIds.size}টি নির্বাচিত</span>
           <div className="flex gap-2 flex-wrap ml-auto">
             <button onClick={() => bulkAction('accepted')} disabled={bulkLoading}
@@ -246,7 +246,7 @@ export default function ManageOrders() {
           <div className="flex items-center gap-2 mb-3 px-1">
             <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
               <input type="checkbox" checked={allSelected} onChange={toggleAll}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer" />
               সব নির্বাচন করুন ({filtered.length}টি)
             </label>
           </div>
@@ -256,7 +256,7 @@ export default function ManageOrders() {
       {/* Orders list */}
       {isLoading ? (
         <div className="text-center py-20">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-400 text-sm">লোড হচ্ছে...</p>
         </div>
       ) : filtered.length === 0 ? (
@@ -267,12 +267,12 @@ export default function ManageOrders() {
       ) : (
         <div className="space-y-4">
           {filtered.map(order => (
-            <div key={order.id} className={`bg-white rounded-2xl border overflow-hidden transition-all ${selectedIds.has(order.id) ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-100'}`}>
+            <div key={order.id} className={`bg-white rounded-2xl border overflow-hidden transition-all ${selectedIds.has(order.id) ? 'border-purple-300 ring-1 ring-purple-200' : 'border-gray-100'}`}>
               {/* Order card header */}
               <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer flex-shrink-0" />
+                    className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer flex-shrink-0" />
                   <span className="font-bold text-gray-800 text-sm">{order.order_number}</span>
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium flex-shrink-0 ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
                     {STATUS_LABELS[order.status] || order.status}
@@ -294,7 +294,7 @@ export default function ManageOrders() {
                 <div className="space-y-1.5">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">কাস্টমার</p>
                   <p className="font-semibold text-gray-800 text-sm">👤 {order.customer_name}</p>
-                  <a href={`tel:${order.customer_phone}`} className="text-sm text-blue-600 hover:underline block">📞 {order.customer_phone}</a>
+                  <a href={`tel:${order.customer_phone}`} className="text-sm text-purple-600 hover:underline block">📞 {order.customer_phone}</a>
                   <p className="text-sm text-gray-500">📍 {order.customer_address}</p>
                 </div>
 
@@ -325,7 +325,7 @@ export default function ManageOrders() {
                   <select
                     defaultValue={order.shop_id || ''}
                     onChange={e => handleAssign(order.id, e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer flex-1 min-w-[140px]">
+                    className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-300 cursor-pointer flex-1 min-w-[140px]">
                     <option value="">🏪 দোকান নির্বাচন করুন</option>
                     {shops.map(shop => (
                       <option key={shop.id} value={shop.id}>
@@ -336,7 +336,7 @@ export default function ManageOrders() {
                   <select
                     value={order.status}
                     onChange={e => handleStatus(order.id, e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer">
+                    className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-300 cursor-pointer">
                     {STATUSES.filter(Boolean).map(s => (
                       <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                     ))}
@@ -361,7 +361,7 @@ export default function ManageOrders() {
                     WhatsApp
                   </button>
                   <a href={`tel:${order.customer_phone}`}
-                    className="text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors flex items-center gap-1">
+                    className="text-xs px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg font-medium transition-colors flex items-center gap-1">
                     📞 কল
                   </a>
                 </div>

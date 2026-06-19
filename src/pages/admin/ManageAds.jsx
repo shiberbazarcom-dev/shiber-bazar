@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useAllAds, useCreateAd, useUpdateAd, useDeleteAd } from '../../hooks/useAds'
 import { uploadImage } from '../../lib/supabase'
 import { compressImage, validateFileSize } from '../../lib/compressImage'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const EMPTY_FORM = {
   title:       '',
@@ -227,8 +227,8 @@ export default function ManageAds() {
               </div>
 
               {/* Size hint */}
-              <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-50 rounded-xl text-xs text-blue-700">
-                <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-start gap-2 px-3 py-2.5 bg-purple-50 rounded-xl text-xs text-purple-700">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>
@@ -244,14 +244,14 @@ export default function ManageAds() {
                 <div
                   onClick={() => !uploading && fileRef.current?.click()}
                   className={`relative w-full ${spec.height} border-2 border-dashed rounded-xl cursor-pointer transition-colors overflow-hidden flex items-center justify-center
-                    ${uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'}`}
+                    ${uploading ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-purple-400 bg-gray-50 hover:bg-purple-50'}`}
                 >
                   {previewUrl ? (
                     <>
                       <img src={previewUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
                       {uploading ? (
                         <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
-                          <div className="w-7 h-7 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                          <div className="w-7 h-7 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
                         </div>
                       ) : (
                         <div className="absolute inset-0 bg-black/0 hover:bg-black/40 flex items-center justify-center transition-all group z-10">
@@ -280,7 +280,7 @@ export default function ManageAds() {
                   onChange={handleFileChange}
                 />
                 {uploading && (
-                  <p className="text-xs text-blue-600 mt-1.5 text-center">⏳ ছবি আপলোড হচ্ছে...</p>
+                  <p className="text-xs text-purple-600 mt-1.5 text-center">⏳ ছবি আপলোড হচ্ছে...</p>
                 )}
               </div>
 
@@ -309,7 +309,7 @@ export default function ManageAds() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.is_active}
                   onChange={e => set('is_active', e.target.checked)}
-                  className="w-4 h-4 rounded accent-blue-600" />
+                  className="w-4 h-4 rounded accent-purple-600" />
                 <span className="text-sm font-medium text-gray-700">সক্রিয় রাখুন</span>
               </label>
 
@@ -337,7 +337,7 @@ export default function ManageAds() {
       {/* Ads list */}
       {isLoading ? (
         <div className="text-center py-20">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
         </div>
       ) : ads.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-200">
@@ -375,7 +375,7 @@ export default function ManageAds() {
                     <>
                       <span className="text-gray-200">·</span>
                       <a href={ad.target_url} target="_blank" rel="noreferrer"
-                        className="text-xs text-blue-500 truncate max-w-[120px] hover:underline">{ad.target_url}</a>
+                        className="text-xs text-purple-500 truncate max-w-[120px] hover:underline">{ad.target_url}</a>
                     </>
                   )}
                 </div>
@@ -393,7 +393,7 @@ export default function ManageAds() {
                   {ad.is_active ? '✅ চালু' : '⏸ বন্ধ'}
                 </button>
                 <button onClick={() => openEdit(ad)}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium">
+                  className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 font-medium">
                   ✏️ সম্পাদনা
                 </button>
                 <button onClick={() => handleDelete(ad.id)}

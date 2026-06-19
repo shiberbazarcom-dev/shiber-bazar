@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+﻿import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useCategory } from '../hooks/useCategories'
 import { useShops } from '../hooks/useShops'
@@ -6,7 +6,7 @@ import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import SEO from '../components/SEO'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 export default function CategoryPage() {
   const { slug } = useParams()
@@ -34,7 +34,7 @@ export default function CategoryPage() {
     return () => obs.disconnect()
   }, [onIntersect])
 
-  const coverBg = `linear-gradient(135deg, #2563EB 0%, #60a5fa 100%)`
+  const coverBg = `linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%)`
 
   return (
     <div>
@@ -45,7 +45,7 @@ export default function CategoryPage() {
       {/* Header */}
       <section style={{ background: coverBg }} className="py-8 sm:py-10">
         <div className="container-app">
-          <Link to="/categories" className="text-blue-200 hover:text-white text-sm mb-4 inline-block transition-colors">
+          <Link to="/categories" className="text-purple-200 hover:text-white text-sm mb-4 inline-block transition-colors">
             ← সব বিভাগ
           </Link>
           {loadingCat ? (
@@ -64,13 +64,13 @@ export default function CategoryPage() {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">{category.name}</h1>
                 {category.description && (
-                  <p className="text-blue-100 text-sm mt-0.5">{category.description}</p>
+                  <p className="text-purple-100 text-sm mt-0.5">{category.description}</p>
                 )}
-                <p className="text-blue-200 text-sm mt-1">{total} টি দোকান</p>
+                <p className="text-purple-200 text-sm mt-1">{total} টি দোকান</p>
               </div>
             </div>
           ) : (
-            <p className="text-blue-100">বিভাগ পাওয়া যায়নি</p>
+            <p className="text-purple-100">বিভাগ পাওয়া যায়নি</p>
           )}
         </div>
       </section>
@@ -113,7 +113,7 @@ export default function CategoryPage() {
         {/* Infinite scroll */}
         {isFetchingNextPage && (
           <div className="flex justify-center mt-6">
-            <div className="w-7 h-7 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
           </div>
         )}
         <div ref={sentinel} className="h-4" />

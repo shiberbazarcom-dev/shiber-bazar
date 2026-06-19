@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useServiceCategories, useSubmitService } from '../../hooks/useServices'
 import { SERVICE_CATEGORIES, CATEGORY_EXTRA_FIELDS } from '../../data/serviceCategories'
@@ -7,7 +7,7 @@ import { compressImage, validateFileSize } from '../../lib/compressImage'
 import toast from 'react-hot-toast'
 import SEO from '../../components/SEO'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 export default function SubmitService() {
   const navigate = useNavigate()
@@ -101,7 +101,7 @@ export default function SubmitService() {
 
       {/* Header */}
       <div className="mb-6">
-        <Link to="/services" className="text-sm text-blue-600 hover:underline">← স্থানীয় সেবাসমূহ</Link>
+        <Link to="/services" className="text-sm text-purple-600 hover:underline">← স্থানীয় সেবাসমূহ</Link>
         <h1 className="text-2xl font-bold text-gray-800 mt-2">সেবা যোগ করুন</h1>
         <p className="text-sm text-gray-500 mt-1">আপনার সেবা লিস্ট করুন — অনুমোদনের পরে প্রকাশিত হবে</p>
       </div>
@@ -114,7 +114,7 @@ export default function SubmitService() {
           <select
             value={form.category_id}
             onChange={e => { set('category_id', e.target.value); setExtra({}) }}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-white"
             required>
             <option value="">বেছে নিন...</option>
             {cats.map(c => (
@@ -132,7 +132,7 @@ export default function SubmitService() {
             value={form.name}
             onChange={e => set('name', e.target.value)}
             placeholder="আপনার পুরো নাম"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
             required
           />
         </div>
@@ -146,7 +146,7 @@ export default function SubmitService() {
             placeholder="01XXXXXXXXX"
             type="tel"
             maxLength={11}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
             required
           />
         </div>
@@ -158,7 +158,7 @@ export default function SubmitService() {
             value={form.location}
             onChange={e => set('location', e.target.value)}
             placeholder="শিবের বাজার, সিলেট"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
           />
         </div>
 
@@ -170,7 +170,7 @@ export default function SubmitService() {
             onChange={e => set('description', e.target.value)}
             placeholder="আপনার সেবা সম্পর্কে কিছু লিখুন..."
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 resize-none"
           />
         </div>
 
@@ -182,7 +182,7 @@ export default function SubmitService() {
               <select
                 value={extra[field.key] || ''}
                 onChange={e => setEx(field.key, e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-white">
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-white">
                 <option value="">বেছে নিন...</option>
                 {field.options.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
@@ -191,7 +191,7 @@ export default function SubmitService() {
                 value={extra[field.key] || ''}
                 onChange={e => setEx(field.key, e.target.value)}
                 placeholder={field.placeholder || ''}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
               />
             )}
           </div>
@@ -203,7 +203,7 @@ export default function SubmitService() {
           {imagePreview && (
             <img src={imagePreview} alt="preview" className="w-full h-32 object-cover rounded-xl mb-2" />
           )}
-          <label className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-200 text-sm text-gray-500 cursor-pointer hover:border-blue-300 hover:text-blue-500 transition-colors">
+          <label className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-200 text-sm text-gray-500 cursor-pointer hover:border-purple-300 hover:text-purple-500 transition-colors">
             📷 ছবি আপলোড করুন
             <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
           </label>

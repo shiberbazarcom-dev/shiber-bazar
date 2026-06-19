@@ -1,8 +1,8 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useAdminServices, useAdminUpdateService } from '../../hooks/useServices'
 import toast from 'react-hot-toast'
 
-const BLUE = '#2563EB'
+const BLUE = 'var(--primary)'
 
 const STATUS_TABS = [
   { key: 'pending',  label: '⏳ অনুমোদন বাকি' },
@@ -56,7 +56,7 @@ function DetailModal({ service, onClose, onAction }) {
 
           <div className="space-y-2 mb-4">
             <InfoRow label="নাম"        value={service.name} />
-            <InfoRow label="মোবাইল"    value={<a href={`tel:${service.phone}`} className="text-blue-600">{service.phone}</a>} />
+            <InfoRow label="মোবাইল"    value={<a href={`tel:${service.phone}`} className="text-purple-600">{service.phone}</a>} />
             <InfoRow label="ক্যাটাগরি" value={`${service.service_categories?.icon} ${service.service_categories?.name_bn}`} />
             {service.location    && <InfoRow label="এলাকা"      value={service.location} />}
             {service.description && <InfoRow label="বিবরণ"      value={service.description} />}
@@ -84,7 +84,7 @@ function DetailModal({ service, onClose, onAction }) {
             )}
             {service.status === 'approved' && !service.is_verified && (
               <button onClick={() => act('verify')} disabled={update.isPending}
-                className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl bg-blue-500 disabled:opacity-60">
+                className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl bg-purple-500 disabled:opacity-60">
                 ✓ বিশ্বস্ত হিসেবে চিহ্নিত করুন
               </button>
             )}
@@ -157,7 +157,7 @@ export default function ManageServices() {
         <div className="space-y-3">
           {services.map(svc => (
             <div key={svc.id}
-              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-blue-100 transition-colors cursor-pointer"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-purple-100 transition-colors cursor-pointer"
               onClick={() => setSelected(svc)}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3 items-start flex-1 min-w-0">
@@ -196,7 +196,7 @@ export default function ManageServices() {
                 </span>
               </div>
 
-              <p className="text-xs text-blue-600 mt-2 text-right">বিস্তারিত দেখুন →</p>
+              <p className="text-xs text-purple-600 mt-2 text-right">বিস্তারিত দেখুন →</p>
             </div>
           ))}
         </div>

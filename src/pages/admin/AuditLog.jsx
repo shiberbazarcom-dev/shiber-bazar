@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 
@@ -7,7 +7,7 @@ const PAGE = 30
 const ACTION_META = {
   shop_approved:        { icon: '✅', label: 'দোকান অনুমোদন',      color: 'bg-green-100  text-green-700'  },
   shop_rejected:        { icon: '❌', label: 'দোকান প্রত্যাখ্যান',  color: 'bg-red-100    text-red-700'    },
-  order_status_changed: { icon: '📦', label: 'অর্ডার স্ট্যাটাস',    color: 'bg-blue-100   text-blue-700'   },
+  order_status_changed: { icon: '📦', label: 'অর্ডার স্ট্যাটাস',    color: 'bg-purple-100   text-purple-700'   },
   role_changed:         { icon: '🛡️', label: 'Role পরিবর্তন',        color: 'bg-purple-100 text-purple-700' },
   shop_deleted:         { icon: '🗑️', label: 'দোকান মুছে ফেলা',      color: 'bg-red-100    text-red-700'    },
   shop_featured:        { icon: '⭐', label: 'বিশেষ চিহ্নিত',         color: 'bg-amber-100  text-amber-700'  },
@@ -69,7 +69,7 @@ export default function AuditLog() {
           <button key={f.val} onClick={() => { setActionFilter(f.val); setPage(0) }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               actionFilter === f.val
-                ? 'bg-blue-600 text-white'
+                ? 'bg-purple-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}>
             {f.label}
@@ -82,7 +82,7 @@ export default function AuditLog() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin" />
           </div>
         ) : logs.length === 0 ? (
           <div className="py-20 text-center">

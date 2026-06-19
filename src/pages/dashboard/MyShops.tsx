@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -287,7 +287,7 @@ export default function MyShops() {
             return (
               <Card key={shop.id} className="overflow-hidden group">
                 {/* Cover */}
-                <div className="relative h-28 bg-gradient-to-br from-blue-100 to-indigo-100">
+                <div className="relative h-28 bg-gradient-to-br from-purple-100 to-indigo-100">
                   {(shop.cover_image || shop.cover_url) && (
                     <img src={shop.cover_image || shop.cover_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   )}
@@ -298,7 +298,7 @@ export default function MyShops() {
                   <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl border-2 border-white bg-white shadow-md overflow-hidden">
                     {(shop.logo || shop.logo_url)
                       ? <img src={shop.logo || shop.logo_url} alt="" className="w-full h-full object-cover" />
-                      : <div className="w-full h-full bg-blue-50 flex items-center justify-center text-xl">{shop.categories?.icon || '🏪'}</div>
+                      : <div className="w-full h-full bg-purple-50 flex items-center justify-center text-xl">{shop.categories?.icon || '🏪'}</div>
                     }
                   </div>
                 </div>
@@ -396,7 +396,7 @@ export default function MyShops() {
                 <div>
                   <Label className="text-xs mb-1.5 block">লোগো</Label>
                   <div
-                    className="h-24 rounded-lg border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors flex items-center justify-center bg-gray-50 relative"
+                    className="h-24 rounded-lg border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-purple-400 transition-colors flex items-center justify-center bg-gray-50 relative"
                     onClick={() => logoRef.current?.click()}
                   >
                     {(editShop.logo || editShop.logo_url)
@@ -410,7 +410,7 @@ export default function MyShops() {
                 <div>
                   <Label className="text-xs mb-1.5 block">কভার ছবি</Label>
                   <div
-                    className="h-24 rounded-lg border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors flex items-center justify-center bg-gray-50 relative"
+                    className="h-24 rounded-lg border-2 border-dashed border-gray-200 overflow-hidden cursor-pointer hover:border-purple-400 transition-colors flex items-center justify-center bg-gray-50 relative"
                     onClick={() => coverRef.current?.click()}
                   >
                     {(editShop.cover_image || editShop.cover_url)
@@ -472,7 +472,7 @@ export default function MyShops() {
               {/* ── Verification Documents ── */}
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  <ShieldCheck className="h-4 w-4 text-purple-500 flex-shrink-0" />
                   <p className="text-sm font-semibold text-gray-700">যাচাইকরণ নথি</p>
                   <span className="text-[10px] text-gray-400 font-normal">(ঐচ্ছিক)</span>
                 </div>
@@ -507,9 +507,9 @@ export default function MyShops() {
                 )}
 
                 {/* New doc picker */}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2">
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 space-y-2">
                   {(editShop.verification_status === 'rejected' || !editShop.verification_status || editShop.verification_status === 'unverified') && (
-                    <p className="text-xs text-blue-700 font-medium">
+                    <p className="text-xs text-purple-700 font-medium">
                       {editShop.verification_status === 'rejected'
                         ? '⚠️ আপনার নথি প্রত্যাখ্যাত হয়েছে। নতুন নথি আপলোড করুন।'
                         : '📎 নথি আপলোড করলে দোকানের বিশ্বাসযোগ্যতা বাড়বে।'}
@@ -519,7 +519,7 @@ export default function MyShops() {
                     <select
                       value={newDocType}
                       onChange={e => setNewDocType(e.target.value)}
-                      className="flex-1 border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      className="flex-1 border border-purple-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300"
                     >
                       {DOC_TYPE_OPTIONS.map(([val, lbl]) => (
                         <option key={val} value={val}>{lbl}</option>
@@ -528,13 +528,13 @@ export default function MyShops() {
                     <button
                       type="button"
                       onClick={() => verDocRef.current?.click()}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 flex-shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 flex-shrink-0"
                     >
                       <Upload className="h-3.5 w-3.5" /> যোগ করুন
                     </button>
                     <input ref={verDocRef} type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={handleVerDocPick} />
                   </div>
-                  <p className="text-[10px] text-blue-500">JPG, PNG বা PDF — সর্বোচ্চ ৫MB</p>
+                  <p className="text-[10px] text-purple-500">JPG, PNG বা PDF — সর্বোচ্চ ৫MB</p>
                 </div>
 
                 {/* Pending (not yet saved) docs preview */}

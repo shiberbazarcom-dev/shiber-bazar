@@ -1,12 +1,12 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useShopOrders, useUpdateOrderStatus } from '../../hooks/useOrders'
 import toast from 'react-hot-toast'
 
-const GREEN = '#2563EB'
+const GREEN = 'var(--primary)'
 
 const STATUS_COLORS = {
   pending:   'bg-yellow-100 text-yellow-700',
-  forwarded: 'bg-blue-100 text-blue-700',
+  forwarded: 'bg-purple-100 text-purple-700',
   accepted:  'bg-green-100 text-green-700',
   rejected:  'bg-red-100 text-red-700',
   delivered: 'bg-purple-100 text-purple-700',
@@ -84,7 +84,7 @@ export default function ShopOrders() {
       {/* Content */}
       {isLoading ? (
         <div className="text-center py-20">
-          <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-400 text-sm">লোড হচ্ছে...</p>
         </div>
       ) : filtered.length === 0 ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFeaturedShops, useLatestShops, useMarketStats } from '../hooks/useShops'
 import { useCategoryWithCount } from '../hooks/useCategories'
@@ -336,7 +336,7 @@ function HomeServicesSection() {
           </div>
           <Link
             to="/services"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group flex-shrink-0">
+            className="text-sm font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group flex-shrink-0">
             সব দেখুন
             <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -351,7 +351,7 @@ function HomeServicesSection() {
         <div className="mt-5 text-center">
           <Link
             to="/services/submit"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-colors">
+            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-5 py-2.5 rounded-xl transition-colors">
             + আপনার সেবা লিস্ট করুন — বিনামূল্যে
           </Link>
         </div>
@@ -664,7 +664,7 @@ export default function Home() {
               <div className="flex items-center gap-2.5 px-3 py-2.5">
                 {(newest.logo || newest.logo_url)
                   ? <img src={newest.logo || newest.logo_url} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600 flex-shrink-0">
+                  : <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center text-sm font-bold text-purple-600 flex-shrink-0">
                       {newest.shop_name?.[0]}
                     </div>
                 }
@@ -688,7 +688,7 @@ export default function Home() {
               <Link
                 to={`/shop/${newest.slug || newest.id}`}
                 onClick={() => setAnnounceDismissed(true)}
-                className="block text-center text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 py-1.5 transition-colors"
+                className="block text-center text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 py-1.5 transition-colors"
               >
                 দোকান দেখুন →
               </Link>
@@ -883,7 +883,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <span>📞</span>
-              <a href="tel:+8801310012276" className="font-medium text-blue-600 hover:underline">
+              <a href="tel:+8801310012276" className="font-medium text-purple-600 hover:underline">
                 ০১৩১০-০১২২৭৬
               </a>
             </div>

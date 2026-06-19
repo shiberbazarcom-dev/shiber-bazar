@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import * as XLSX from 'xlsx'
 import { useCategories } from '../../hooks/useCategories'
 import { useQuery } from '@tanstack/react-query'
@@ -134,13 +134,13 @@ function ShopImportTab() {
   return (
     <div className="space-y-5">
       {/* Download template */}
-      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+      <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex items-center justify-between">
         <div>
           <p className="font-semibold text-blue-800 text-sm">Excel Template</p>
-          <p className="text-xs text-blue-600 mt-0.5">এই template এ তথ্য পূরণ করুন, তারপর upload করুন</p>
+          <p className="text-xs text-purple-600 mt-0.5">এই template এ তথ্য পূরণ করুন, তারপর upload করুন</p>
         </div>
         <button onClick={() => downloadTemplate('shop')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-xl hover:bg-purple-700 transition-colors">
           📥 Template Download
         </button>
       </div>
@@ -148,7 +148,7 @@ function ShopImportTab() {
       {/* Upload */}
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-2">Excel / CSV ফাইল আপলোড করুন</label>
-        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
           <span className="text-2xl mb-1">📂</span>
           <span className="text-sm text-gray-500">.xlsx বা .csv ফাইল বেছে নিন</span>
           <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
@@ -292,13 +292,13 @@ function ProductImportTab() {
   return (
     <div className="space-y-5">
       {/* Download template */}
-      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+      <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex items-center justify-between">
         <div>
           <p className="font-semibold text-blue-800 text-sm">পণ্য Template</p>
-          <p className="text-xs text-blue-600 mt-0.5">এই format এ পণ্যের তালিকা বানান</p>
+          <p className="text-xs text-purple-600 mt-0.5">এই format এ পণ্যের তালিকা বানান</p>
         </div>
         <button onClick={() => downloadTemplate('product')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-xl hover:bg-purple-700 transition-colors">
           📥 Template Download
         </button>
       </div>
@@ -307,7 +307,7 @@ function ProductImportTab() {
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-2">কোন দোকানে পণ্য যোগ হবে? *</label>
         <select value={shopId} onChange={e => setShopId(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white">
+          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400 bg-white">
           <option value="">দোকান বেছে নিন</option>
           {shops.map(s => <option key={s.id} value={s.id}>{s.shop_name}</option>)}
         </select>
@@ -316,7 +316,7 @@ function ProductImportTab() {
       {/* Upload */}
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-2">Excel / CSV ফাইল আপলোড করুন</label>
-        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
           <span className="text-2xl mb-1">📂</span>
           <span className="text-sm text-gray-500">.xlsx বা .csv ফাইল বেছে নিন</span>
           <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
@@ -404,7 +404,7 @@ export default function BulkImport() {
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-              tab === t.key ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              tab === t.key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}>
             {t.label}
           </button>

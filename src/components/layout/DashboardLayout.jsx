@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
+﻿import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -18,7 +18,7 @@ function SidebarLink({ to, icon, label, end, badge, onClose }) {
       className={({ isActive }) => cn(
         'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
         isActive
-          ? 'bg-blue-600 text-white shadow-sm'
+          ? 'bg-purple-600 text-white shadow-sm'
           : 'text-gray-600 hover:bg-gray-100'
       )}
     >
@@ -63,7 +63,7 @@ function TopBar({ type, profile, signOut, setSidebarOpen, mobileBadge, links }) 
 
       {/* Breadcrumb — shows on all sizes */}
       <div className="flex items-center gap-2 min-w-0">
-        <Link to="/" className="hidden lg:block text-xs text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0">
+        <Link to="/" className="hidden lg:block text-xs text-gray-400 hover:text-purple-600 transition-colors flex-shrink-0">
           শিবের বাজার
         </Link>
         <span className="hidden lg:block text-gray-300 text-xs">/</span>
@@ -152,7 +152,7 @@ function NewOrderToast({ t, order }) {
           {order.customer_name} · {order.customer_phone}
         </p>
         <a href="/admin/orders"
-          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           অর্ডার দেখুন →
         </a>
@@ -167,18 +167,18 @@ function NewOrderToast({ t, order }) {
 function ForwardedOrderToast({ t, order }) {
   return (
     <div className={cn(
-      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full',
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-purple-200 p-4 max-w-sm w-full',
       t.visible ? 'opacity-100' : 'opacity-0'
     )}>
-      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">📤</div>
+      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">📤</div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-800 text-sm">🎉 নতুন অর্ডার এসেছে!</p>
         <p className="text-xs text-gray-500 mt-0.5 truncate">
           {order.order_number}
         </p>
-        <p className="text-xs text-blue-600 mt-0.5">Admin আপনার দোকানে অর্ডার পাঠিয়েছেন</p>
+        <p className="text-xs text-purple-600 mt-0.5">Admin আপনার দোকানে অর্ডার পাঠিয়েছেন</p>
         <a href="/dashboard/orders"
-          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           অর্ডার দেখুন →
         </a>
@@ -217,16 +217,16 @@ function NewServiceToast({ t, service }) {
 function NewShopToast({ t, shop }) {
   return (
     <div className={cn(
-      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full',
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-purple-200 p-4 max-w-sm w-full',
       t.visible ? 'opacity-100' : 'opacity-0'
     )}>
-      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">🏪</div>
+      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">🏪</div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-gray-800 text-sm">নতুন দোকান আবেদন!</p>
         <p className="text-xs text-gray-700 font-medium mt-0.5 truncate">{shop.shop_name}</p>
         <p className="text-xs text-gray-400 truncate">{shop.address || 'ঠিকানা নেই'}</p>
         <a href="/admin/shops"
-          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
+          className="inline-block mt-2 text-xs font-semibold text-purple-600 hover:underline"
           onClick={() => toast.dismiss(t.id)}>
           দোকান দেখুন →
         </a>
@@ -487,7 +487,7 @@ export default function DashboardLayout({ type = 'user' }) {
       {/* Header */}
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.full_name?.[0] || 'U'}
           </div>
           <div className="min-w-0">
