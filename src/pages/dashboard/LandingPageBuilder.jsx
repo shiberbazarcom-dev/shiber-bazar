@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { useShops } from '../../hooks/useShops'
 import { useShopProducts } from '../../hooks/useProducts'
 import toast from 'react-hot-toast'
 
@@ -163,9 +162,14 @@ function LpCard({ lp, onEdit, onDelete, onToggle }) {
 ══════════════════════════════════════════════ */
 export default function LandingPageBuilder() {
   const { user } = useAuth()
-  const { data: shopsData } = useShops()
-  const shops = shopsData?.filter(s => s.owner_id === user?.id) || []
+  const [shops, setShops] = useState([])
   const [selectedShopId, setSelectedShopId] = useState('')
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('shops').select('id, shop_name, owner_id').eq('owner_id', user.id).eq('is_active', true)
+      .then(({ data }) => { if (data) setShops(data) })
+  }, [user?.id])
   const { data: products = [] } = useShopProducts(selectedShopId)
 
   const [pages, setPages] = useState([])
