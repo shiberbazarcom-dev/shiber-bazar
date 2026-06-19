@@ -354,11 +354,12 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/add-shop',     icon: '➕', label: 'নতুন দোকান' },
     { to: '/dashboard/products',     icon: '🛍️', label: 'পণ্য আপলোড' },
     { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
-    { to: '/dashboard/analytics',    icon: '📈', label: 'অ্যানালিটিক্স' },
-    { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
-    { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },
-    { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
-    { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
+    { to: '/dashboard/analytics',     icon: '📈', label: 'অ্যানালিটিক্স' },
+    { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা' },
+    { to: '/dashboard/chat',          icon: '💬', label: 'বার্তা' },
+    { to: '/dashboard/qr-code',       icon: '🔲', label: 'QR কোড' },
+    { to: '/dashboard/my-services',   icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/profile',       icon: '👤', label: 'প্রোফাইল' },
   ]
 
   const adminLinks = [
