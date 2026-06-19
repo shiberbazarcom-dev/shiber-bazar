@@ -16,6 +16,7 @@ const TEMPLATES = [
   { id: 3, name: 'লাল অফার', desc: 'ডিসকাউন্ট ফোকাস', color: '#dc2626', preview: '🔴' },
   { id: 4, name: 'মিনিমাল', desc: 'সাদামাটা, প্রোফেশনাল', color: '#374151', preview: '⚫' },
   { id: 5, name: 'গোল্ড প্রিমিয়াম', desc: 'প্রিমিয়াম প্রোডাক্ট', color: '#b45309', preview: '🟡' },
+  { id: 6, name: 'নাহাল স্টাইল', desc: 'হলুদ/কালো + ইনলাইন অর্ডার ফর্ম', color: '#1a1a1a', preview: '🟨' },
 ]
 
 /* ── sub-components ── */

@@ -14,6 +14,7 @@ const TEMPLATE_COLORS = {
   3: { primary: '#dc2626', light: '#fef2f2', text: '#7f1d1d' },
   4: { primary: '#374151', light: '#f9fafb', text: '#111827' },
   5: { primary: '#b45309', light: '#fffbeb', text: '#78350f' },
+  6: { primary: '#f5c518', light: '#fff8e1', text: '#1a1a1a' },
 }
 
 /* ── countdown ── */
@@ -497,7 +498,236 @@ function T5({ lp, color, onOrder }) {
   )
 }
 
-const TEMPLATE_MAP = { 1: T1, 2: T2, 3: T3, 4: T4, 5: T5 }
+/* Template 6 — নাহাল স্টাইল (Yellow/Black + inline order form) */
+function T6({ lp, color, onOrder }) {
+  const [form, setForm] = useState({ name: '', phone: '', address: '', district: 'Dhaka' })
+  const [qty, setQty] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const price = Number(lp.product_price || 0)
+  const total = price * qty
+
+  const DISTRICTS = ['Dhaka','Chittagong','Sylhet','Rajshahi','Khulna','Barisal','Rangpur','Mymensingh','Comilla','Narayanganj']
+
+  const handleSubmit = async () => {
+    if (!form.name.trim() || !form.phone.trim()) return
+    setSubmitting(true)
+    await supabase.from('orders').insert({
+      shop_id: lp.shop_id,
+      customer_name: form.name,
+      customer_phone: form.phone,
+      customer_address: `${form.address}, ${form.district}`,
+      product_name: `${lp.product_name} ×${qty}`,
+      total_amount: total,
+      status: 'pending',
+    })
+    setSubmitting(false)
+    setDone(true)
+  }
+
+  const YELLOW = '#f5c518'
+  const BLACK = '#1a1a1a'
+
+  if (done) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: YELLOW }}>
+      <div className="text-center px-5">
+        <div className="text-6xl mb-4">✅</div>
+        <h2 className="text-2xl font-extrabold text-black mb-2">অর্ডার কনফার্ম হয়েছে!</h2>
+        <p className="text-black/70 text-sm">আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।</p>
+        {lp.show_whatsapp && lp.phone && (
+          <a href={wa(lp.phone, `আমার অর্ডার কনফার্ম হয়েছে। নাম: ${form.name}, ফোন: ${form.phone}`)}
+            target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl text-white font-bold"
+            style={{ background: '#25d366' }}>
+            <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp এ যোগাযোগ
+          </a>
+        )}
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen" style={{ background: '#fff8e1' }}>
+      {/* top logo + offer strip */}
+      <div style={{ background: YELLOW }} className="px-4 pt-5 pb-4 text-center">
+        {lp.hero_image_url && (
+          <img src={lp.hero_image_url} alt="logo"
+            className="w-16 h-16 object-contain mx-auto mb-3 rounded-full bg-white p-1 shadow"
+            onError={e => e.target.style.display='none'} />
+        )}
+        {/* offer strip */}
+        {lp.badge_text && (
+          <div className="flex items-center justify-between text-xs font-bold text-black/70 mb-3">
+            <span>{lp.badge_text}</span>
+            {lp.subheadline && <span>{lp.subheadline}</span>}
+          </div>
+        )}
+        {/* big CTA */}
+        <button onClick={() => document.getElementById('t6-order-form').scrollIntoView({ behavior: 'smooth' })}
+          className="w-full max-w-xs mx-auto flex items-center justify-center py-4 rounded-xl text-white text-base font-extrabold shadow-lg"
+          style={{ background: BLACK }}>
+          {lp.cta_text}
+        </button>
+      </div>
+
+      {/* main product image */}
+      {lp.hero_image_url && (
+        <div className="px-4 pt-4">
+          <img src={lp.hero_image_url} alt={lp.product_name}
+            className="w-full rounded-2xl object-cover shadow-md" style={{ maxHeight: 300 }} />
+        </div>
+      )}
+
+      {/* features grid */}
+      {lp.features?.length > 0 && (
+        <div className="px-4 pt-5">
+          <div className="border-2 border-black rounded-xl overflow-hidden">
+            <div className="text-center font-extrabold text-sm py-2 text-white" style={{ background: BLACK }}>
+              এই পণ্যের বৈশিষ্ট্য
+            </div>
+            <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-gray-200">
+              {lp.features.map((f, i) => (
+                <div key={i} className="p-3 text-xs text-gray-700 flex items-start gap-1.5">
+                  <span className="font-bold text-black flex-shrink-0">{i + 1}.</span> {f}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* second CTA */}
+      <div className="px-4 pt-5">
+        <button onClick={() => document.getElementById('t6-order-form').scrollIntoView({ behavior: 'smooth' })}
+          className="w-full py-4 rounded-xl text-white font-extrabold text-base"
+          style={{ background: BLACK }}>
+          {lp.cta_text}
+        </button>
+      </div>
+
+      {/* product description */}
+      {lp.product_description && (
+        <div className="px-4 pt-5">
+          <p className="text-sm text-gray-700 leading-relaxed">{lp.product_description}</p>
+        </div>
+      )}
+
+      {/* FAQ */}
+      {lp.faqs?.length > 0 && (
+        <div className="px-4 pt-5">
+          <h3 className="font-extrabold text-gray-800 mb-3 text-center">প্রশ্ন ও উত্তর</h3>
+          <Faq faqs={lp.faqs} color={{ primary: BLACK }} />
+        </div>
+      )}
+
+      {/* pricing box */}
+      <div className="mx-4 mt-5 border-2 border-gray-200 rounded-xl p-4" style={{ background: '#fffde7' }}>
+        <p className="text-center font-extrabold text-sm text-gray-700 mb-2">এই পণ্যের মূল্য</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-2xl font-extrabold text-black">{fmt(lp.product_price)}</p>
+            {lp.product_original_price && (
+              <p className="text-sm text-gray-400 line-through">{fmt(lp.product_original_price)}</p>
+            )}
+          </div>
+          {lp.product_original_price && lp.product_price && (
+            <span className="text-green-600 font-bold text-sm">
+              {fmt(Number(lp.product_original_price) - Number(lp.product_price))} সাশ্রয়!
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* inline order form */}
+      <div id="t6-order-form" className="mx-4 mt-5 mb-10 rounded-2xl overflow-hidden border-2 border-gray-200 bg-white">
+        {/* form header */}
+        <div className="text-center py-3 font-extrabold text-white text-sm" style={{ background: BLACK }}>
+          অর্ডার করতে নিচের ফর্মটি সঠিকভাবে পূরণ করুন
+        </div>
+
+        {/* product row */}
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 bg-yellow-50 rounded-xl p-3 border border-yellow-200">
+            <div className="w-5 h-5 rounded-full border-2 border-yellow-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+            </div>
+            {lp.hero_image_url && (
+              <img src={lp.hero_image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-gray-800 leading-snug">{lp.product_name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{fmt(lp.product_price)} × {qty} = {fmt(price * qty)}</p>
+            </div>
+            {/* qty */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                className="w-7 h-7 rounded-lg bg-gray-100 font-bold text-gray-700 flex items-center justify-center">−</button>
+              <span className="w-6 text-center font-bold text-sm">{qty}</span>
+              <button onClick={() => setQty(q => q + 1)}
+                className="w-7 h-7 rounded-lg font-bold text-white flex items-center justify-center" style={{ background: YELLOW, color: BLACK }}>+</button>
+            </div>
+          </div>
+        </div>
+
+        {/* billing form */}
+        <div className="p-4 space-y-3">
+          <p className="font-bold text-sm text-gray-700">Billing & Shipping</p>
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            placeholder="পূরা নাম *" required
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-400" />
+          <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+            placeholder="মোবাইল নম্বর *" required type="tel"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-400" />
+          <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+            placeholder="ঠিকানা"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-400" />
+          <select value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-400 bg-white">
+            {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+          </select>
+        </div>
+
+        {/* order summary */}
+        <div className="mx-4 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-3 py-2 bg-gray-50 font-bold text-xs text-gray-600 border-b border-gray-200">Your order</div>
+          <div className="px-3 py-2 flex justify-between text-xs text-gray-600">
+            <span>Product</span><span>Subtotal</span>
+          </div>
+          <div className="px-3 py-1 flex justify-between text-xs text-gray-700">
+            <span className="truncate flex-1 mr-2">{lp.product_name} × {qty}</span>
+            <span className="flex-shrink-0 font-bold">{fmt(price * qty)}</span>
+          </div>
+          <div className="px-3 py-2 flex justify-between text-xs font-bold text-gray-800 border-t border-gray-100">
+            <span>Total</span><span>{fmt(total)}</span>
+          </div>
+        </div>
+
+        {/* cash on delivery note */}
+        <div className="mx-4 mb-4 rounded-xl p-3 border border-gray-200 bg-gray-50 text-xs text-gray-500 text-center">
+          ক্যাশ অন ডেলিভারি — পণ্য পেয়ে পরিশোধ করবেন, আগে টাকা দিতে হবে না।
+        </div>
+
+        {/* submit */}
+        <div className="px-4 pb-5">
+          <button onClick={handleSubmit} disabled={submitting || !form.name || !form.phone}
+            className="w-full py-4 rounded-xl font-extrabold text-base disabled:opacity-50 transition-all active:scale-95"
+            style={{ background: YELLOW, color: BLACK }}>
+            {submitting ? 'অর্ডার হচ্ছে...' : `Confirm Order  ${fmt(total)}`}
+          </button>
+        </div>
+      </div>
+
+      {/* footer */}
+      <div className="text-center py-6 text-xs text-gray-400 border-t border-gray-200">
+        © {new Date().getFullYear()} · {lp.product_name}
+      </div>
+    </div>
+  )
+}
+
+const TEMPLATE_MAP = { 1: T1, 2: T2, 3: T3, 4: T4, 5: T5, 6: T6 }
 
 /* ══════════════════════════════════════════════
    MAIN — public landing page
