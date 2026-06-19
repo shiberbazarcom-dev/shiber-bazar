@@ -420,6 +420,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
     { to: '/dashboard/analytics',     icon: '📈', label: 'অ্যানালিটিক্স' },
     { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা' },
+    { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ' },
     { to: '/dashboard/chat',          icon: '💬', label: 'বার্তা' },
     { to: '/dashboard/broadcast',    icon: '📢', label: 'ব্রডকাস্ট' },
     { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },

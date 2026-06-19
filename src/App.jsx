@@ -68,6 +68,8 @@ const ShopAnalytics     = lazy(() => import('./pages/dashboard/ShopAnalytics'))
 const Chat              = lazy(() => import('./pages/dashboard/Chat'))
 const Broadcast         = lazy(() => import('./pages/dashboard/Broadcast'))
 const HisaberKhata      = lazy(() => import('./pages/dashboard/HisaberKhata'))
+const LandingPageBuilder = lazy(() => import('./pages/dashboard/LandingPageBuilder'))
+const LandingPage        = lazy(() => import('./pages/LandingPage'))
 
 /* ── Super Admin / Market Manager ── */
 const AdminDashboard   = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -168,6 +170,7 @@ export default function App() {
             <Route path="/register"       element={<PublicLayout><Register /></PublicLayout>} />
             <Route path="/auth/callback"  element={<AuthCallback />} />
             <Route path="/order"          element={<PublicLayout><OrderPage /></PublicLayout>} />
+            <Route path="/lp/:slug"       element={<LandingPage />} />
             <Route path="/order/:shopId"  element={<PublicLayout><OrderPage /></PublicLayout>} />
             <Route path="/track-order"    element={<PublicLayout><TrackOrder /></PublicLayout>} />
             <Route path="/product/:id"    element={<PublicLayout noFooter><ProductDetails /></PublicLayout>} />
@@ -258,6 +261,11 @@ export default function App() {
               <Route path="hisaber-khata" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
                   <HisaberKhata />
+                </ProtectedRoute>
+              } />
+              <Route path="landing-pages" element={
+                <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
+                  <LandingPageBuilder />
                 </ProtectedRoute>
               } />
             </Route>
