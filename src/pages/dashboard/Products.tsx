@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -85,6 +85,7 @@ export default function Products() {
   const [saving, setSaving] = useState(false)
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
   const [saveError, setSaveError] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
 
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkShopId, setBulkShopId] = useState('')
@@ -243,6 +244,27 @@ export default function Products() {
       setBulkSaving(false)
     }
   }
+
+  const generateAiContent = useCallback(async (name: string, price?: string) => {
+    if (!name?.trim()) return
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'product_description', productName: name, price: price || '' }),
+      })
+      const data = await res.json()
+      if (data.description || data.features) {
+        setEditProduct((p: any) => ({
+          ...p,
+          description: data.description || p.description,
+          features: data.features || p.features,
+        }))
+      }
+    } catch { /* silent */ }
+    setAiLoading(false)
+  }, [])
 
   const filtered = shopFilter === 'all' ? products : products.filter((p: Product) => p.shop_id === shopFilter)
 
@@ -534,12 +556,27 @@ export default function Products() {
                 <Input
                   value={editProduct.name}
                   onChange={e => setEditProduct((p: any) => ({ ...p, name: e.target.value }))}
+                  onBlur={e => {
+                    const name = e.target.value.trim()
+                    if (name && !editProduct.description && !editProduct.features)
+                      generateAiContent(name, editProduct.price)
+                  }}
                   placeholder="পণ্যের নাম লিখুন"
                 />
               </div>
 
               <div>
-                <Label className="text-xs mb-1.5 block">বিবরণ</Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label className="text-xs">বিবরণ</Label>
+                  <button type="button" onClick={() => generateAiContent(editProduct.name, editProduct.price)}
+                    disabled={aiLoading || !editProduct.name?.trim()}
+                    className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-white disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
+                    {aiLoading
+                      ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />লিখছে...</>
+                      : <>✨ AI দিয়ে লিখুন</>}
+                  </button>
+                </div>
                 <Textarea
                   rows={3}
                   value={editProduct.description}
