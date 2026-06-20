@@ -189,9 +189,7 @@ export default function ChatWindow({ conversation, otherName }) {
     channelRef.current?.send({ type: 'broadcast', event: 'typing', payload: { user_id: user?.id } })
   }
 
-  async function handleSend(e) {
-    e?.preventDefault()
-    const content = typeof e === 'string' ? e : text.trim()
+  async function sendContent(content) {
     if (!content || !conversation?.id) return
     setText('')
     if (inputRef.current) { inputRef.current.style.height = 'auto'; inputRef.current.focus() }
@@ -202,6 +200,11 @@ export default function ChatWindow({ conversation, otherName }) {
       await callAiAutoReply(conversation.id)
       setAiTyping(false)
     }
+  }
+
+  async function handleSend(e) {
+    e?.preventDefault()
+    await sendContent(text.trim())
   }
 
   if (!conversation) {
@@ -299,7 +302,7 @@ export default function ChatWindow({ conversation, otherName }) {
                 isOwn={item.senderId === user?.id}
                 senderName={item.group[0].sender?.full_name || 'ব্যবহারকারী'}
                 senderInitial={(item.group[0].sender?.full_name || '?')[0].toUpperCase()}
-                onQuickReply={!isOwner ? (qr) => handleSend(qr) : null}
+                onQuickReply={!isOwner ? (qr) => sendContent(qr) : null}
               />
             )
           )}
@@ -344,7 +347,7 @@ export default function ChatWindow({ conversation, otherName }) {
           <p className="text-[10px] text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">দ্রুত উত্তর</p>
           <div className="flex flex-col gap-1">
             {CANNED.map((c, i) => (
-              <button key={i} onClick={() => handleSend(c)}
+              <button key={i} type="button" onClick={() => sendContent(c)}
                 className="text-left text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors">
                 {c}
               </button>
