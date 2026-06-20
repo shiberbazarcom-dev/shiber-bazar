@@ -77,15 +77,14 @@ export default async function handler(req, res) {
     if (!shop) return res.status(200).json({ skipped: 'shop not found' })
     if (!shop.auto_reply_enabled) return res.status(200).json({ skipped: 'disabled' })
 
-    // Fetch shop products
+    // Fetch shop products (no is_active filter — fetch all and let AI decide)
     const { data: products, error: prodErr } = await supabase
       .from('products')
-      .select('name, price, unit, description')
+      .select('name, price, unit, description, is_active')
       .eq('shop_id', shop.id)
-      .eq('is_active', true)
       .limit(50)
 
-    console.log('[auto-reply] products count:', products?.length, 'shopId:', shop.id, 'prodErr:', prodErr?.message)
+    console.log('[auto-reply] products count:', products?.length, 'shopId:', shop.id, 'prodErr:', prodErr?.message, 'sample:', JSON.stringify(products?.[0]))
 
     const productList = products?.length
       ? products.map((p, i) => `${i + 1}. ${p.name} — ৳${p.price}${p.unit ? `/${p.unit}` : ''}${p.description ? ` (${p.description})` : ''}`).join('\n')
