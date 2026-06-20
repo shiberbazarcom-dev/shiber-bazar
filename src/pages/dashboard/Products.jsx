@@ -1,10 +1,40 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMyProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, uploadProductImage } from '../../hooks/useProducts'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
 const GREEN = '#2563EB'
+
+function AiDescBtn({ productName, price, onResult }) {
+  const [loading, setLoading] = useState(false)
+  const run = async () => {
+    if (!productName?.trim()) return toast.error('আগে পণ্যের নাম দিন')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'product_description', productName, price }),
+      })
+      const data = await res.json()
+      if (data.description) {
+        onResult(data.description)
+        toast.success(`✨ AI লিখেছে! (${data.provider === 'deepseek' ? 'DeepSeek' : 'Gemini'})`)
+      }
+    } catch { toast.error('AI কাজ করেনি') }
+    setLoading(false)
+  }
+  return (
+    <button type="button" onClick={run} disabled={loading}
+      className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-white disabled:opacity-60"
+      style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
+      {loading
+        ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />লিখছে...</>
+        : <>✨ AI দিয়ে লিখুন</>}
+    </button>
+  )
+}
 
 const EMPTY_FORM = {
   shop_id:     '',
@@ -202,7 +232,14 @@ export default function Products() {
 
               {/* Description */}
               <div>
-                <label className="form-label">বিবরণ</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="form-label !mb-0">বিবরণ</label>
+                  <AiDescBtn
+                    productName={form.name}
+                    price={form.price}
+                    onResult={(desc) => set('description', desc)}
+                  />
+                </div>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)}
                   className="input" rows={2} placeholder="পণ্যের বিস্তারিত..." />
               </div>

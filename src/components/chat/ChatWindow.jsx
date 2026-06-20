@@ -64,6 +64,8 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
 export default function ChatWindow({ conversation, otherName }) {
   const { user } = useAuth()
   const [text, setText] = useState('')
+  const [aiReplies, setAiReplies] = useState([])
+  const [aiLoading, setAiLoading] = useState(false)
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
 
@@ -80,11 +82,33 @@ export default function ChatWindow({ conversation, otherName }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
+  async function getSmartReplies() {
+    const lastCustomerMsg = [...messages].reverse().find(m => m.sender_id !== user?.id)?.content
+    if (!lastCustomerMsg) return
+    setAiLoading(true)
+    setAiReplies([])
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'smart_reply',
+          customerMessage: lastCustomerMsg,
+          shopName: conversation?.shops?.shop_name || 'আমাদের দোকান',
+        }),
+      })
+      const data = await res.json()
+      if (data.replies?.length) setAiReplies(data.replies)
+    } catch { /* silent fail */ }
+    setAiLoading(false)
+  }
+
   async function handleSend(e) {
     e.preventDefault()
     if (!text.trim() || !conversation?.id) return
     const content = text.trim()
     setText('')
+    setAiReplies([])
     inputRef.current?.focus()
     await sendMsg.mutateAsync({ conversationId: conversation.id, content })
   }
@@ -177,6 +201,28 @@ export default function ChatWindow({ conversation, otherName }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Smart Reply suggestions */}
+      {(aiReplies.length > 0 || aiLoading) && (
+        <div className="px-3 py-2 bg-purple-50 border-t border-purple-100">
+          {aiLoading ? (
+            <div className="flex items-center gap-2 text-xs text-purple-500 py-1">
+              <span className="w-3 h-3 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
+              AI reply তৈরি করছে...
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wide">✨ AI Suggestions</p>
+              {aiReplies.map((r, i) => (
+                <button key={i} onClick={() => { setText(r); setAiReplies([]); inputRef.current?.focus() }}
+                  className="w-full text-left text-xs text-purple-800 bg-white border border-purple-200 rounded-xl px-3 py-2 hover:bg-purple-50 active:scale-98 transition-all line-clamp-2">
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <form onSubmit={handleSend} className="px-4 py-3 bg-white border-t border-gray-100 flex gap-2 flex-shrink-0">
         <input
           ref={inputRef}
@@ -185,6 +231,15 @@ export default function ChatWindow({ conversation, otherName }) {
           placeholder="বার্তা লিখুন..."
           className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
         />
+        <button type="button" onClick={getSmartReplies} disabled={aiLoading}
+          title="AI Smart Reply"
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors text-white"
+          style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
+          {aiLoading
+            ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            : <span className="text-sm font-bold">✨</span>
+          }
+        </button>
         <button
           type="submit"
           disabled={!text.trim() || sendMsg.isPending}

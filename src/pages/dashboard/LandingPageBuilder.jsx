@@ -4,6 +4,16 @@ import { supabase } from '../../lib/supabase'
 import { useShopProducts } from '../../hooks/useProducts'
 import toast from 'react-hot-toast'
 
+async function aiGenerate(type, params) {
+  const res = await fetch('/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, ...params }),
+  })
+  if (!res.ok) throw new Error('AI সার্ভার সাড়া দেয়নি')
+  return res.json()
+}
+
 /* ── helpers ── */
 const slugify = (text) =>
   text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 40) +
@@ -259,6 +269,35 @@ export default function LandingPageBuilder() {
     }))
   }
 
+  const [aiLoading, setAiLoading] = useState(false)
+
+  const generateWithAI = async () => {
+    const productName = form.product_name || form.title
+    if (!productName.trim()) return toast.error('আগে পণ্যের নাম দিন')
+    setAiLoading(true)
+    try {
+      const data = await aiGenerate('landing_page', {
+        productName,
+        price: form.product_price,
+        category: shops.find(s => s.id === form.shop_id)?.category || '',
+      })
+      setForm(f => ({
+        ...f,
+        headline:         data.headline    || f.headline,
+        subheadline:      data.subheadline || f.subheadline,
+        badge_text:       data.badge_text  || f.badge_text,
+        cta_text:         data.cta_text    || f.cta_text,
+        whatsapp_message: data.whatsapp_message || f.whatsapp_message,
+        features: data.features?.length ? data.features : f.features,
+        faqs:     data.faqs?.length     ? data.faqs     : f.faqs,
+      }))
+      toast.success(`✨ AI লিখেছে! (${data.provider === 'deepseek' ? 'DeepSeek' : 'Gemini'})`)
+    } catch (e) {
+      toast.error('AI কাজ করেনি: ' + e.message)
+    }
+    setAiLoading(false)
+  }
+
   const save = async () => {
     if (!form.title.trim()) return toast.error('শিরোনাম দিন')
     setSaving(true)
@@ -312,6 +351,13 @@ export default function LandingPageBuilder() {
             </svg>
           </button>
           <h1 className="font-bold text-gray-800 flex-1">{editingId ? 'এডিট করুন' : 'নতুন ল্যান্ডিং পেজ'}</h1>
+          <button onClick={generateWithAI} disabled={aiLoading}
+            className="px-3 h-9 rounded-xl text-white text-sm font-bold disabled:opacity-60 flex items-center gap-1.5"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
+            {aiLoading
+              ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />লিখছে...</>
+              : <>✨ AI</>}
+          </button>
           <button onClick={save} disabled={saving}
             className="px-4 h-9 rounded-xl text-white text-sm font-bold disabled:opacity-60"
             style={{ background: tpl.color }}>
