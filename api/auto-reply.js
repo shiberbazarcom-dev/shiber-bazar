@@ -4,225 +4,221 @@
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
-/* Detect customer gender/addressing style from conversation history */
+/* ── Gender detection: ONLY from explicit customer statement ── */
 function detectAddressingStyle(msgs, ownerId) {
-  // Check what the AI has already used — if found, lock it in
-  const aiMsgs = msgs.filter(m => m.sender_id === ownerId && m.is_ai).map(m => m.content)
-  for (const msg of aiMsgs) {
-    if (/ভাই/.test(msg)) return 'male'
-    if (/আপু/.test(msg)) return 'female'
-    if (/স্যার/.test(msg)) return 'male'
-    if (/ম্যাডাম/.test(msg)) return 'female'
-  }
-  // Check if customer revealed their gender explicitly
   const customerMsgs = msgs.filter(m => m.sender_id !== ownerId).map(m => m.content)
   for (const msg of customerMsgs) {
-    const lc = msg.toLowerCase()
-    if (/আমি (একজন )?(মহিলা|মেয়ে|আপু|বোন)/.test(lc) || /আমার (স্বামী|ছেলে|মেয়ে)/.test(lc)) return 'female'
-    if (/আমি (একজন )?(পুরুষ|ছেলে|ভাই|ব্যক্তি)/.test(lc) || /আমার (স্ত্রী|বউ|বাবা)/.test(lc)) return 'male'
+    const lc = msg
+    if (/আমি\s*(একজন\s*)?(মহিলা|মেয়ে|আপু|বোন)|আমার\s*(স্বামী|ছেলে সন্তান)/.test(lc)) return 'female'
+    if (/আমি\s*(একজন\s*)?(পুরুষ|ছেলে|ভাই মানুষ)|আমার\s*(স্ত্রী|বউ)/.test(lc)) return 'male'
   }
-  return 'neutral'
+  return 'neutral' // DEFAULT — never guess from name
 }
 
-function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona, addressingStyle }) {
-  const pharmacyMode = shopCategory?.toLowerCase().includes('pharma') || shopCategory?.toLowerCase().includes('ঔষধ') || shopCategory?.toLowerCase().includes('medicine')
+/* ── Parse conversation to extract already-collected order info ── */
+function extractCollectedInfo(msgs, ownerId) {
+  const info = { name: null, phone: null, address: null, hasOrderConfirmed: false }
+  const allText = msgs.map(m => m.content).join('\n')
 
-  const genderRule = addressingStyle === 'male'
-    ? `## সম্বোধন (LOCKED — পরিবর্তন করবে না)
-- এই conversation-এ customer কে সবসময় "ভাই" বলো
-- "আপু", "ম্যাডাম" কখনো বলবে না
-- উদাহরণ: "জি ভাই", "ঠিক আছে ভাই", "কত প্যাকেট লাগবে ভাই?"`
+  // If SB order number exists — order already placed
+  if (/\bSB\d+\b/.test(allText)) {
+    info.hasOrderConfirmed = true
+    return info
+  }
+
+  // Extract phone from customer messages
+  for (const msg of msgs.filter(m => m.sender_id !== ownerId)) {
+    const phone = msg.content.match(/01[3-9]\d{8}/)
+    if (phone) { info.phone = phone[0]; break }
+  }
+
+  return info
+}
+
+function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona, addressingStyle, collectedInfo }) {
+  const pharmacyMode = /pharma|ঔষধ|medicine|pharmacy/i.test(shopCategory || '')
+
+  const addressRule = addressingStyle === 'male'
+    ? '- এই conversation-এ customer কে "ভাই" বলো (customer নিজে male বলেছেন)'
     : addressingStyle === 'female'
-    ? `## সম্বোধন (LOCKED — পরিবর্তন করবে না)
-- এই conversation-এ customer কে সবসময় "আপু" বলো
-- "ভাই", "স্যার" কখনো বলবে না
-- উদাহরণ: "জি আপু", "ঠিক আছে আপু", "কত পিস লাগবে আপু?"`
-    : `## সম্বোধন (NEUTRAL — gender নিশ্চিত না)
-- "ভাই" বা "আপু" কখনো বলবে না — gender অনুমান করবে না
-- Neutral phrases ব্যবহার করো: "জি 😊", "ঠিক আছে", "অবশ্যই", "কতটি লাগবে?", "ধন্যবাদ"
-- Customer নিজে gender বললে পরবর্তী reply থেকে সেটা use করো এবং সারা conversation lock রাখো`
+    ? '- এই conversation-এ customer কে "আপু" বলো (customer নিজে female বলেছেন)'
+    : `- কখনো "ভাই" বা "আপু" বলবে না — gender জানা নেই, guess করবে না
+- Neutral শব্দ ব্যবহার করো: "জি", "ঠিক আছে", "বুঝতে পেরেছি", "অবশ্যই", "ধন্যবাদ", "নিশ্চয়ই"`
 
-  return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী (ShiberBazar platform)।
+  const variedStarters = `
+## NATURAL TRANSITIONS — প্রতিটি reply আলাদা
+❌ কখনো শুধু "জি" দিয়ে reply শুরু করবে না
+❌ একই opener দুইবার ব্যবহার করবে না
+
+✅ Use these naturally based on context:
+তথ্য পেলে: "বুঝতে পেরেছি।", "ধন্যবাদ, তথ্যটি নোট করলাম।", "চমৎকার।", "ঠিক আছে, নোট করলাম।"
+পরের তথ্য চাইতে: "ঠিক আছে, পরের তথ্যটি দিন।", "এখন একটু বলুন —", "সব তথ্য প্রায় হয়ে এল।"
+সব পেলে: "সব তথ্য পাওয়া গেছে।", "অর্ডারটি প্রস্তুত করছি।"
+সাহায্যে: "অবশ্যই।", "নিশ্চয়ই।", "হ্যাঁ, বলুন।"
+
+আগের reply যদি "বুঝতে পেরেছি" দিয়ে শুরু হয় → পরেরটা ভিন্ন opener দাও।`
+
+  const alreadyHave = []
+  if (collectedInfo.phone) alreadyHave.push(`ফোন: ${collectedInfo.phone}`)
+
+  return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী।
 দোকানের ধরন: ${shopCategory || 'সাধারণ দোকান'}
 
 ## পরিচয়
-- তুমি একজন বাস্তব মানুষ, professional sales representative
-- কখনো AI/bot/robot বলে স্বীকার করবে না — প্রসঙ্গ পরিবর্তন করো
-- Customer যদি মালিক/owner/real person চায় → handoff: true
+- তুমি একজন বাস্তব মানুষ — কখনো AI/bot বলে স্বীকার করবে না
+- Customer মালিক/real person চাইলে → handoff: true
 
-${genderRule}
+## সম্বোধন নিয়ম
+${addressRule}
+
+${variedStarters}
 
 ## কথা বলার নিয়ম
-- সবসময় স্বাভাবিক বাংলায় বলো
-- Bengali, Banglish, বানান ভুল, local ভাষা বোঝো
-- Tone: বাজারের দোকানদারের মতো — আন্তরিক, সহজ
-- শুধু একটাই প্রশ্ন করো প্রতিবার
-- Reply ছোট রাখো (২-৪ লাইন)
+- সহজ স্বাভাবিক বাংলায় কথা বলো
+- Bengali, Banglish, বানান ভুল সব বোঝো
+- Reply ছোট রাখো (২-৪ লাইন), শুধু একটা প্রশ্ন করো
 - Emoji ব্যবহার করবে না
 - আগের reply হুবহু repeat করবে না
 
 ## আগের reply (এটা repeat করবে না):
 "${lastAiReply || ''}"
 
+${alreadyHave.length ? `## ইতিমধ্যে সংগ্রহ করা তথ্য:\n${alreadyHave.join('\n')}` : ''}
+
 ## দোকানের পণ্য তালিকা:
-${productList || 'পণ্য তালিকা যোগ করা হয়নি। জিজ্ঞেস করলে বলো "একটু পরে জানাচ্ছি ভাই।"'}
+${productList || 'পণ্য তালিকা পাওয়া যায়নি। জিজ্ঞেস করলে বলো "একটু পরে জানাচ্ছি।"'}
 ${aiPersona ? `\n## দোকানের বিশেষ তথ্য:\n${aiPersona}` : ''}
 
-## এখন পর্যন্ত কথোপকথন:
+## কথোপকথনের ইতিহাস:
 ${chatHistory || '(নতুন কথোপকথন)'}
 Customer: ${customerMessage}
 
 ---
 
-## ORDER TAKING FLOW — ধাপে ধাপে অনুসরণ করো
+## ORDER FLOW — ধাপ অনুসরণ করো
 
-**গুরুত্বপূর্ণ:** conversation history দেখে বুঝো কোন তথ্য আগেই নেওয়া হয়েছে। শুধু missing তথ্যই জিজ্ঞেস করো।
+conversation history দেখো — কোন তথ্য আগেই আছে তা আর জিজ্ঞেস করবে না।
 
----
+### STEP 1 — পণ্য ও পরিমাণ
+Customer কিনতে চাইলে detect করো।
+- পরিমাণ না জানলে → "কত পরিমাণ লাগবে?"
+- পণ্য না জানলে → "কোন পণ্যটি নিতে চাচ্ছেন?"
+- পণ্য + পরিমাণ দুটোই জানলে → নিশ্চিত করো, "আর কিছু লাগবে?"
 
-### STEP 1 — পণ্য ও পরিমাণ চিহ্নিত করো
+### STEP 2 — নাম
+Customer কেনা শেষ বললে → "আপনার নামটা বলবেন?"
 
-Customer buying intent detect করো। Examples:
-"এই চাল নিতে চাই", "order করতে চাই", "৫ কেজি মিনিকেট লাগবে", "এটা কিনবো", "দাম ঠিক আছে নিবো"
+### STEP 3 — মোবাইল
+নাম পেলে → "মোবাইল নম্বরটা দিন।"
+Valid: 01XXXXXXXXX (11 digits, 01 দিয়ে শুরু)
+Invalid হলে → "সঠিক মোবাইল নম্বর দিন (যেমন: 01XXXXXXXXX)"
 
-- পণ্যের নাম জানা থাকলে কিন্তু পরিমাণ না থাকলে → "জি, কত পরিমাণ লাগবে?"
-- পণ্যের নাম না জানলে → "আপনি কোন পণ্যটি নিতে চাচ্ছেন?"
-- পণ্য + পরিমাণ দুটোই পেলে → confirm করো এবং জিজ্ঞেস করো "আর কিছু লাগবে?"
-- Multiple products support করো — cart build করো
-- Customer পণ্য পরিবর্তন করলে (যেমন "না, মিনিকেট না, নাজিরশাইল দিন") → সাথে সাথে update করো
+### STEP 4 — ঠিকানা ⚠️ IMPORTANT
+মোবাইল পেলে → "ডেলিভারি ঠিকানা দিন।"
 
-### STEP 2 — নাম সংগ্রহ করো
+**যেকোনো location text গ্রহণ করো — কোনো strict format নেই:**
+✅ "শিবের বাজার" → accept
+✅ "shiber bazar sylhet" → accept
+✅ "হাটফলা ইউনিয়ন" → accept
+✅ "দক্ষিণ সুরমা" → accept
+✅ "ঢাকা" → accept
+✅ "mirpur 10" → accept
 
-Customer যখন বলে "না আর কিছু লাগবে না" বা কেনা শেষ → জিজ্ঞেস করো:
-"আপনার নামটা বলবেন?"
+Customer যা বলুক — একটি word-ও address হিসেবে গ্রহণ করো।
+**আর ঠিকানা জিজ্ঞেস করবে না।** একবার পেলেই STEP 5-এ যাও।
 
-### STEP 3 — মোবাইল নম্বর সংগ্রহ করো
+### STEP 5 — অর্ডার সারাংশ
+সব তথ্য পেলে এই format দেখাও:
 
-নাম পেলে → জিজ্ঞেস করো:
-"আপনার মোবাইল নম্বরটি দিন।"
+"অর্ডার সারাংশ:
 
-Bangladesh phone: 01XXXXXXXXX (11 digits, starts with 01)
-ভুল format হলে বলো: "ভাই, সঠিক মোবাইল নম্বর দিন (যেমন: 01XXXXXXXXX)"
-
-### STEP 4 — ঠিকানা সংগ্রহ করো
-
-মোবাইল পেলে → জিজ্ঞেস করো:
-"ডেলিভারি ঠিকানাটি দিন।"
-
-### STEP 5 — অর্ডার সারাংশ দেখাও
-
-সব তথ্য পেলে এই format-এ সারাংশ দেখাও:
-
-"অর্ডার সারাংশ
-
-পণ্য: [নাম]
-পরিমাণ: [পরিমাণ]
-একক মূল্য: ৳[price]
-সাবটোটাল: ৳[price × quantity]
+পণ্য: [নাম] × [পরিমাণ] = ৳[subtotal]
+মোট: ৳[total]
 
 নাম: [নাম]
 মোবাইল: [নম্বর]
 ঠিকানা: [ঠিকানা]
 
-সব তথ্য ঠিক থাকলে Confirm লিখুন।"
+সব ঠিক থাকলে 'Confirm' লিখুন।"
 
-Multiple products হলে প্রতিটি পণ্য আলাদা লাইনে দেখাও।
+### STEP 6 — Confirmation
+Customer "confirm / হ্যাঁ / জি / ok / ঠিক আছে / order করুন / yes" বললে → order JSON তৈরি করো।
 
-### STEP 6 — Confirmation নাও
-
-Customer "হ্যাঁ / জি / confirm / ok / ঠিক আছে / order করুন" বললে → order JSON দাও
-Reply: "জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে। দোকানদার শীঘ্রই যোগাযোগ করবেন।"
+**CRITICAL:** order JSON-এ সব field অবশ্যই দিতে হবে:
+- product_name, quantity, customer_name, customer_phone, customer_address সব required
 
 ---
 
-## SMART PRODUCT RECOMMENDATION (গুরুত্বপূর্ণ)
-
-Customer কোনো পণ্য জিজ্ঞেস করলে বা buying intent বুঝলে — শুধুমাত্র এই দোকানের পণ্য তালিকা থেকে সর্বোচ্চ ৩-৫টি relevant পণ্য দেখাও।
-
-**কখন recommend করবে:**
-- Customer কোনো category বললে (যেমন "চাল আছে?", "ফেসওয়াশ আছে?")
-- Customer buying intent দেখালে ("লাগবে", "চাই", "দিন", "আছে?")
-- Customer একটা পণ্য order দিলে — related/complementary পণ্য suggest করো
-
-**কীভাবে দেখাবে (হুবহু এই format):**
-"জি ভাই, আমাদের কাছে আছে:
+## পণ্য recommendation
+Customer পণ্য চাইলে শুধু এই দোকানের list থেকে দেখাও:
+"আমাদের কাছে আছে:
 • [পণ্য ১] — ৳[মূল্য]
 • [পণ্য ২] — ৳[মূল্য]
-• [পণ্য ৩] — ৳[মূল্য]
 
-কোনটা নিবেন?"
+কোনটা নেবেন?"
+${pharmacyMode ? '\n⚠️ ফার্মেসি: ওষুধ prescribe করবে না। বলবে "দয়া করে ডাক্তারের পরামর্শ নিন।"' : ''}
 
-**Upselling (natural ভাবে, aggressive নয়):**
-Customer একটা পণ্য নিলে — একবার মাত্র related পণ্য suggest করো।
-যেমন: চাল নিলে → "চালের সাথে সয়াবিন তেল বা ডাল লাগবে?"
+## Handoff trigger
+এই পরিস্থিতিতে handoff: true দাও:
+- "দাম কমবে?", "ডিসকাউন্ট?", "শেষ দাম?"
+- "দোকান কখন খোলা?", "stock আছে?", "কবে পাবো?"
+- "মালিকের সাথে কথা বলবো", "real person চাই"
+- Customer ৩+ বার একই প্রশ্ন করলে বা frustrated হলে
 
-**নিয়ম:**
-- শুধুমাত্র এই দোকানের পণ্য তালিকা থেকে recommend করো
-- অন্য দোকানের পণ্য কখনো বলবে না
-- পণ্য তালিকায় না থাকলে → "এই পণ্যটা আমাদের কাছে নেই।"
-${pharmacyMode ? `- এটি একটি ফার্মেসি। ওষুধ prescribe করবে না। বলবে: "দয়া করে ডাক্তারের পরামর্শ নিন। আমাদের কাছে এই ধরনের পণ্য আছে..."` : ''}
-
-## INTELLIGENT HANDOFF — কখন দোকানদারের কাছে পাঠাবে
-
-নিচের যেকোনো পরিস্থিতিতে handoff: true দাও:
-
-**দাম নিয়ে আলোচনা:**
-- "শেষ দাম কত?", "কিছু কম হবে?", "ডিসকাউন্ট পাবো?", "দাম কমবে?"
-
-**দোকান সংক্রান্ত প্রশ্ন যার উত্তর জানো না:**
-- "আজকে দোকান খোলা আছে?", "কখন ডেলিভারি হবে?", "এই পণ্য কবে আসবে?", "stock আছে?"
-- পণ্য database-এ নেই এমন কিছু customer বারবার জিজ্ঞেস করলে
-
-**Customer মানুষ চাইলে:**
-- "দোকানদারের সাথে কথা বলতে চাই", "owner দিন", "মানুষের সাথে কথা বলবো", "real person চাই"
-
-**Customer frustrated হলে:**
-- "আপনি বুঝতে পারছেন না", "ভুল বলছেন", "এটা ঠিক না", "বারবার একই কথা বলছেন"
-- Customer একই প্রশ্ন ৩+ বার করলে
-
-**Handoff reply examples (context অনুযায়ী বেছে নাও):**
-- "জি ভাই, এই বিষয়ে আমি পুরোপুরি নিশ্চিত নই। দোকানদারকে জানিয়ে দিচ্ছি, তিনি শীঘ্রই উত্তর দিবেন।"
-- "এই প্রশ্নের সঠিক উত্তর দোকানদার ভালো দিতে পারবেন। আমি আপনার বার্তাটি পাঠিয়ে দিচ্ছি।"
-- "ঠিক আছে ভাই, মালিককে জানাচ্ছি। কিছুক্ষণ অপেক্ষা করুন।"
-
-**কখনো বলবে না:** "Error", "I don't know", "Unable to answer"
-
-## বিশেষ পরিস্থিতি
-- "thanks / ধন্যবাদ / ok" (order-এর পরে) → "ধন্যবাদ ভাই, আর কিছু লাগলে জানাবেন।" order: null
-- পণ্য list-এ নেই → "দুঃখিত ভাই, এই পণ্যটা আমাদের কাছে নেই।"
-- Order একবার SB নম্বর দেওয়া হলে → নতুন order object দেবে না (customer নতুন পণ্য না চাইলে)
-- "আগের অর্ডারের সাথে যোগ করে দিচ্ছি" — কখনো বলবে না
-- Customer conversation ছেড়ে চলে গেলে পরে ফিরলে history দেখে flow continue করো
+## বিশেষ নিয়ম
+- Thanks/ধন্যবাদ (order-এর পরে) → "ধন্যবাদ, আর কিছু লাগলে জানাবেন।" order: null
+- পণ্য list-এ নেই → "দুঃখিত, এই পণ্যটি আমাদের কাছে নেই।"
+- History-তে SB নম্বর আছে → নতুন order JSON দেবে না (customer নতুন পণ্য না চাইলে)
 
 ---
 
-## JSON Response Format (শুধু JSON, অন্য কিছু না):
+## JSON Response Format (শুধু JSON দেবে):
 
 সাধারণ reply:
 {"reply":"...","order":null,"items":null,"handoff":false,"quick_replies":["option1","option2"]}
 
-Single product order confirm:
-{"reply":"জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে। দোকানদার শীঘ্রই যোগাযোগ করবেন।","order":{"product_name":"পণ্যের নাম","quantity":1,"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","notes":""},"items":null,"handoff":false,"quick_replies":[]}
+Single product order (সব field required):
+{"reply":"ধন্যবাদ, অর্ডার নিশ্চিত হচ্ছে...","order":{"product_name":"পণ্যের নাম","quantity":2,"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","notes":""},"items":null,"handoff":false,"quick_replies":[]}
 
-Multiple products order confirm:
-{"reply":"জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে।","order":null,"items":[{"product_name":"চাল","quantity":5},{"product_name":"চিনি","quantity":2}],"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","handoff":false,"quick_replies":[]}
+Multiple products:
+{"reply":"ধন্যবাদ, অর্ডার নিশ্চিত হচ্ছে...","order":null,"items":[{"product_name":"চাল","quantity":5},{"product_name":"তেল","quantity":2}],"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","handoff":false,"quick_replies":[]}
 
 Handoff:
-{"reply":"ঠিক আছে ভাই, মালিককে জানাচ্ছি। কিছুক্ষণ অপেক্ষা করুন।","order":null,"items":null,"handoff":true,"quick_replies":[]}`
+{"reply":"এই বিষয়ে দোকানদার ভালো বলতে পারবেন, এখনই জানাচ্ছি।","order":null,"items":null,"handoff":true,"quick_replies":[]}`
 }
 
+/* ── Neutral acknowledgment messages — varied, no gender, no repetitive "জি" ── */
 const ACK_MESSAGES = [
-  'জি ভাই',
-  'হ্যাঁ ভাই',
-  'আচ্ছা ভাই',
-  'জি, একটু দেখছি',
+  'ঠিক আছে, একটু দেখছি',
+  'বুঝতে পেরেছি',
+  'অবশ্যই, এক মুহূর্ত',
+  'আচ্ছা, একটু সময় দিন',
+  'ধন্যবাদ জানানোর জন্য',
+  'নিশ্চয়ই, দেখছি',
   'হ্যাঁ, এক সেকেন্ড',
-  'ঠিক আছে ভাই',
-  'জি আপু',
-  'হ্যাঁ আপু, একটু দেখছি',
+  'চমৎকার, দেখছি',
 ]
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+/* ── Format beautiful order confirmation message ── */
+function formatOrderConfirmation({ orderNumber, shopName, productName, quantity, total, customerName, customerPhone, customerAddress }) {
+  return `✅ অর্ডার সফলভাবে গ্রহণ করা হয়েছে
+
+অর্ডার নং: ${orderNumber}
+দোকান: ${shopName}
+
+পণ্য: ${productName}
+পরিমাণ: ${quantity}
+মোট মূল্য: ৳${total}
+
+নাম: ${customerName}
+ফোন: ${customerPhone}
+ঠিকানা: ${customerAddress}
+
+স্ট্যাটাস: Pending ⏳
+দোকানদার শীঘ্রই যোগাযোগ করবেন।`
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -252,6 +248,7 @@ export default async function handler(req, res) {
 
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
+    // Owner reply → resume AI if paused
     if (sender_id === conv.owner_id) {
       if (conv.ai_paused) {
         await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation_id)
@@ -282,12 +279,13 @@ export default async function handler(req, res) {
 
     const { data: recentMsgs } = await supabase
       .from('messages')
-      .select('sender_id, content, is_ai')
+      .select('sender_id, content, is_ai, created_at')
       .eq('conversation_id', conversation_id)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(24)
 
     const msgs = (recentMsgs || []).reverse()
+
     const chatHistory = msgs
       .map(m => m.sender_id === conv.owner_id ? `বিক্রয়কর্মী: ${m.content}` : `Customer: ${m.content}`)
       .join('\n')
@@ -297,6 +295,12 @@ export default async function handler(req, res) {
 
     const shopCategory = shop.categories?.name || ''
     const addressingStyle = detectAddressingStyle(msgs, conv.owner_id)
+    const collectedInfo = extractCollectedInfo(msgs, conv.owner_id)
+
+    // If order already confirmed in this conversation, skip
+    if (collectedInfo.hasOrderConfirmed) {
+      // Still reply, just don't create another order
+    }
 
     const promptText = buildPrompt({
       shopName: shop.shop_name,
@@ -307,9 +311,10 @@ export default async function handler(req, res) {
       lastAiReply,
       aiPersona: shop.ai_persona || '',
       addressingStyle,
+      collectedInfo,
     })
 
-    // ── Human delay: send acknowledgment first ──
+    // ── Human delay: ACK first ──
     const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
     await supabase.from('messages').insert({
       conversation_id,
@@ -317,7 +322,11 @@ export default async function handler(req, res) {
       content: ack,
       is_ai: true,
     })
-    await sleep(1500 + Math.random() * 2000) // 1.5s – 3.5s
+    await supabase.from('conversations')
+      .update({ last_message: ack, last_message_at: new Date().toISOString() })
+      .eq('id', conversation_id)
+
+    await sleep(1500 + Math.random() * 2000)
 
     const { result } = await generate(promptText)
 
@@ -325,27 +334,25 @@ export default async function handler(req, res) {
     try {
       const parsed = parseJson(result)
       reply = parsed.reply
-      order = parsed.order       // single product
-      items = parsed.items       // multiple products array
+      order = parsed.order
+      items = parsed.items
       customerName = parsed.customer_name
       customerPhone = parsed.customer_phone
       customerAddress = parsed.customer_address
       quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
       handoff = !!parsed.handoff
     } catch {
-      reply = result.slice(0, 500)
+      reply = result.slice(0, 600)
     }
 
     if (!reply) return res.status(200).json({ skipped: 'no reply' })
 
+    // ── Handoff ──
     if (handoff) {
       await supabase.from('conversations').update({ ai_paused: true }).eq('id', conversation_id)
-
-      // Notify shop owner
       const recentContext = msgs.slice(-4)
         .map(m => m.sender_id === conv.owner_id ? `দোকান: ${m.content}` : `Customer: ${m.content}`)
         .join('\n')
-
       await supabase.from('notifications').insert({
         user_id: shop.owner_id,
         type: 'customer_needs_help',
@@ -355,11 +362,18 @@ export default async function handler(req, res) {
       })
     }
 
-    // ── Create order(s) ──
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-    // Single product order
+    // ── Guard: if an order was already confirmed in this conversation, block new order ──
+    if (collectedInfo.hasOrderConfirmed && (order || items?.length)) {
+      reply = 'আপনার অর্ডার আগেই নেওয়া হয়েছে। নতুন পণ্য অর্ডার করতে চাইলে বলুন।'
+      order = null
+      items = null
+    }
+
+    // ── Single product order ──
     if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
+      // Duplicate check: same phone + similar product within 5 minutes
       const { data: dup } = await supabase
         .from('orders').select('order_number')
         .eq('shop_id', shop.id)
@@ -369,62 +383,112 @@ export default async function handler(req, res) {
         .maybeSingle()
 
       if (dup) {
-        reply = `ঠিক আছে ভাই, আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। শীঘ্রই যোগাযোগ করব।`
+        reply = `আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। দোকানদার শীঘ্রই যোগাযোগ করবেন।`
       } else {
-        const matched = products?.find(p => p.name?.toLowerCase().includes(order.product_name.toLowerCase().slice(0, 6)))
-        const total = (matched?.price || 0) * (order.quantity || 1)
-        const { data: created } = await supabase.from('orders').insert({
+        const matched = products?.find(p =>
+          p.name?.toLowerCase().includes(order.product_name.toLowerCase().slice(0, 6))
+        )
+        const unitPrice = matched?.price || 0
+        const qty = Number(order.quantity) || 1
+        const total = unitPrice * qty
+
+        const { data: created, error: insertError } = await supabase.from('orders').insert({
           shop_id: shop.id,
           product_name: order.product_name,
-          quantity: order.quantity || 1,
+          quantity: qty,
           total,
           customer_name: order.customer_name,
           customer_phone: order.customer_phone,
           customer_address: order.customer_address,
           notes: order.notes || '',
-          status: 'pending',
-        }).select('order_number').single()
-        if (created?.order_number) {
-          reply = `${reply} (অর্ডার নং: ${created.order_number})`
+          status: 'pending',   // admin/owner panels both filter by this
+        }).select('order_number, id').single()
+
+        if (insertError || !created?.order_number) {
+          // DB insert failed — show error, NOT success
+          console.error('[auto-reply] order insert failed:', insertError)
+          reply = 'দুঃখিত, এই মুহূর্তে অর্ডার নেওয়া সম্ভব হচ্ছে না। একটু পরে আবার চেষ্টা করুন বা দোকানে সরাসরি যোগাযোগ করুন।'
+        } else {
+          // ✅ DB confirmed — now show success card
+          reply = formatOrderConfirmation({
+            orderNumber: created.order_number,
+            shopName: shop.shop_name,
+            productName: order.product_name,
+            quantity: qty,
+            total,
+            customerName: order.customer_name,
+            customerPhone: order.customer_phone,
+            customerAddress: order.customer_address,
+          })
+          // Notify shop owner of new order
+          await supabase.from('notifications').insert({
+            user_id: shop.owner_id,
+            type: 'new_order',
+            title: `নতুন অর্ডার: ${created.order_number}`,
+            message: `${order.customer_name} — ${order.product_name} × ${qty} — ৳${total}`,
+            data: { conversation_id, order_id: created.id, order_number: created.order_number },
+          })
         }
       }
     }
 
-    // Multiple products order
-    if (items?.length && customerPhone && customerAddress) {
+    // ── Multiple products order ──
+    if (!collectedInfo.hasOrderConfirmed && items?.length && (customerPhone || order?.customer_phone) && (customerAddress || order?.customer_address)) {
+      const phone = customerPhone || order?.customer_phone
+      const address = customerAddress || order?.customer_address
+      const name = customerName || order?.customer_name || ''
+
       const { data: dup } = await supabase
         .from('orders').select('order_number')
         .eq('shop_id', shop.id)
-        .eq('customer_phone', customerPhone)
+        .eq('customer_phone', phone)
         .gte('created_at', fiveMinsAgo)
         .maybeSingle()
 
       if (dup) {
-        reply = `ঠিক আছে ভাই, আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। শীঘ্রই যোগাযোগ করব।`
+        reply = `আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। দোকানদার শীঘ্রই যোগাযোগ করবেন।`
       } else {
-        // Insert one combined order with all items in notes
-        const productSummary = items.map(it => `${it.product_name} x${it.quantity || 1}`).join(', ')
+        const productSummary = items.map(it => `${it.product_name} ×${it.quantity || 1}`).join(', ')
         const firstProduct = items[0]
-        const matched = products?.find(p => p.name?.toLowerCase().includes(firstProduct.product_name?.toLowerCase().slice(0, 6)))
+        const totalQty = items.reduce((s, it) => s + (Number(it.quantity) || 1), 0)
         const total = items.reduce((sum, it) => {
           const p = products?.find(pr => pr.name?.toLowerCase().includes(it.product_name?.toLowerCase().slice(0, 6)))
-          return sum + (p?.price || 0) * (it.quantity || 1)
+          return sum + (p?.price || 0) * (Number(it.quantity) || 1)
         }, 0)
 
-        const { data: created } = await supabase.from('orders').insert({
+        const { data: created, error: insertError } = await supabase.from('orders').insert({
           shop_id: shop.id,
           product_name: firstProduct.product_name,
-          quantity: firstProduct.quantity || 1,
+          quantity: Number(firstProduct.quantity) || 1,
           total,
-          customer_name: customerName || '',
-          customer_phone: customerPhone,
-          customer_address: customerAddress,
-          notes: `পণ্য তালিকা: ${productSummary}`,
+          customer_name: name,
+          customer_phone: phone,
+          customer_address: address,
+          notes: `পণ্য: ${productSummary}`,
           status: 'pending',
-        }).select('order_number').single()
+        }).select('order_number, id').single()
 
-        if (created?.order_number) {
-          reply = `${reply} (অর্ডার নং: ${created.order_number})`
+        if (insertError || !created?.order_number) {
+          console.error('[auto-reply] multi-order insert failed:', insertError)
+          reply = 'দুঃখিত, এই মুহূর্তে অর্ডার নেওয়া সম্ভব হচ্ছে না। একটু পরে আবার চেষ্টা করুন।'
+        } else {
+          reply = formatOrderConfirmation({
+            orderNumber: created.order_number,
+            shopName: shop.shop_name,
+            productName: productSummary,
+            quantity: totalQty,
+            total,
+            customerName: name,
+            customerPhone: phone,
+            customerAddress: address,
+          })
+          await supabase.from('notifications').insert({
+            user_id: shop.owner_id,
+            type: 'new_order',
+            title: `নতুন অর্ডার: ${created.order_number}`,
+            message: `${name} — ${productSummary} — ৳${total}`,
+            data: { conversation_id, order_id: created.id, order_number: created.order_number },
+          })
         }
       }
     }
@@ -438,7 +502,7 @@ export default async function handler(req, res) {
     })
 
     await supabase.from('conversations')
-      .update({ last_message: reply, last_message_at: new Date().toISOString() })
+      .update({ last_message: reply.slice(0, 200), last_message_at: new Date().toISOString() })
       .eq('id', conversation_id)
 
     return res.status(200).json({ ok: true })
