@@ -7,6 +7,50 @@ import { useMarketStats } from '../../hooks/useShops'
 import { getAvatarUrl } from '../../lib/utils'
 import SearchDropdown from '../SearchDropdown'
 
+function TickerStrip({ stats }) {
+  const items = [
+    stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
+    `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
+    stats?.totalProducts ? `🛍️ ${stats.totalProducts}+ পণ্য এক জায়গায়` : null,
+    `💬 AI চ্যাটবট — দোকানদার ঘুমালেও অর্ডার নেয়`,
+    stats?.totalUsers    ? `👥 ${stats.totalUsers}+ ক্রেতা-বিক্রেতা যুক্ত হয়েছেন` : null,
+    `📲 অ্যাপ ইন্সটল করুন, হাতের মুঠোয় রাখুন বাজার`,
+    `⚡ সরাসরি চ্যাট করুন — তাৎক্ষণিক যোগাযোগ`,
+    `🎯 আপনার দোকান যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
+  ].filter(Boolean)
+
+  const [idx, setIdx] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIdx(i => (i + 1) % items.length)
+        setVisible(true)
+      }, 400)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [items.length])
+
+  return (
+    <div className="hidden sm:flex items-center justify-center text-white text-xs py-1.5 overflow-hidden h-7"
+      style={{ background: 'linear-gradient(90deg, #1e3a8a, #1d4ed8, #2563eb, #1d4ed8, #1e3a8a)' }}>
+      <span
+        style={{
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(-6px)',
+          display: 'block',
+          fontWeight: 500,
+          letterSpacing: '0.02em',
+        }}>
+        {items[idx]}
+      </span>
+    </div>
+  )
+}
+
 export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth()
   const { totalCount: cartCount } = useCart()
@@ -175,40 +219,7 @@ export default function Navbar() {
         )}
 
         {/* Announcement ticker — only shown after banner is dismissed */}
-        {announceBannerDismissed && (() => {
-          const items = [
-            stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
-            `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
-            stats?.totalProducts ? `🛍️ ${stats.totalProducts}+ পণ্য এক জায়গায়` : null,
-            `💬 AI চ্যাটবট — দোকানদার ঘুমালেও অর্ডার নেয়`,
-            stats?.totalUsers    ? `👥 ${stats.totalUsers}+ ক্রেতা-বিক্রেতা যুক্ত হয়েছেন` : null,
-            `📲 অ্যাপ ইন্সটল করুন, হাতের মুঠোয় রাখুন বাজার`,
-            `⚡ সরাসরি চ্যাট করুন — তাৎক্ষণিক যোগাযোগ`,
-            `🎯 আপনার দোকান যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
-          ].filter(Boolean)
-          const dur = items.length * 3
-          return (
-            <div className="hidden sm:flex items-center justify-center text-white text-xs py-1.5 overflow-hidden relative"
-              style={{ background: 'linear-gradient(90deg, #1e3a8a, #1d4ed8, #2563eb, #1d4ed8, #1e3a8a)' }}>
-              <style>{`
-                @keyframes nbFadeUp {
-                  0%,100% { opacity: 0; transform: translateY(5px); }
-                  10%     { opacity: 1; transform: translateY(0); }
-                  80%     { opacity: 1; transform: translateY(0); }
-                  90%     { opacity: 0; transform: translateY(-5px); }
-                }
-                ${items.map((_, i) => `.nbtick-${i} { animation: nbFadeUp ${dur}s ease infinite; animation-delay: ${i * 3}s; opacity: 0; }`).join(' ')}
-              `}</style>
-              <div className="relative h-4 w-full flex items-center justify-center">
-                {items.map((msg, i) => (
-                  <span key={i} className={`nbtick-${i} absolute inset-0 flex items-center justify-center font-medium tracking-wide`}>
-                    {msg}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
+        {announceBannerDismissed && <TickerStrip stats={stats} />}
 
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
           <div className="flex items-center gap-2 sm:gap-3">
