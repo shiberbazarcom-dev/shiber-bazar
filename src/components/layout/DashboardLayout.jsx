@@ -515,12 +515,15 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin/orders',            icon: '📦', label: 'অর্ডার' },
     { to: '/admin/services',          icon: '🛠️', label: 'সেবা অনুমোদন' },
     { to: '/admin/service-directory', icon: '📒', label: 'সেবা ডিরেক্টরি' },
-    { to: '/admin/ads',               icon: '📢', label: 'ব্যানার/বিজ্ঞাপন' },
     { to: '/admin/notices',           icon: '📋', label: 'নোটিস বোর্ড' },
+    { section: 'CMS' },
+    { to: '/admin/settings',          icon: '⚙️', label: 'সাইট সেটিংস' },
+    { to: '/admin/sections',          icon: '🏠', label: 'সেকশন বিল্ডার' },
+    { to: '/admin/ads',               icon: '📢', label: 'বিজ্ঞাপন' },
+    { to: '/admin/jobs',              icon: '💼', label: 'চাকরির বোর্ড' },
     { section: 'সিস্টেম' },
     { to: '/admin/audit-log',         icon: '🗂️', label: 'Audit Log' },
     { to: '/admin/error-logs',        icon: '🐛', label: 'Error Logs' },
-    { to: '/admin/settings',          icon: '⚙️', label: 'সেটিংস' },
   ]
 
   let links
