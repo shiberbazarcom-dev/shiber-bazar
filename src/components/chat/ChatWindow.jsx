@@ -7,19 +7,62 @@ import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence, syncMessages } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 
-function OrderCard({ orderNumber }) {
+function OrderCard({ orderNumber, messageContent }) {
+  const lines = (messageContent || '').split('\n')
+  const get = (prefix) => {
+    const line = lines.find(l => l.startsWith(prefix))
+    return line ? line.slice(prefix.length).trim() : ''
+  }
+  const product  = get('পণ্য: ')
+  const total    = get('মোট মূল্য: ')
+  const name     = get('নাম: ')
+  const phone    = get('ফোন: ')
+  const address  = get('ঠিকানা: ')
+
   return (
-    <Link
-      to={`/track-order?order=${orderNumber}`}
-      className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
-    >
-      <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0 text-sm">✓</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-green-800">অর্ডার নিশ্চিত হয়েছে</p>
-        <p className="text-[11px] text-green-600 font-mono">{orderNumber}</p>
+    <div className="mt-3 rounded-2xl border border-green-200 bg-white overflow-hidden shadow-md w-full max-w-xs">
+      {/* Card header */}
+      <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-base font-bold flex-shrink-0">✓</div>
+        <div>
+          <p className="text-white font-bold text-sm leading-tight">অর্ডার নিশ্চিত হয়েছে</p>
+          <p className="text-green-100 text-[11px] font-mono mt-0.5">{orderNumber}</p>
+        </div>
       </div>
-      <span className="text-xs text-green-600 font-semibold flex-shrink-0">ট্র্যাক করুন →</span>
-    </Link>
+
+      {/* Card body */}
+      <div className="px-4 py-3 space-y-2">
+        {product && (
+          <div className="flex justify-between gap-2">
+            <span className="text-gray-400 text-xs flex-shrink-0">পণ্য</span>
+            <span className="text-gray-800 text-xs font-medium text-right">{product}</span>
+          </div>
+        )}
+        {total && (
+          <div className="flex justify-between gap-2 pt-2 border-t border-gray-100">
+            <span className="text-gray-400 text-xs flex-shrink-0">মোট মূল্য</span>
+            <span className="text-green-700 text-xs font-bold">{total}</span>
+          </div>
+        )}
+        {(name || phone || address) && (
+          <div className="pt-2 border-t border-gray-100 space-y-1.5">
+            {name    && <div className="flex justify-between gap-2"><span className="text-gray-400 text-xs flex-shrink-0">নাম</span><span className="text-gray-700 text-xs text-right">{name}</span></div>}
+            {phone   && <div className="flex justify-between gap-2"><span className="text-gray-400 text-xs flex-shrink-0">ফোন</span><span className="text-gray-700 text-xs font-mono">{phone}</span></div>}
+            {address && <div className="flex justify-between gap-2"><span className="text-gray-400 text-xs flex-shrink-0">ঠিকানা</span><span className="text-gray-700 text-xs text-right max-w-[65%]">{address}</span></div>}
+          </div>
+        )}
+        <div className="flex justify-between gap-2 pt-2 border-t border-gray-100">
+          <span className="text-gray-400 text-xs flex-shrink-0">স্ট্যাটাস</span>
+          <span className="text-amber-600 text-[11px] font-semibold bg-amber-50 px-2 py-0.5 rounded-full">Pending ⏳</span>
+        </div>
+      </div>
+
+      {/* Track link footer */}
+      <Link to={`/track-order?order=${orderNumber}`}
+        className="flex items-center justify-center gap-1.5 py-2.5 bg-green-50 border-t border-green-100 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors">
+        অর্ডার ট্র্যাক করুন →
+      </Link>
+    </div>
   )
 }
 
@@ -106,9 +149,11 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
           {group.map((msg, idx) => {
             const orderMatch = msg.is_ai ? msg.content.match(/\b(SB\d+)\b/) : null
             const orderNumber = orderMatch?.[1] || null
-            // Clean display text — remove the "(অর্ডার নং: SBxxx)" suffix
-            const displayText = orderNumber
-              ? msg.content.replace(/\s*\(অর্ডার নং: SB\d+\)/, '').trim()
+            // For confirmed orders: show only the first line as text, card shows the rest
+            // For other messages with SB reference: show full text
+            const isConfirmation = orderNumber && msg.content.includes('✅ অর্ডার সফলভাবে')
+            const displayText = isConfirmation
+              ? msg.content.split('\n')[0].trim()
               : msg.content
             return (
               <div key={msg.id} className={`group flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -120,7 +165,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
                       : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
                 }`}>
                   <p className="break-words whitespace-pre-wrap">{displayText}</p>
-                  {orderNumber && <OrderCard orderNumber={orderNumber} />}
+                  {orderNumber && <OrderCard orderNumber={orderNumber} messageContent={msg.content} />}
                 </div>
                 <CopyButton text={msg.content} />
                 {idx === group.length - 1 && isOwn && msg.is_read && (

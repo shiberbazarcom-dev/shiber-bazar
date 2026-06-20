@@ -201,6 +201,39 @@ const ACK_MESSAGES = [
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
+/* ── Robust product name matching (handles spelling variations) ── */
+function findProduct(products, orderProductName) {
+  if (!products?.length || !orderProductName) return null
+  const norm = s => s?.toLowerCase().replace(/[^ঀ-৿A-za-z0-9]/g, '').trim()
+  const target = norm(orderProductName)
+  if (!target) return null
+
+  // 1. Exact normalized match
+  let match = products.find(p => norm(p.name) === target)
+  if (match) return match
+
+  // 2. Product list name contains the order name (first 8 chars)
+  const prefix8 = target.slice(0, 8)
+  if (prefix8.length >= 4) {
+    match = products.find(p => norm(p.name)?.includes(prefix8))
+    if (match) return match
+  }
+
+  // 3. Order name contains product list name (first 8 chars)
+  match = products.find(p => {
+    const pn = norm(p.name)
+    return pn?.length >= 4 && target.includes(pn.slice(0, 8))
+  })
+  if (match) return match
+
+  // 4. First 4 characters match (loose fallback)
+  const prefix4 = target.slice(0, 4)
+  if (prefix4.length === 4) {
+    match = products.find(p => norm(p.name)?.startsWith(prefix4))
+  }
+  return match || null
+}
+
 /* ── Format beautiful order confirmation message ── */
 function formatOrderConfirmation({ orderNumber, shopName, productName, quantity, total, customerName, customerPhone, customerAddress }) {
   return `✅ অর্ডার সফলভাবে গ্রহণ করা হয়েছে
@@ -385,9 +418,7 @@ export default async function handler(req, res) {
       if (dup) {
         reply = `আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। দোকানদার শীঘ্রই যোগাযোগ করবেন।`
       } else {
-        const matched = products?.find(p =>
-          p.name?.toLowerCase().includes(order.product_name.toLowerCase().slice(0, 6))
-        )
+        const matched = findProduct(products, order.product_name)
         const unitPrice = matched?.price || 0
         const qty = Number(order.quantity) || 1
         const total = unitPrice * qty
@@ -452,7 +483,7 @@ export default async function handler(req, res) {
         const firstProduct = items[0]
         const totalQty = items.reduce((s, it) => s + (Number(it.quantity) || 1), 0)
         const total = items.reduce((sum, it) => {
-          const p = products?.find(pr => pr.name?.toLowerCase().includes(it.product_name?.toLowerCase().slice(0, 6)))
+          const p = findProduct(products, it.product_name)
           return sum + (p?.price || 0) * (Number(it.quantity) || 1)
         }, 0)
 

@@ -55,6 +55,15 @@ export async function generate(prompt) {
 }
 
 export function parseJson(text) {
-  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  // Strip markdown code fences
+  let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+
+  // If AI prefixed text before the JSON, extract the first {...} block
+  const jsonStart = clean.indexOf('{')
+  const jsonEnd   = clean.lastIndexOf('}')
+  if (jsonStart > 0 && jsonEnd > jsonStart) {
+    clean = clean.slice(jsonStart, jsonEnd + 1)
+  }
+
   return JSON.parse(clean)
 }
