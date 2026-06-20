@@ -18,6 +18,7 @@ export default function Navbar() {
   const [query, setQuery]             = useState('')
   const [showSuggest, setShowSuggest] = useState(false)
   const [menuOpen, setMenuOpen]       = useState(false)
+  const [announceBannerDismissed, setAnnounceBannerDismissed] = useState(false)
   const [catOpen, setCatOpen]         = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -129,6 +130,23 @@ export default function Navbar() {
           TOP NAVBAR
       ══════════════════════════════════════════════ */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+
+        {/* 🎉 Launch Announcement Banner */}
+        {!announceBannerDismissed && (
+          <div className="relative flex items-center justify-center gap-2 px-4 py-2 text-white text-xs font-medium" style={{ background: 'linear-gradient(90deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%)' }}>
+            <span className="animate-pulse">🎉</span>
+            <span>শিবের বাজার অ্যাপ খুব শীঘ্রই পূর্ণরূপে চালু হতে যাচ্ছে — আপনার দোকান এখনই যোগ করুন!</span>
+            <button
+              onClick={() => setAnnounceBannerDismissed(true)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+              aria-label="বন্ধ করুন"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* PWA Install Banner — mobile only */}
         {showInstall && (
