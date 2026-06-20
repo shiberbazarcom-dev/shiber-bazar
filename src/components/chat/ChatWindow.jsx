@@ -7,13 +7,23 @@ import { supabase } from '../../lib/supabase'
 
 async function callAiAutoReply(conversationId) {
   try {
-    await supabase.functions.invoke('ai-auto-reply', {
-      body: { conversation_id: conversationId },
-    })
-  } catch (_) {
-    // AI reply failure is silent — user can still chat normally
-  }
+    await supabase.functions.invoke('ai-auto-reply', { body: { conversation_id: conversationId } })
+  } catch (_) {}
 }
+
+/* ── Canned responses for shop owners ── */
+const CANNED = [
+  'জী ভাই, কী সাহায্য করতে পারি?',
+  'ধন্যবাদ আপনার অর্ডারের জন্য। শীঘ্রই ডেলিভারি দেওয়া হবে।',
+  'আপনার অর্ডারটি গ্রহণ করা হয়েছে।',
+  'দুঃখিত, এই পণ্যটি এই মুহূর্তে স্টকে নেই।',
+  'ডেলিভারি সাধারণত ১-৩ কার্যদিবসের মধ্যে হয়।',
+  'পেমেন্ট: নগদ অন ডেলিভারি / বিকাশ / নগদ গ্রহণযোগ্য।',
+  'আপনার এলাকায় ডেলিভারি চার্জ ৬০-১০০ টাকা।',
+  'পণ্যে কোনো সমস্যা হলে ৩ দিনের মধ্যে জানান, বদলে দেওয়া হবে।',
+  'আজকের মধ্যে অর্ডার করলে কালকের মধ্যে পাঠানো হবে।',
+  'আপনার নাম, মোবাইল নম্বর এবং ঠিকানা দিন।',
+]
 
 function PresenceStatus({ userId }) {
   const lastSeen = useOtherUserPresence(userId)
@@ -27,8 +37,30 @@ function PresenceStatus({ userId }) {
   return <p className="text-xs text-gray-400">শেষ দেখা {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}</p>
 }
 
-function MessageGroup({ group, isOwn, senderName, senderInitial }) {
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+  return (
+    <button onClick={copy} title="কপি করুন"
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0">
+      {copied
+        ? <svg viewBox="0 0 24 24" className="w-3 h-3 fill-green-500"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        : <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+      }
+    </button>
+  )
+}
+
+function MessageGroup({ group, isOwn, senderName, senderInitial, onQuickReply }) {
   const isAiGroup = !isOwn && group.some(m => m.is_ai)
+  const lastMsg = group[group.length - 1]
+  const quickReplies = !isOwn ? (lastMsg?.quick_replies || null) : null
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 mb-3 animate-fadeIn`}>
       {!isOwn && (
@@ -47,7 +79,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
         )}
         <div className="flex flex-col gap-0.5">
           {group.map((msg, idx) => (
-            <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div key={msg.id} className={`group flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
               <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 isOwn
                   ? 'bg-blue-500 text-white rounded-br-sm'
@@ -57,6 +89,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
               }`}>
                 <p className="break-words whitespace-pre-wrap">{msg.content}</p>
               </div>
+              <CopyButton text={msg.content} />
               {idx === group.length - 1 && isOwn && msg.is_read && (
                 <span className="text-xs text-green-600 font-bold">✓✓</span>
               )}
@@ -64,8 +97,20 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
           ))}
         </div>
         <p className={`text-xs mt-1 px-3 ${isOwn ? 'text-gray-400' : 'text-gray-500'}`}>
-          {format(new Date(group[group.length - 1].created_at), 'h:mm a')}
+          {format(new Date(lastMsg.created_at), 'h:mm a')}
         </p>
+
+        {/* Quick Reply Buttons */}
+        {quickReplies?.length > 0 && onQuickReply && (
+          <div className="flex flex-wrap gap-1.5 mt-1 px-1">
+            {quickReplies.map((qr, i) => (
+              <button key={i} onClick={() => onQuickReply(qr)}
+                className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors font-medium">
+                {qr}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -81,6 +126,7 @@ export default function ChatWindow({ conversation, otherName }) {
   const [showAiSettings, setShowAiSettings] = useState(false)
   const [aiPersona, setAiPersona] = useState('')
   const [savingPersona, setSavingPersona] = useState(false)
+  const [showCanned, setShowCanned] = useState(false)
   const bottomRef      = useRef(null)
   const inputRef       = useRef(null)
   const typingTimerRef = useRef(null)
@@ -99,19 +145,12 @@ export default function ChatWindow({ conversation, otherName }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping, aiTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
-  /* ── Load auto_reply_enabled + ai_persona from shop ── */
+  /* ── Load shop settings ── */
   useEffect(() => {
     if (!conversation?.shop_id) return
-    supabase
-      .from('shops')
-      .select('auto_reply_enabled, ai_persona')
-      .eq('id', conversation.shop_id)
-      .single()
+    supabase.from('shops').select('auto_reply_enabled, ai_persona').eq('id', conversation.shop_id).single()
       .then(({ data }) => {
-        if (data) {
-          setAutoReply(!!data.auto_reply_enabled)
-          setAiPersona(data.ai_persona || '')
-        }
+        if (data) { setAutoReply(!!data.auto_reply_enabled); setAiPersona(data.ai_persona || '') }
       })
   }, [conversation?.shop_id])
 
@@ -123,20 +162,16 @@ export default function ChatWindow({ conversation, otherName }) {
     setShowAiSettings(false)
   }
 
-  /* ── Toggle auto-reply (saves to DB) ── */
   async function toggleAutoReply() {
     if (!conversation?.shop_id || togglingAR) return
     const next = !autoReply
     setTogglingAR(true)
-    const { error } = await supabase
-      .from('shops')
-      .update({ auto_reply_enabled: next })
-      .eq('id', conversation.shop_id)
+    const { error } = await supabase.from('shops').update({ auto_reply_enabled: next }).eq('id', conversation.shop_id)
     if (!error) setAutoReply(next)
     setTogglingAR(false)
   }
 
-  /* ── Typing indicator via Supabase broadcast ── */
+  /* ── Typing indicator ── */
   useEffect(() => {
     if (!conversation?.id || !user?.id) return
     const ch = supabase.channel(`typing:${conversation.id}`)
@@ -155,14 +190,13 @@ export default function ChatWindow({ conversation, otherName }) {
   }
 
   async function handleSend(e) {
-    e.preventDefault()
-    if (!text.trim() || !conversation?.id) return
-    const content = text.trim()
+    e?.preventDefault()
+    const content = typeof e === 'string' ? e : text.trim()
+    if (!content || !conversation?.id) return
     setText('')
-    inputRef.current?.focus()
+    if (inputRef.current) { inputRef.current.style.height = 'auto'; inputRef.current.focus() }
+    setShowCanned(false)
     await sendMsg.mutateAsync({ conversationId: conversation.id, content })
-
-    // If customer sent a message and shop has AI auto-reply enabled, trigger AI
     if (!isOwner && autoReply) {
       setAiTyping(true)
       await callAiAutoReply(conversation.id)
@@ -211,25 +245,16 @@ export default function ChatWindow({ conversation, otherName }) {
           <p className="font-semibold text-gray-800 text-sm truncate">{otherName}</p>
           <PresenceStatus userId={otherUserId} />
         </div>
-
-        {/* Auto-reply toggle + settings — shop owner only */}
         {isOwner && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={toggleAutoReply}
-              disabled={togglingAR}
-              title={autoReply ? 'AI auto-reply চালু আছে — বন্ধ করতে ক্লিক করুন' : 'AI auto-reply চালু করুন'}
+            <button onClick={toggleAutoReply} disabled={togglingAR}
               className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
-              style={autoReply
-                ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
-                : { background: '#f3f4f6', color: '#9ca3af', borderColor: '#e5e7eb' }}>
+              style={autoReply ? { background:'#ede9fe',color:'#6d28d9',borderColor:'#c4b5fd' } : { background:'#f3f4f6',color:'#9ca3af',borderColor:'#e5e7eb' }}>
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
               {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
             </button>
             {autoReply && (
-              <button
-                onClick={() => setShowAiSettings(s => !s)}
-                title="AI সেটিং"
+              <button onClick={() => setShowAiSettings(s => !s)} title="AI সেটিং"
                 className="w-7 h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors">
                 ⚙️
               </button>
@@ -238,21 +263,17 @@ export default function ChatWindow({ conversation, otherName }) {
         )}
       </div>
 
-      {/* AI Persona Settings Panel */}
+      {/* AI Persona Settings */}
       {isOwner && showAiSettings && (
         <div className="px-4 py-3 bg-purple-50 border-b border-purple-200 flex-shrink-0">
           <p className="text-xs font-semibold text-purple-700 mb-1.5">✨ AI-এর জন্য বিশেষ নির্দেশনা</p>
-          <textarea
-            value={aiPersona}
-            onChange={e => setAiPersona(e.target.value)}
-            placeholder="যেমন: সবসময় বিনম্র ভাষায় কথা বলো। ডেলিভারি ৩-৫ দিনের মধ্যে হয়। নগদ পেমেন্ট গ্রহণ করা হয়।"
-            rows={3}
-            className="w-full text-xs rounded-lg border border-purple-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
-          />
+          <textarea value={aiPersona} onChange={e => setAiPersona(e.target.value)} rows={3}
+            placeholder="যেমন: ডেলিভারি ৩-৫ দিন। নগদ পেমেন্ট গ্রহণযোগ্য।"
+            className="w-full text-xs rounded-lg border border-purple-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none" />
           <div className="flex gap-2 mt-2 justify-end">
-            <button onClick={() => setShowAiSettings(false)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">বাতিল</button>
-            <button onClick={saveAiPersona} disabled={savingPersona} className="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:opacity-60">
-              {savingPersona ? 'সংরক্ষণ হচ্ছে...' : '💾 সংরক্ষণ করুন'}
+            <button onClick={() => setShowAiSettings(false)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600">বাতিল</button>
+            <button onClick={saveAiPersona} disabled={savingPersona} className="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white font-semibold disabled:opacity-60">
+              {savingPersona ? 'সংরক্ষণ...' : '💾 সংরক্ষণ'}
             </button>
           </div>
         </div>
@@ -278,6 +299,7 @@ export default function ChatWindow({ conversation, otherName }) {
                 isOwn={item.senderId === user?.id}
                 senderName={item.group[0].sender?.full_name || 'ব্যবহারকারী'}
                 senderInitial={(item.group[0].sender?.full_name || '?')[0].toUpperCase()}
+                onQuickReply={!isOwner ? (qr) => handleSend(qr) : null}
               />
             )
           )}
@@ -302,9 +324,7 @@ export default function ChatWindow({ conversation, otherName }) {
         {/* AI typing indicator */}
         {aiTyping && (
           <div className="flex justify-start gap-2 mb-3 animate-fadeIn">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-              ✨
-            </div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">✨</div>
             <div className="bg-purple-50 border border-purple-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1 items-center">
                 <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -315,32 +335,59 @@ export default function ChatWindow({ conversation, otherName }) {
             </div>
           </div>
         )}
-
         <div ref={bottomRef} />
       </div>
 
+      {/* Canned responses panel (owner only) */}
+      {isOwner && showCanned && (
+        <div className="px-3 py-2 bg-white border-t border-gray-100 flex-shrink-0 max-h-40 overflow-y-auto">
+          <p className="text-[10px] text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">দ্রুত উত্তর</p>
+          <div className="flex flex-col gap-1">
+            {CANNED.map((c, i) => (
+              <button key={i} onClick={() => handleSend(c)}
+                className="text-left text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors">
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <form onSubmit={handleSend} className="px-3 sm:px-4 py-3 bg-white border-t border-gray-100 flex gap-2 items-end flex-shrink-0">
+        {/* Canned responses button (owner only) */}
+        {isOwner && (
+          <button type="button" onClick={() => setShowCanned(s => !s)}
+            title="দ্রুত উত্তর"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors border ${
+              showCanned ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
+            }`}>
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+          </button>
+        )}
+
         <textarea
           ref={inputRef}
           value={text}
           rows={1}
-          onChange={e => { setText(e.target.value); broadcastTyping(); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
+          onChange={e => {
+            setText(e.target.value)
+            broadcastTyping()
+            e.target.style.height = 'auto'
+            e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+          }}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               if (text.trim()) handleSend(e)
             }
           }}
-          placeholder="বার্তা লিখুন... (Shift+Enter নতুন লাইন)"
+          placeholder={isOwner ? 'বার্তা লিখুন... (Shift+Enter নতুন লাইন)' : 'বার্তা লিখুন...'}
           className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0 resize-none overflow-hidden"
           style={{ minHeight: '40px', maxHeight: '120px' }}
         />
-        <button
-          type="submit"
-          disabled={!text.trim() || sendMsg.isPending}
-          className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0"
-        >
+        <button type="submit" disabled={!text.trim() || sendMsg.isPending}
+          className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0">
           {sendMsg.isPending
             ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             : <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>

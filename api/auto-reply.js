@@ -49,8 +49,11 @@ Customer: ${customerMessage}
 অর্ডার না হলে:
 {
   "reply": "reply এখানে",
-  "order": null
+  "order": null,
+  "quick_replies": ["বিকল্প ১", "বিকল্প ২"]
 }
+
+quick_replies হলো customer-কে দেওয়া ২-৩টি suggestion বাটন। যদি suggestion দেওয়ার দরকার না থাকে তাহলে খালি array [] দাও।
 
 শুধু JSON দাও।`
 }
@@ -128,11 +131,12 @@ export default async function handler(req, res) {
     const prompt = smartReplyPrompt({ shopName: shop.shop_name, productList, chatHistory, customerMessage: content })
     const { result } = await generate(prompt)
 
-    let reply, order
+    let reply, order, quickReplies
     try {
       const parsed = parseJson(result)
       reply = parsed.reply
       order = parsed.order
+      quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
     } catch {
       reply = result.slice(0, 500)
     }
@@ -162,6 +166,8 @@ export default async function handler(req, res) {
       conversation_id,
       sender_id: shop.owner_id,
       content: reply,
+      is_ai: true,
+      ...(quickReplies ? { quick_replies: quickReplies } : {}),
     })
 
     // Update conversation timestamp

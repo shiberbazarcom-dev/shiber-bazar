@@ -51,7 +51,7 @@ export function useOtherUserPresence(userId) {
   return data || null
 }
 
-/* ── All conversations for current user ── */
+/* ── All conversations for current user (with unread count) ── */
 export function useConversations() {
   const { user } = useAuth()
   return useQuery({
@@ -69,7 +69,20 @@ export function useConversations() {
         .or(`customer_id.eq.${user.id},owner_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false })
       if (error) throw error
-      return data || []
+      const convs = data || []
+      if (!convs.length) return convs
+
+      // Fetch unread counts in one query
+      const { data: unread } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convs.map(c => c.id))
+        .neq('sender_id', user.id)
+        .eq('is_read', false)
+
+      const unreadMap = {}
+      unread?.forEach(m => { unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1 })
+      return convs.map(c => ({ ...c, unread_count: unreadMap[c.id] || 0 }))
     },
     enabled: !!user,
   })
@@ -84,7 +97,7 @@ export function useMessages(conversationId) {
       if (!conversationId) return []
       const { data, error } = await supabase
         .from('messages')
-        .select('*, sender:sender_id ( id, full_name )')
+        .select('*, sender:sender_id ( id, full_name ), quick_replies')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .limit(100)

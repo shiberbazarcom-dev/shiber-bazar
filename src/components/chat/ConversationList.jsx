@@ -78,11 +78,22 @@ export default function ConversationList({ conversations, selected, onSelect, is
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-0.5">
-                <p className="text-sm font-semibold text-gray-800 truncate">{otherName}</p>
-                <p className="text-[10px] text-gray-400 flex-shrink-0 ml-2">{timeAgo}</p>
+                <p className={`text-sm truncate ${conv.unread_count ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'}`}>{otherName}</p>
+                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                  {conv.unread_count > 0 && (
+                    <span className="min-w-[18px] h-[18px] bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                      {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                    </span>
+                  )}
+                  <p className="text-[10px] text-gray-400">{timeAgo}</p>
+                </div>
               </div>
               {conv.shops?.shop_name && <p className="text-xs text-blue-600 mb-0.5">{conv.shops.shop_name}</p>}
-              {conv.last_message && <p className="text-xs text-gray-500 truncate">{conv.last_message}</p>}
+              {conv.last_message && (
+                <p className={`text-xs truncate ${conv.unread_count ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+                  {conv.last_message}
+                </p>
+              )}
             </div>
           </button>
         )

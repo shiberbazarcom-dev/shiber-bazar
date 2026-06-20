@@ -91,7 +91,7 @@ export function useUpdateOrderStatus() {
         .from('orders')
         .update(updates)
         .eq('id', id)
-        .select('customer_id, order_number, shops(shop_name)')
+        .select('customer_id, order_number, shop_id, shops(shop_name, owner_id)')
         .single()
       if (error) throw error
 
@@ -113,6 +113,33 @@ export function useUpdateOrderStatus() {
           message: `${order.shops?.shop_name || 'দোকান'} আপনার অর্ডার গ্রহণ করেছে।`,
           data:    { order_id: id },
         })
+      }
+
+      // Send order status notification in chat conversation
+      const STATUS_MSG = {
+        accepted:  `আপনার অর্ডার (${order?.order_number || ''}) গ্রহণ করা হয়েছে। শীঘ্রই ডেলিভারি দেওয়া হবে।`,
+        rejected:  `দুঃখিত, আপনার অর্ডার (${order?.order_number || ''}) বাতিল করা হয়েছে। বিস্তারিত জানতে যোগাযোগ করুন।`,
+        delivered: `আপনার অর্ডার (${order?.order_number || ''}) সফলভাবে ডেলিভারি দেওয়া হয়েছে। ধন্যবাদ!`,
+      }
+      const chatMsg = STATUS_MSG[status]
+      if (chatMsg && order?.customer_id && order?.shops?.owner_id) {
+        const { data: conv } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('customer_id', order.customer_id)
+          .eq('shop_id', order.shop_id || shop_id)
+          .maybeSingle()
+        if (conv?.id) {
+          await supabase.from('messages').insert({
+            conversation_id: conv.id,
+            sender_id: order.shops.owner_id,
+            content: chatMsg,
+            is_ai: false,
+          })
+          await supabase.from('conversations')
+            .update({ last_message: chatMsg, last_message_at: new Date().toISOString() })
+            .eq('id', conv.id)
+        }
       }
     },
     onSuccess: () => {
