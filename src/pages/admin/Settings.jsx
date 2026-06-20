@@ -7,19 +7,19 @@ const GREEN = '#2563EB'
 
 function useSettings() {
   return useQuery({
-    queryKey: ['site-settings'],
+    queryKey: ['site-settings-admin'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
         .select('*')
         .order('key')
       if (error) throw error
-      // Return as {key: value} map
       return (data || []).reduce((acc, row) => {
         acc[row.key] = row
         return acc
       }, {})
     },
+    staleTime: 0,
   })
 }
 
@@ -32,7 +32,10 @@ function useUpdateSetting() {
         .upsert({ key, value, updated_at: new Date().toISOString() })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['site-settings'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['site-settings-admin'] })
+      qc.invalidateQueries({ queryKey: ['site-settings'] })
+    },
   })
 }
 
