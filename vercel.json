@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/auto-reply.js": { "maxDuration": 30 }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],

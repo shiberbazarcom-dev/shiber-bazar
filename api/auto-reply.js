@@ -1,57 +1,114 @@
 /* Vercel serverless function — called by Supabase Database Webhook
    Triggered on: INSERT into messages table
-   Flow: new customer message → fetch shop + products → AI → insert reply as owner
 */
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
-function smartReplyPrompt({ shopName, productList, chatHistory, customerMessage }) {
-  return `তুমি "${shopName}" দোকানের মালিক। তুমি একজন বাস্তব বাংলাদেশী দোকানদার হিসেবে কথা বলো — আন্তরিক, সহজ, এবং বিশ্বাসযোগ্য। তুমি AI বা bot নও।
+function buildPrompt({ shopName, productList, chatHistory, customerMessage, lastAiReply, aiPersona }) {
+  return `You are a customer support and order-taking agent for "${shopName}", a Bangladeshi shop on ShiberBazar platform.
 
-কথা বলার ধরন:
-- একদম সাধারণ বাংলায় কথা বলো যেভাবে একজন দোকানদার বলে
-- "জী ভাই", "জী আপু", "ঠিক আছে ভাই", "আচ্ছা" — এই ধরনের স্বাভাবিক শব্দ ব্যবহার করো
-- Banglish বুঝলে বাংলায় উত্তর দাও
-- reply ছোট রাখো, এক-দুই লাইনের বেশি না
-- কোনো formal বা robotic ভাষা ব্যবহার করবে না
-- Customer-কে "ভাই/আপু" বলে সম্বোধন করো
-- Emoji একদম ব্যবহার করবে না
+## YOUR IDENTITY
+- You are a professional human sales representative — never admit you are AI or a bot
+- If asked "apni ki AI / robot / bot?" — change the subject naturally, do not confirm
+- If customer demands to speak to the real owner/manager → set handoff: true
 
-${productList
-  ? `আমাদের দোকানের পণ্য:\n${productList}`
-  : `দোকানের পণ্য তালিকা এখনো দেওয়া হয়নি। Customer কিছু জিজ্ঞেস করলে বলবে "একটু পরে জানাচ্ছি" বা "সরাসরি ফোন করুন।"`
-}
+## COMMUNICATION RULES (strictly follow)
+- Always reply in natural Bengali (বাংলা)
+- Understand Bengali, Banglish, spelling mistakes, and local language
+- Tone: friendly, warm, like a real market representative
+- Use phrases: "জি ভাই", "অবশ্যই", "একটু দেখছি", "ধন্যবাদ ভাই", "আর কিছু লাগবে?"
+- Keep each reply SHORT — 2–4 lines max
+- NEVER use emoji
+- Ask only ONE question at a time
+- NEVER repeat your previous reply verbatim
 
---- এখন পর্যন্ত কথোপকথন ---
-${chatHistory}
+## PREVIOUS REPLY (do NOT repeat this):
+"${lastAiReply || ''}"
+
+## SHOP PRODUCTS:
+${productList || 'পণ্য তালিকা এখনো যোগ করা হয়নি। জিজ্ঞেস করলে বলো "একটু পরে জানাচ্ছি ভাই।"'}
+${aiPersona ? `\n## SHOP SPECIAL INFO:\n${aiPersona}` : ''}
+
+## CONVERSATION SO FAR:
+${chatHistory || '(new conversation)'}
 Customer: ${customerMessage}
+
 ---
 
-গুরুত্বপূর্ণ:
-- আগের কথোপকথন মনে রেখো — যা আগে জানা গেছে তা আর জিজ্ঞেস করবে না
-- শুধু তালিকার পণ্য নিয়ে কথা বলো
-- Customer order দিতে চাইলে এক এক করে নাম, মোবাইল, ঠিকানা চাও
-- কথোপকথনে যদি ইতিমধ্যে "অর্ডার নেওয়া হয়েছে" বা অর্ডার নম্বর (SB...) থাকে — order আর নতুন করে দিও না, "order": null দাও
-- Customer "thanks", "ধন্যবাদ", "ok thanks", "আচ্ছা", "okay" বললে — "ধন্যবাদ ভাই, ভালো থাকবেন!" বা "জী ভাই, আর কিছু লাগলে জানাবেন।" — আগের কথা repeat করবে না, "order": null দাও
-- Conversation শেষ মনে হলে বিদায়সূচক ছোট একটা কথা বলো
-- Customer যদি বলে "মালিকের সাথে কথা বলতে চাই", "owner এর সাথে কথা বলব", "আপনি কি মালিক?", "real person চাই", "human চাই" বা এই ধরনের কিছু — তাহলে "handoff": true দাও এবং reply-এ বলো "ঠিক আছে ভাই, আপনাকে এখন দোকান মালিকের কাছে পাঠানো হচ্ছে। কিছুক্ষণ অপেক্ষা করুন, তিনি অনলাইন আসলেই reply দেবেন।"
+## ORDER COLLECTION FLOW
 
-অর্ডার নেওয়ার সময় (প্রথমবার, যদি আগে confirm না হয়ে থাকে):
-{"reply":"...","order":{"product_name":"...","quantity":1,"price":0,"customer_name":"...","customer_phone":"...","customer_address":"...","notes":""},"handoff":false,"quick_replies":[]}
+Follow this exact sequence. Only ask what is missing — check history first.
 
-অর্ডার না হলে বা আগেই হয়ে গেলে:
-{"reply":"...","order":null,"handoff":false,"quick_replies":["বিকল্প ১","বিকল্প ২"]}
+**STEP 1 — Identify products & quantities**
+- If customer says "চাল লাগবে" without quantity → ask "কত কেজি চাল লাগবে ভাই?"
+- If customer gives product + quantity → confirm and ask "আর কিছু লাগবে?"
+- Support multiple products — build a cart
+- Allow customer to add/remove/change quantity
 
-Customer মালিকের সাথে কথা বলতে চাইলে:
-{"reply":"ঠিক আছে ভাই, আপনাকে এখন দোকান মালিকের কাছে পাঠানো হচ্ছে। কিছুক্ষণ অপেক্ষা করুন, তিনি অনলাইন আসলেই reply দেবেন।","order":null,"handoff":true,"quick_replies":[]}
+**STEP 2 — When customer says no more products**
+Ask: "ঠিক আছে ভাই। ডেলিভারির ঠিকানাটা দিবেন?"
 
-শুধু JSON দাও।`
+**STEP 3 — Collect address**
+After getting address → ask: "আপনার মোবাইল নাম্বারটা দিবেন?"
+
+**STEP 4 — Collect phone**
+After getting phone → show full order summary and ask for confirmation:
+
+"ধন্যবাদ ভাই। আপনার অর্ডার সংক্ষেপে:
+
+[list products here]
+
+ঠিকানা: [address]
+মোবাইল: [phone]
+
+অর্ডার কনফার্ম করবো?"
+
+**STEP 5 — Confirmation**
+If customer says "হ্যাঁ / জি / confirm / ok / ঠিক আছে" → place the order (fill the order JSON)
+Reply: "জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে। দোকানদার শীঘ্রই যোগাযোগ করবেন।"
+
+---
+
+## IMPORTANT RULES
+- Check conversation history — never ask for info already given
+- Once order is confirmed (SB number in history) → do NOT create another order unless customer explicitly orders a new/different product
+- Never say "আগের অর্ডারের সাথে যোগ করে দিচ্ছি"
+- "thanks / ধন্যবাদ / ok" after order → reply: "ধন্যবাদ ভাই, আর কিছু লাগলে জানাবেন।" with order: null
+- Product not in list → "দুঃখিত ভাই, এই পণ্যটা আমাদের কাছে নেই।"
+
+---
+
+## RESPONSE FORMAT — return ONLY valid JSON, nothing else:
+
+Normal reply (no order yet):
+{"reply":"...","order":null,"items":null,"handoff":false,"quick_replies":["option1","option2"]}
+
+Single product order confirmed:
+{"reply":"জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে।","order":{"product_name":"পণ্যের নাম","quantity":1,"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","notes":""},"items":null,"handoff":false,"quick_replies":[]}
+
+Multiple products order confirmed:
+{"reply":"জি ভাই। আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে।","order":null,"items":[{"product_name":"চাল","quantity":5},{"product_name":"চিনি","quantity":2}],"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","handoff":false,"quick_replies":[]}
+
+Handoff to owner:
+{"reply":"ঠিক আছে ভাই, মালিককে জানাচ্ছি। কিছুক্ষণ অপেক্ষা করুন।","order":null,"items":null,"handoff":true,"quick_replies":[]}`
 }
+
+const ACK_MESSAGES = [
+  'জি ভাই',
+  'হ্যাঁ ভাই',
+  'আচ্ছা ভাই',
+  'জি, একটু দেখছি',
+  'হ্যাঁ, এক সেকেন্ড',
+  'ঠিক আছে ভাই',
+  'জি আপু',
+  'হ্যাঁ আপু, একটু দেখছি',
+]
+
+const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // Verify Supabase webhook secret
   const secret = req.headers['x-webhook-secret'] || req.headers['authorization']
   if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -69,7 +126,6 @@ export default async function handler(req, res) {
   if (!conversation_id || !content) return res.status(200).json({ skipped: 'missing fields' })
 
   try {
-    // Fetch conversation
     const { data: conv } = await supabase
       .from('conversations')
       .select('shop_id, owner_id, ai_paused')
@@ -78,98 +134,110 @@ export default async function handler(req, res) {
 
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
-    // Skip if message is from the owner (owner replying re-enables AI)
     if (sender_id === conv.owner_id) {
-      // If owner manually replied, unpause AI for this conversation
       if (conv.ai_paused) {
         await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation_id)
       }
       return res.status(200).json({ skipped: 'owner message' })
     }
 
-    // Skip if AI is paused for this conversation (customer requested human)
-    if (conv.ai_paused) return res.status(200).json({ skipped: 'ai paused for this conversation' })
+    if (conv.ai_paused) return res.status(200).json({ skipped: 'ai paused' })
 
-    // Fetch shop separately (avoids join dependency on FK setup)
     const { data: shop } = await supabase
       .from('shops')
-      .select('id, shop_name, owner_id, auto_reply_enabled')
+      .select('id, shop_name, owner_id, auto_reply_enabled, ai_persona')
       .eq('id', conv.shop_id)
       .single()
-
-    console.log('[auto-reply] shop:', JSON.stringify({ id: shop?.id, name: shop?.shop_name, auto_reply: shop?.auto_reply_enabled }))
 
     if (!shop) return res.status(200).json({ skipped: 'shop not found' })
     if (!shop.auto_reply_enabled) return res.status(200).json({ skipped: 'disabled' })
 
-    // Fetch shop products (no is_active filter — fetch all and let AI decide)
     const { data: products } = await supabase
       .from('products')
       .select('name, price, description')
       .eq('shop_id', shop.id)
-      .limit(50)
+      .limit(60)
 
     const productList = products?.length
       ? products.map((p, i) => `${i + 1}. ${p.name} — ৳${p.price}${p.description ? ` (${p.description})` : ''}`).join('\n')
       : ''
 
-    // Fetch recent conversation history (last 14 messages for memory)
     const { data: recentMsgs } = await supabase
       .from('messages')
-      .select('sender_id, content')
+      .select('sender_id, content, is_ai')
       .eq('conversation_id', conversation_id)
       .order('created_at', { ascending: false })
-      .limit(14)
+      .limit(20)
 
-    const chatHistory = (recentMsgs || [])
-      .reverse()
+    const msgs = (recentMsgs || []).reverse()
+    const chatHistory = msgs
       .map(m => m.sender_id === conv.owner_id ? `বিক্রয়কর্মী: ${m.content}` : `Customer: ${m.content}`)
       .join('\n')
 
-    // Generate AI reply
-    const prompt = smartReplyPrompt({ shopName: shop.shop_name, productList, chatHistory, customerMessage: content })
-    const { result } = await generate(prompt)
+    const lastAiMsg = msgs.filter(m => m.sender_id === conv.owner_id && m.is_ai).pop()
+    const lastAiReply = lastAiMsg?.content || ''
 
-    let reply, order, quickReplies, handoff
+    const promptText = buildPrompt({
+      shopName: shop.shop_name,
+      productList,
+      chatHistory,
+      customerMessage: content,
+      lastAiReply,
+      aiPersona: shop.ai_persona || '',
+    })
+
+    // ── Human delay: send acknowledgment first ──
+    const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
+    await supabase.from('messages').insert({
+      conversation_id,
+      sender_id: shop.owner_id,
+      content: ack,
+      is_ai: true,
+    })
+    await sleep(1500 + Math.random() * 2000) // 1.5s – 3.5s
+
+    const { result } = await generate(promptText)
+
+    let reply, order, items, customerName, customerPhone, customerAddress, quickReplies, handoff
     try {
       const parsed = parseJson(result)
       reply = parsed.reply
-      order = parsed.order
+      order = parsed.order       // single product
+      items = parsed.items       // multiple products array
+      customerName = parsed.customer_name
+      customerPhone = parsed.customer_phone
+      customerAddress = parsed.customer_address
       quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
       handoff = !!parsed.handoff
     } catch {
       reply = result.slice(0, 500)
     }
 
-    if (!reply) return res.status(200).json({ skipped: 'no reply generated' })
+    if (!reply) return res.status(200).json({ skipped: 'no reply' })
 
-    // If customer wants to talk to owner — pause AI for this conversation
     if (handoff) {
       await supabase.from('conversations').update({ ai_paused: true }).eq('id', conversation_id)
     }
 
-    // If AI detected a complete order — create it in DB (only if no recent order exists for this conversation)
+    // ── Create order(s) ──
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+
+    // Single product order
     if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
-      // Duplicate guard: check if an order was already created in the last 10 minutes for same phone+shop
-      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
-      const { data: existingOrder } = await supabase
-        .from('orders')
-        .select('order_number')
+      const { data: dup } = await supabase
+        .from('orders').select('order_number')
         .eq('shop_id', shop.id)
         .eq('customer_phone', order.customer_phone)
-        .gte('created_at', tenMinsAgo)
+        .ilike('product_name', `%${order.product_name.slice(0, 8)}%`)
+        .gte('created_at', fiveMinsAgo)
         .maybeSingle()
 
-      if (existingOrder) {
-        // Order already exists — don't duplicate, just mention existing order number
-        console.log('[auto-reply] duplicate order skipped, existing:', existingOrder.order_number)
+      if (dup) {
+        reply = `ঠিক আছে ভাই, আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। শীঘ্রই যোগাযোগ করব।`
       } else {
-        // Calculate total from product list
-        const matchedProduct = products?.find(p => p.name?.toLowerCase().includes(order.product_name?.toLowerCase()))
-        const unitPrice = matchedProduct?.price || order.price || 0
-        const total = unitPrice * (order.quantity || 1)
-
-        const { data: createdOrder } = await supabase.from('orders').insert({
+        const matched = products?.find(p => p.name?.toLowerCase().includes(order.product_name.toLowerCase().slice(0, 6)))
+        const total = (matched?.price || 0) * (order.quantity || 1)
+        const { data: created } = await supabase.from('orders').insert({
           shop_id: shop.id,
           product_name: order.product_name,
           quantity: order.quantity || 1,
@@ -180,14 +248,51 @@ export default async function handler(req, res) {
           notes: order.notes || '',
           status: 'pending',
         }).select('order_number').single()
-
-        if (createdOrder?.order_number) {
-          reply = `${reply} (অর্ডার নং: ${createdOrder.order_number})`
+        if (created?.order_number) {
+          reply = `${reply} (অর্ডার নং: ${created.order_number})`
         }
       }
     }
 
-    // Insert reply as shop owner
+    // Multiple products order
+    if (items?.length && customerPhone && customerAddress) {
+      const { data: dup } = await supabase
+        .from('orders').select('order_number')
+        .eq('shop_id', shop.id)
+        .eq('customer_phone', customerPhone)
+        .gte('created_at', fiveMinsAgo)
+        .maybeSingle()
+
+      if (dup) {
+        reply = `ঠিক আছে ভাই, আপনার অর্ডার আগেই নেওয়া হয়েছে (${dup.order_number})। শীঘ্রই যোগাযোগ করব।`
+      } else {
+        // Insert one combined order with all items in notes
+        const productSummary = items.map(it => `${it.product_name} x${it.quantity || 1}`).join(', ')
+        const firstProduct = items[0]
+        const matched = products?.find(p => p.name?.toLowerCase().includes(firstProduct.product_name?.toLowerCase().slice(0, 6)))
+        const total = items.reduce((sum, it) => {
+          const p = products?.find(pr => pr.name?.toLowerCase().includes(it.product_name?.toLowerCase().slice(0, 6)))
+          return sum + (p?.price || 0) * (it.quantity || 1)
+        }, 0)
+
+        const { data: created } = await supabase.from('orders').insert({
+          shop_id: shop.id,
+          product_name: firstProduct.product_name,
+          quantity: firstProduct.quantity || 1,
+          total,
+          customer_name: customerName || '',
+          customer_phone: customerPhone,
+          customer_address: customerAddress,
+          notes: `পণ্য তালিকা: ${productSummary}`,
+          status: 'pending',
+        }).select('order_number').single()
+
+        if (created?.order_number) {
+          reply = `${reply} (অর্ডার নং: ${created.order_number})`
+        }
+      }
+    }
+
     await supabase.from('messages').insert({
       conversation_id,
       sender_id: shop.owner_id,
@@ -196,15 +301,13 @@ export default async function handler(req, res) {
       ...(quickReplies ? { quick_replies: quickReplies } : {}),
     })
 
-    // Update conversation timestamp
-    await supabase
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
+    await supabase.from('conversations')
+      .update({ last_message: reply, last_message_at: new Date().toISOString() })
       .eq('id', conversation_id)
 
-    return res.status(200).json({ ok: true, provider: 'ai' })
+    return res.status(200).json({ ok: true })
   } catch (err) {
-    console.error('Auto-reply error:', err)
+    console.error('[auto-reply] error:', err)
     return res.status(500).json({ error: err.message })
   }
 }
