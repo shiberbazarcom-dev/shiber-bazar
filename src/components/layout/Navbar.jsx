@@ -174,8 +174,8 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Announcement ticker strip — fade rotator */}
-        {(() => {
+        {/* Announcement ticker — only shown after banner is dismissed */}
+        {announceBannerDismissed && (() => {
           const items = [
             stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
             `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
@@ -186,26 +186,22 @@ export default function Navbar() {
             `⚡ সরাসরি চ্যাট করুন — তাৎক্ষণিক যোগাযোগ`,
             `🎯 আপনার দোকান যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
           ].filter(Boolean)
+          const dur = items.length * 3
           return (
             <div className="hidden sm:flex items-center justify-center text-white text-xs py-1.5 overflow-hidden relative"
               style={{ background: 'linear-gradient(90deg, #1e3a8a, #1d4ed8, #2563eb, #1d4ed8, #1e3a8a)' }}>
               <style>{`
-                @keyframes fadeUp {
-                  0%   { opacity: 0; transform: translateY(6px); }
-                  15%  { opacity: 1; transform: translateY(0); }
-                  85%  { opacity: 1; transform: translateY(0); }
-                  100% { opacity: 0; transform: translateY(-6px); }
+                @keyframes nbFadeUp {
+                  0%,100% { opacity: 0; transform: translateY(5px); }
+                  10%     { opacity: 1; transform: translateY(0); }
+                  80%     { opacity: 1; transform: translateY(0); }
+                  90%     { opacity: 0; transform: translateY(-5px); }
                 }
-                .ticker-fade { animation: fadeUp ${items.length * 3}s ease infinite; }
-                ${items.map((_, i) => `.ticker-item-${i} { animation-delay: ${i * 3}s; }`).join(' ')}
+                ${items.map((_, i) => `.nbtick-${i} { animation: nbFadeUp ${dur}s ease infinite; animation-delay: ${i * 3}s; opacity: 0; }`).join(' ')}
               `}</style>
               <div className="relative h-4 w-full flex items-center justify-center">
                 {items.map((msg, i) => (
-                  <span
-                    key={i}
-                    className={`ticker-fade ticker-item-${i} absolute inset-0 flex items-center justify-center font-medium tracking-wide`}
-                    style={{ animationDelay: `${i * 3}s` }}
-                  >
+                  <span key={i} className={`nbtick-${i} absolute inset-0 flex items-center justify-center font-medium tracking-wide`}>
                     {msg}
                   </span>
                 ))}
