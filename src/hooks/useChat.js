@@ -117,7 +117,7 @@ export function useSendMessage() {
       const { data, error } = await supabase
         .from('messages')
         .insert({ conversation_id: conversationId, sender_id: user.id, content })
-        .select()
+        .select('*, sender:sender_id ( id, full_name ), quick_replies')
         .single()
       if (error) throw error
       await supabase
@@ -126,8 +126,12 @@ export function useSendMessage() {
         .eq('id', conversationId)
       return data
     },
-    onSuccess: (_, { conversationId }) => {
-      qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+    onSuccess: (newMsg, { conversationId }) => {
+      // Immediately inject into cache — no network round-trip needed
+      qc.setQueryData(['messages', conversationId], (old = []) => {
+        if (old.some(m => m.id === newMsg.id)) return old
+        return [...old, newMsg]
+      })
       qc.invalidateQueries({ queryKey: ['conversations'] })
     },
   })
@@ -217,26 +221,23 @@ export function useRealtimeMessages(conversationId, senderName = '') {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages',
           filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          qc.invalidateQueries({ queryKey: ['messages', conversationId] })
+        async (payload) => {
+          const incoming = payload.new
+          // Optimistically add bare message so it appears instantly
+          qc.setQueryData(['messages', conversationId], (old = []) => {
+            if (old.some(m => m.id === incoming.id)) return old
+            return [...old, { ...incoming, sender: null, quick_replies: incoming.quick_replies ?? null }]
+          })
+          // Then refetch in background to get sender join data
+          qc.refetchQueries({ queryKey: ['messages', conversationId], type: 'active' })
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count'] })
 
           // Only react to OTHER person's messages, not my own
-          if (payload.new?.sender_id !== user?.id) {
+          if (incoming?.sender_id !== user?.id) {
             playMessageSound()
-            // In-app toast notification (auto, no permission needed)
-            showChatNotification(
-              senderName || 'নতুন বার্তা',
-              payload.new?.content,
-              conversationId,
-            )
-            // Browser notification (only if user enabled it)
-            showBrowserNotification(
-              senderName || 'নতুন বার্তা',
-              payload.new?.content,
-              conversationId,
-            )
+            showChatNotification(senderName || 'নতুন বার্তা', incoming?.content, conversationId)
+            showBrowserNotification(senderName || 'নতুন বার্তা', incoming?.content, conversationId)
           }
         })
       .subscribe()

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { format, formatDistance } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
@@ -171,6 +172,7 @@ export default function ChatWindow({ conversation, otherName }) {
     ? (conversation.customer_id === user?.id ? conversation.owner_id : conversation.customer_id)
     : null
 
+  const qc = useQueryClient()
   const { data: messages = [] } = useMessages(conversation?.id)
   const sendMsg  = useSendMessage()
   const markRead = useMarkMessagesRead(conversation?.id)
@@ -246,6 +248,8 @@ export default function ChatWindow({ conversation, otherName }) {
       setAiTyping(true)
       await callAiAutoReply(conversation.id)
       setAiTyping(false)
+      // Force-fetch after AI reply so message appears without waiting for realtime
+      qc.refetchQueries({ queryKey: ['messages', conversation.id], type: 'active' })
     }
   }
 
