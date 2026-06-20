@@ -6,30 +6,49 @@ import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
 function smartReplyPrompt({ shopName, productList, chatHistory, customerMessage }) {
-  return `তুমি "${shopName}" দোকানের একজন স্মার্ট AI বিক্রয়কর্মী। তুমি একজন বাস্তব মানুষের মতো কথা বলো।
-
-🔴 কঠোর নিয়ম:
-1. উপরের কথোপকথন মনে রাখবে — আগে যা বলা হয়েছে তা আর জিজ্ঞেস করবে না।
-2. Customer যদি আগেই কোনো পণ্যের নাম বলে থাকে, সেটা নিয়েই এগিয়ে যাবে।
-3. শুধুমাত্র নিচের পণ্য তালিকা থেকে উত্তর দেবে — তালিকার বাইরে কিছু বলবে না।
-4. Customer বাংলা বা banglish যেভাবেই লিখুক, বুঝে বাংলায় reply দেবে।
-5. Order confirm হলে মোট দাম বলবে এবং delivery address চাইবে।
-6. ছোট ও স্বাভাবিক কথায় reply দেবে — বড় paragraph না।
+  return `তুমি "${shopName}" দোকানের একজন স্মার্ট AI বিক্রয়কর্মী।
 
 ${productList
-  ? `✅ "${shopName}" দোকানের পণ্য তালিকা:\n${productList}`
-  : `⚠️ পণ্য তালিকা এখনো আপডেট হয়নি। সব প্রশ্নে বলবে: "অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"`
+  ? `✅ দোকানের পণ্য তালিকা:\n${productList}`
+  : `⚠️ পণ্য তালিকা আপডেট হয়নি। বলবে: "সরাসরি যোগাযোগ করুন।"`
 }
 
---- এখন পর্যন্ত কথোপকথন ---
+--- কথোপকথন ---
 ${chatHistory}
 Customer: ${customerMessage}
 ---
 
-উপরের পুরো কথোপকথন বিবেচনা করে এখন reply দাও। JSON format:
-{"replies": ["reply এখানে"]}
+নিয়ম:
+- আগের কথোপকথন মনে রেখে reply দাও — আগে যা জানা গেছে তা আর জিজ্ঞেস করবে না
+- শুধু তালিকার পণ্য নিয়ে কথা বলবে
+- Customer বাংলা বা banglish যেভাবেই লিখুক, বাংলায় reply দেবে
+- ছোট ও স্বাভাবিক reply দেবে
 
-শুধু JSON দাও।`
+অর্ডার সংক্রান্ত নিয়ম:
+- Customer যদি order confirm করে এবং কথোপকথনে নাম + মোবাইল নম্বর + ঠিকানা পাওয়া যায় → order field পূরণ করবে
+- যদি কোনো তথ্য বাকি থাকে → reply-তে শুধু সেই তথ্যটা চাইবে
+- Order confirm হলে reply-তে order number উল্লেখ করবে (order number জানা না থাকলে "অর্ডার নিবন্ধন হয়েছে" বলবে)
+
+JSON format এ return করো:
+{
+  "reply": "reply এখানে",
+  "order": null
+}
+
+অথবা অর্ডার ready হলে:
+{
+  "reply": "আপনার অর্ডার নিবন্ধন হয়েছে! শীঘ্রই যোগাযোগ করা হবে।",
+  "order": {
+    "product_name": "পণ্যের নাম",
+    "quantity": 1,
+    "customer_name": "নাম",
+    "customer_phone": "01XXXXXXXXX",
+    "customer_address": "ঠিকানা",
+    "notes": ""
+  }
+}
+
+শুধু JSON দাও, আর কিছু না।`
 }
 
 export default async function handler(req, res) {
@@ -105,15 +124,34 @@ export default async function handler(req, res) {
     const prompt = smartReplyPrompt({ shopName: shop.shop_name, productList, chatHistory, customerMessage: content })
     const { result } = await generate(prompt)
 
-    let reply
+    let reply, order
     try {
       const parsed = parseJson(result)
-      reply = parsed.replies?.[0]
+      reply = parsed.reply
+      order = parsed.order
     } catch {
-      reply = result.slice(0, 500) // fallback: use raw text
+      reply = result.slice(0, 500)
     }
 
     if (!reply) return res.status(200).json({ skipped: 'no reply generated' })
+
+    // If AI detected a complete order — create it in DB
+    if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
+      const { data: createdOrder } = await supabase.from('orders').insert({
+        shop_id: shop.id,
+        product_name: order.product_name,
+        quantity: order.quantity || 1,
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        customer_address: order.customer_address,
+        notes: order.notes || '',
+        status: 'pending',
+      }).select('order_number').single()
+
+      if (createdOrder?.order_number) {
+        reply = reply.replace('অর্ডার নিবন্ধন হয়েছে', `অর্ডার নিবন্ধন হয়েছে (${createdOrder.order_number})`)
+      }
+    }
 
     // Insert reply as shop owner
     await supabase.from('messages').insert({
