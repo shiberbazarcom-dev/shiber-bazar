@@ -85,6 +85,7 @@ export function useConversations() {
       return convs.map(c => ({ ...c, unread_count: unreadMap[c.id] || 0 }))
     },
     enabled: !!user,
+    staleTime: 0,  // conversations sidebar must always be fresh
   })
 }
 
@@ -105,13 +106,16 @@ export function useMessages(conversationId) {
       return data || []
     },
     enabled: !!conversationId && !!user,
-    staleTime: 0,        // always consider stale — realtime keeps it fresh
-    gcTime: 1000 * 60,  // keep in memory 1 min after unmount
+    staleTime: 0,
+    gcTime: 1000 * 60,
+    // Polling fallback: if realtime misses an event, polling catches it within 4s
+    refetchInterval: 4000,
+    refetchIntervalInBackground: false,
   })
 }
 
 /* ── Fetch messages directly and update cache ── */
-async function syncMessages(qc, conversationId) {
+export async function syncMessages(qc, conversationId) {
   const { data } = await supabase
     .from('messages')
     .select('*, sender:sender_id ( id, full_name ), quick_replies')
@@ -252,29 +256,32 @@ export function useUnreadMessageCount() {
 export function useRealtimeMessages(conversationId, senderName = '') {
   const { user } = useAuth()
   const qc = useQueryClient()
+  // Store senderName in a ref so it never causes re-subscription
+  const senderNameRef = useRef(senderName)
+  useEffect(() => { senderNameRef.current = senderName }, [senderName])
+
   useEffect(() => {
     if (!conversationId) return
     const ch = supabase
-      .channel(`messages-${conversationId}`)
+      .channel(`chat-${conversationId}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages',
           filter: `conversation_id=eq.${conversationId}` },
         async (payload) => {
           const incoming = payload.new
-          // Directly fetch and inject into cache — bypasses staleTime/refetch quirks
+          // Sync messages immediately — no staleTime gate
           await syncMessages(qc, conversationId)
-          qc.invalidateQueries({ queryKey: ['conversations'] })
-          qc.invalidateQueries({ queryKey: ['unread-message-count'] })
 
           if (incoming?.sender_id !== user?.id) {
             playMessageSound()
-            showChatNotification(senderName || 'নতুন বার্তা', incoming?.content, conversationId)
-            showBrowserNotification(senderName || 'নতুন বার্তা', incoming?.content, conversationId)
+            showChatNotification(senderNameRef.current || 'নতুন বার্তা', incoming?.content, conversationId)
+            showBrowserNotification(senderNameRef.current || 'নতুন বার্তা', incoming?.content, conversationId)
           }
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [conversationId, senderName, qc, user?.id])
+    // Only re-subscribe when conversationId or user changes — NOT senderName
+  }, [conversationId, user?.id, qc])
 }
 
 /* ── Realtime: conversation list updates (used in Chat page) ── */
@@ -288,7 +295,8 @@ export function useRealtimeConversations() {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'conversations' },
         () => {
-          qc.invalidateQueries({ queryKey: ['conversations'] })
+          // refetchQueries = immediate fetch (not background like invalidateQueries)
+          qc.refetchQueries({ queryKey: ['conversations', user.id] })
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
         })
       .subscribe()
@@ -307,11 +315,12 @@ export function useGlobalMessageListener() {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         async (payload) => {
-          if (payload.new?.sender_id === user.id) return
           const convId = payload.new?.conversation_id
-          qc.invalidateQueries({ queryKey: ['conversations'] })
+          // Always refresh conversations sidebar (unread counts etc.)
+          qc.refetchQueries({ queryKey: ['conversations', user.id] })
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
-          // Direct sync so active chat window updates immediately
+          // Sync message list for the affected conversation
+          // (handles cases where useRealtimeMessages filtered subscription misses it)
           if (convId) await syncMessages(qc, convId)
         })
       .subscribe()

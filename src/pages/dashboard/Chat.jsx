@@ -17,12 +17,19 @@ export default function Chat() {
   const { data: conversations = [] } = useConversations()
   useRealtimeConversations()
 
+  // Sync selected conversation whenever conversations list refreshes
+  // This keeps ai_paused, last_message, unread_count etc. up to date
   useEffect(() => {
-    if (conversationId && conversations.length) {
+    if (!conversations.length) return
+    if (conversationId) {
       const found = conversations.find(c => c.id === conversationId)
       if (found) { setSelected(found); setShowList(false) }
+    } else if (selected) {
+      // Keep selected in sync even without URL param
+      const found = conversations.find(c => c.id === selected.id)
+      if (found) setSelected(found)
     }
-  }, [conversationId, conversations])
+  }, [conversationId, conversations]) // eslint-disable-line
 
   function handleSelect(conv) {
     setSelected(conv)

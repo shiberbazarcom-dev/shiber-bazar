@@ -4,7 +4,7 @@ import { bn } from 'date-fns/locale'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
-import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
+import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence, syncMessages } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 
 function OrderCard({ orderNumber }) {
@@ -248,14 +248,8 @@ export default function ChatWindow({ conversation, otherName }) {
       setAiTyping(true)
       await callAiAutoReply(conversation.id)
       setAiTyping(false)
-      // Direct fetch after AI reply — bypasses staleTime, guarantees instant display
-      const { data } = await supabase
-        .from('messages')
-        .select('*, sender:sender_id ( id, full_name ), quick_replies')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true })
-        .limit(100)
-      if (data) qc.setQueryData(['messages', conversation.id], data)
+      // Sync after AI reply — realtime + polling also handle this, but explicit sync is faster
+      syncMessages(qc, conversation.id)
     }
   }
 

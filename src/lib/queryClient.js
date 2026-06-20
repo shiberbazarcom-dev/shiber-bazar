@@ -6,9 +6,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime:            1000 * 60 * 2,   // 2 min
-      gcTime:               1000 * 60 * 60,  // 1 hour (offline এ cache রাখতে বাড়ানো হয়েছে)
+      gcTime:               1000 * 60 * 60,  // 1 hour
       retry: 1,
       refetchOnWindowFocus: false,
+      // Chat queries override staleTime/refetch at hook level
     },
   },
 })
