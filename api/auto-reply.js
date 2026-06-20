@@ -63,18 +63,21 @@ export default async function handler(req, res) {
     if (!conv?.shops) return res.status(200).json({ skipped: 'no shop' })
 
     const shop = conv.shops
+    console.log('[auto-reply] shop:', JSON.stringify({ id: shop.id, name: shop.shop_name, auto_reply: shop.auto_reply_enabled, owner: shop.owner_id }))
 
     // Skip if auto-reply disabled or message is from the owner
     if (!shop.auto_reply_enabled) return res.status(200).json({ skipped: 'disabled' })
     if (sender_id === shop.owner_id) return res.status(200).json({ skipped: 'owner message' })
 
-    // Fetch shop products for context
-    const { data: products } = await supabase
+    // Fetch shop products for context — try without is_active filter first as fallback
+    const { data: products, error: prodErr } = await supabase
       .from('products')
       .select('name, price, unit, description')
       .eq('shop_id', shop.id)
       .eq('is_active', true)
       .limit(50)
+
+    console.log('[auto-reply] products count:', products?.length, 'shopId:', shop.id, 'prodErr:', prodErr?.message)
 
     const productList = products?.length
       ? products.map((p, i) => `${i + 1}. ${p.name} — ৳${p.price}${p.unit ? `/${p.unit}` : ''}${p.description ? ` (${p.description})` : ''}`).join('\n')
