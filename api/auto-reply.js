@@ -5,11 +5,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
 function smartReplyPrompt({ customerMessage, shopName, productList }) {
   return `
 তুমি "${shopName}" দোকানের একজন অভিজ্ঞ বিক্রয়কর্মী। তোমার কাজ হলো শুধুমাত্র এই দোকানের পণ্য বিক্রি করা।
@@ -45,6 +40,11 @@ export default async function handler(req, res) {
   if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
 
   const { record, type } = req.body
   if (type !== 'INSERT' || !record) return res.status(200).json({ skipped: 'not an insert' })
