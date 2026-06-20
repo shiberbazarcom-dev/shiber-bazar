@@ -606,7 +606,7 @@ export default function DashboardLayout({ type = 'user' }) {
   )
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-[100dvh] bg-gray-50 flex overflow-hidden">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
@@ -623,3 +623,4 @@ export default function DashboardLayout({ type = 'user' }) {
     </div>
   )
 }
+

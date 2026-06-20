@@ -45,7 +45,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-[calc(100vh-10rem)] bg-white rounded-2xl border border-gray-100 overflow-hidden flex">
+    <div className="h-[calc(100dvh-10rem)] bg-white rounded-2xl border border-gray-100 overflow-hidden flex">
       <div className={`w-full lg:w-80 border-r border-gray-100 flex flex-col flex-shrink-0 ${!showList ? 'hidden lg:flex' : 'flex'}`}>
         <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-gray-800">💬 বার্তাসমূহ</h2>
