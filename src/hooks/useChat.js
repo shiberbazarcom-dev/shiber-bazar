@@ -117,7 +117,7 @@ export function useSendMessage() {
       const { data, error } = await supabase
         .from('messages')
         .insert({ conversation_id: conversationId, sender_id: user.id, content })
-        .select('*, sender:sender_id ( id, full_name ), quick_replies')
+        .select()
         .single()
       if (error) throw error
       await supabase
@@ -126,12 +126,9 @@ export function useSendMessage() {
         .eq('id', conversationId)
       return data
     },
-    onSuccess: (newMsg, { conversationId }) => {
-      // Immediately inject into cache — no network round-trip needed
-      qc.setQueryData(['messages', conversationId], (old = []) => {
-        if (old.some(m => m.id === newMsg.id)) return old
-        return [...old, newMsg]
-      })
+    onSuccess: async (_, { conversationId }) => {
+      // Immediately refetch so the new message appears without waiting for realtime
+      await qc.refetchQueries({ queryKey: ['messages', conversationId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
     },
   })
@@ -223,13 +220,8 @@ export function useRealtimeMessages(conversationId, senderName = '') {
           filter: `conversation_id=eq.${conversationId}` },
         async (payload) => {
           const incoming = payload.new
-          // Optimistically add bare message so it appears instantly
-          qc.setQueryData(['messages', conversationId], (old = []) => {
-            if (old.some(m => m.id === incoming.id)) return old
-            return [...old, { ...incoming, sender: null, quick_replies: incoming.quick_replies ?? null }]
-          })
-          // Then refetch in background to get sender join data
-          qc.refetchQueries({ queryKey: ['messages', conversationId], type: 'active' })
+          // Immediately refetch to get full message with sender join
+          await qc.refetchQueries({ queryKey: ['messages', conversationId] })
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count'] })
 

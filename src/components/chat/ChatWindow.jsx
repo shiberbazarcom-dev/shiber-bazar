@@ -179,7 +179,7 @@ export default function ChatWindow({ conversation, otherName }) {
 
   useRealtimeMessages(conversation?.id, otherName)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping, aiTyping])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, otherTyping, aiTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
   /* ── Load shop settings + conversation ai_paused state ── */
