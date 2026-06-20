@@ -250,12 +250,12 @@ export default function ContactPage() {
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex justify-between">
-                    <span>শনিবার - বৃহস্পতিবার</span>
-                    <span className="font-medium">সকাল ৯টা - রাত ৮টা</span>
+                    <span>{cmsSettings.office_hours_weekday || 'শনিবার - বৃহস্পতিবার'}</span>
+                    <span className="font-medium">{cmsSettings.office_hours_weekday_time || 'সকাল ৯টা - রাত ৮টা'}</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>শুক্রবার</span>
-                    <span className="font-medium">সকাল ৯টা - বিকাল ৫টা</span>
+                    <span>{cmsSettings.office_hours_friday || 'শুক্রবার'}</span>
+                    <span className="font-medium">{cmsSettings.office_hours_friday_time || 'সকাল ৯টা - বিকাল ৫টা'}</span>
                   </li>
                 </ul>
               </div>

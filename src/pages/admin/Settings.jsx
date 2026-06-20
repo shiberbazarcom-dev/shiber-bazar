@@ -12,6 +12,7 @@ const PROTECTED_KEYS = new Set([
   'hero_title','hero_subtitle','hero_search_placeholder_shop','hero_search_placeholder_product',
   'cta_badge','cta_title','cta_subtitle','cta_btn_primary','cta_btn_secondary',
   'contact_phone','contact_phone_display','contact_email','whatsapp_number','contact_address','map_embed_url',
+  'office_hours_weekday','office_hours_weekday_time','office_hours_friday','office_hours_friday_time',
   'footer_about',
   'union_name','union_area','union_email',
   'union_chairman_name','union_chairman_phone','union_chairman_title',
@@ -317,7 +318,7 @@ export default function Settings() {
     },
     {
       title: '📞 যোগাযোগ',
-      keys: ['contact_phone','contact_phone_display','contact_email','whatsapp_number','contact_address','map_embed_url'],
+      keys: ['contact_phone','contact_phone_display','contact_email','whatsapp_number','contact_address','map_embed_url','office_hours_weekday','office_hours_weekday_time','office_hours_friday','office_hours_friday_time'],
     },
     {
       title: '🦶 Footer',
