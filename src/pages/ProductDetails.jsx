@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useProduct, useShopProducts } from '../hooks/useProducts'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
-import { useStartConversation } from '../hooks/useChat'
 import { recordProductView } from '../hooks/useAnalytics'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
@@ -62,7 +61,6 @@ export default function ProductDetails() {
   const { data: related = [] } = useShopProducts(product?.shop_id)
   const { addItem, isInCart } = useCart()
   const { user } = useAuth()
-  const startConversation = useStartConversation()
   const [activeImg, setActiveImg] = useState(0)
   const [imgZoom, setImgZoom] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
@@ -88,17 +86,6 @@ export default function ProductDetails() {
   /* Opens the in-page order modal (no redirect) — order logic unchanged */
   function goOrder() {
     setOrderOpen(true)
-  }
-
-  async function handleStartChat() {
-    if (!user) { navigate('/login'); return }
-    const shop = product?.shops
-    if (!shop) return
-    if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
-    try {
-      const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
-      navigate(`/dashboard/chat/${conv.id}`)
-    } catch { toast.error('বার্তা শুরু করা যায়নি') }
   }
 
   async function handleShare() {
@@ -282,51 +269,42 @@ export default function ProductDetails() {
               )}
 
               {/* Action buttons — desktop only (mobile uses the sticky bottom bar) */}
-              <div className="hidden md:flex flex-col sm:flex-row gap-2.5 mt-1">
+              <div className="hidden md:flex flex-col gap-2.5 mt-1">
+                {/* Primary CTA — Order */}
                 <button
                   onClick={goOrder}
-                  className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 transition-all active:scale-95"
-                  style={{ background: BLUE }}>
+                  className="w-full h-13 font-bold rounded-2xl text-sm flex items-center justify-center gap-2.5 text-white shadow-md hover:shadow-lg hover:brightness-105 transition-all active:scale-[0.98]"
+                  style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', minHeight: '52px' }}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
-                  অর্ডার করুন
+                  এখনই অর্ডার করুন
                 </button>
 
-                {shop?.owner_id !== user?.id && (
-                  <button onClick={handleStartChat} disabled={startConversation.isPending}
-                    className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
-                    style={{ background: '#7c3aed' }}>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                {/* Secondary row — WhatsApp + Cart */}
+                <div className="flex gap-2.5">
+                  {(shop?.whatsapp || shop?.phone) && (
+                    <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
+                      target="_blank" rel="noreferrer"
+                      className="flex-1 h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 text-white hover:brightness-105 active:scale-[0.98] transition-all shadow-sm"
+                      style={{ background: '#25d366' }}>
+                      {WA_ICON}
+                      WhatsApp
+                    </a>
+                  )}
+                  <button onClick={handleAddToCart}
+                    className={`flex-1 h-11 font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 border-2 transition-all active:scale-[0.98] ${
+                      inCart
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-300 hover:text-blue-700'
+                    }`}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    বার্তা যাও
+                    {inCart ? 'কার্টে আছে ✓' : 'কার্টে যোগ'}
                   </button>
-                )}
-
-                {(shop?.whatsapp || shop?.phone) && (
-                  <a href={whatsappUrl(shop.whatsapp || shop.phone, `আমি "${product.name}" অর্ডার করতে চাই।`)}
-                    target="_blank" rel="noreferrer"
-                    className="sm:flex-1 h-12 flex-shrink-0 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
-                    style={{ background: '#25d366' }}>
-                    {WA_ICON}
-                    WhatsApp এ অর্ডার
-                  </a>
-                )}
+                </div>
               </div>
-
-              {/* Add to cart — secondary (desktop only; mobile sticky bar has cart icon) */}
-              <button onClick={handleAddToCart}
-                className={`w-full h-11 font-semibold rounded-2xl text-sm hidden md:flex items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
-                  inCart
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                }`}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {inCart ? 'কার্টে আছে ✓' : 'কার্টে যোগ করুন'}
-              </button>
 
               {/* Description */}
               {product.description && (
