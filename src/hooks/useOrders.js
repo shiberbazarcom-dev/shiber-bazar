@@ -82,6 +82,40 @@ export function useUpdateOrderStatus() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, status, shop_id }) => {
+      // ── Ownership verification (defense-in-depth on top of RLS) ──────────
+      const { data: { user: caller } } = await supabase.auth.getUser()
+      if (!caller) throw new Error('অনুমতি নেই')
+
+      const { data: callerProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', caller.id)
+        .single()
+      const isAdmin = ['super_admin', 'market_manager'].includes(callerProfile?.role)
+
+      if (!isAdmin) {
+        // Fetch the order's current shop_id (use the incoming shop_id override if provided,
+        // otherwise read the existing value from the database)
+        const targetShopId = shop_id ?? (await supabase
+          .from('orders')
+          .select('shop_id')
+          .eq('id', id)
+          .single()
+          .then(r => r.data?.shop_id))
+
+        if (!targetShopId) throw new Error('অর্ডারটি পাওয়া যায়নি')
+
+        const { data: ownedShop } = await supabase
+          .from('shops')
+          .select('id')
+          .eq('id', targetShopId)
+          .eq('owner_id', caller.id)
+          .maybeSingle()
+
+        if (!ownedShop) throw new Error('আপনি এই অর্ডার পরিবর্তন করতে পারবেন না')
+      }
+      // ── End ownership verification ────────────────────────────────────────
+
       const updates = { status }
       if (shop_id !== undefined) updates.shop_id = shop_id
       const { data: order, error } = await supabase

@@ -184,8 +184,19 @@ export function useStartConversation() {
   const { user } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ shopId, ownerId }) => {
+    mutationFn: async ({ shopId }) => {
       if (!user) throw new Error('Login করুন')
+
+      // ── Resolve owner from DB — never trust client-supplied ownerId ───────
+      const { data: shop, error: shopErr } = await supabase
+        .from('shops')
+        .select('id, owner_id')
+        .eq('id', shopId)
+        .single()
+      if (shopErr || !shop) throw new Error('দোকানটি পাওয়া যায়নি')
+      const resolvedOwnerId = shop.owner_id
+      // ── End owner resolution ──────────────────────────────────────────────
+
       const { data: existing } = await supabase
         .from('conversations')
         .select('id')
@@ -195,7 +206,7 @@ export function useStartConversation() {
       if (existing) return existing
       const { data, error } = await supabase
         .from('conversations')
-        .insert({ customer_id: user.id, shop_id: shopId, owner_id: ownerId })
+        .insert({ customer_id: user.id, shop_id: shopId, owner_id: resolvedOwnerId })
         .select()
         .single()
       if (error) throw error

@@ -4,6 +4,27 @@
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
+/* ── Sanitize ai_persona before prompt injection (H3) ───────────────────────
+   Strips prompt-injection patterns while preserving normal business text.
+   Max 500 chars — sufficient for any legitimate shop description.
+──────────────────────────────────────────────────────────────────────────── */
+function sanitizePersona(text) {
+  if (!text) return ''
+  return text
+    .slice(0, 500)
+    .replace(/ignore\s+(all\s+)?(previous|above|prior|earlier)\s+(rules?|instructions?|prompts?|context)/gi, '')
+    .replace(/you\s+are\s+now\s+/gi, '')
+    .replace(/forget\s+(everything|all|previous|above)/gi, '')
+    .replace(/\b(system|assistant|user)\s*:/gi, '')
+    .replace(/new\s+instructions?\s*(override|replace|supersede)?/gi, '')
+    .replace(/override\s+(all\s+)?(previous|above|prior)?/gi, '')
+    .replace(/disregard\s+(all\s+)?(previous|above|prior)?/gi, '')
+    .replace(/^#{1,6}\s/gm, '')   // strip markdown headings used as structural injections
+    .replace(/^-{3,}$/gm, '')     // strip horizontal rules
+    .replace(/^={3,}$/gm, '')
+    .trim()
+}
+
 /* ── Gender detection: ONLY from explicit customer statement ── */
 function detectAddressingStyle(msgs, ownerId) {
   const customerMsgs = msgs.filter(m => m.sender_id !== ownerId).map(m => m.content)
@@ -87,7 +108,7 @@ ${alreadyHave.length ? `## ইতিমধ্যে সংগ্রহ করা
 
 ## দোকানের পণ্য তালিকা:
 ${productList || 'পণ্য তালিকা পাওয়া যায়নি। জিজ্ঞেস করলে বলো "একটু পরে জানাচ্ছি।"'}
-${aiPersona ? `\n## দোকানের বিশেষ তথ্য:\n${aiPersona}` : ''}
+${aiPersona ? `\n## দোকানের বিশেষ তথ্য:\n${sanitizePersona(aiPersona)}` : ''}
 
 ## কথোপকথনের ইতিহাস:
 ${chatHistory || '(নতুন কথোপকথন)'}
