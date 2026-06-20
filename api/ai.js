@@ -1,63 +1,8 @@
 /* Vercel serverless function — AI content generation
-   Primary: DeepSeek-V3
-   Fallback: Google Gemini 1.5 Flash (free)
+   Primary: DeepSeek-V3  |  Fallback: Google Gemini 1.5 Flash
 */
+import { generate, parseJson } from './_generate.js'
 
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
-const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-
-async function callDeepSeek(prompt) {
-  const res = await fetch(DEEPSEEK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1000,
-    }),
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!res.ok) throw new Error(`DeepSeek error: ${res.status}`)
-  const data = await res.json()
-  return data.choices[0].message.content.trim()
-}
-
-async function callGemini(prompt) {
-  const res = await fetch(`${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
-    }),
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!res.ok) throw new Error(`Gemini error: ${res.status}`)
-  const data = await res.json()
-  return data.candidates[0].content.parts[0].text.trim()
-}
-
-async function generate(prompt) {
-  if (process.env.DEEPSEEK_API_KEY) {
-    try {
-      const result = await callDeepSeek(prompt)
-      return { result, provider: 'deepseek' }
-    } catch (err) {
-      console.warn('DeepSeek failed, falling back to Gemini:', err.message)
-    }
-  }
-  if (process.env.GEMINI_API_KEY) {
-    const result = await callGemini(prompt)
-    return { result, provider: 'gemini' }
-  }
-  throw new Error('No AI provider configured')
-}
-
-/* ── Prompt builders ── */
 const PROMPTS = {
   landing_page: ({ productName, price, category }) => `
 তুমি একজন বাংলাদেশী মার্কেটিং কপিরাইটার। নিচের পণ্যের জন্য Facebook landing page এর content তৈরি করো।
@@ -99,29 +44,31 @@ ${price ? `মূল্য: ৳${price}` : ''}
 শুধু JSON দাও, আর কিছু না।`,
 
   smart_reply: ({ customerMessage, shopName, productList }) => `
-তুমি "${shopName}" দোকানের একজন বিনয়ী ও সহায়ক customer service প্রতিনিধি।
-Customer বাংলা বা banglish (বাংলা ইংরেজি মিশিয়ে) যেভাবেই লিখুক, তুমি বুঝে reply দেবে।
-Reply সবসময় বাংলায় দেবে।
+তুমি "${shopName}" দোকানের একজন অভিজ্ঞ বিক্রয়কর্মী। তোমার কাজ হলো শুধুমাত্র এই দোকানের পণ্য বিক্রি করা।
 
-${productList ? `দোকানের পণ্য তালিকা (নাম ও দাম সহ):
-${productList}
+🔴 কঠোর নিয়ম:
+1. শুধুমাত্র নিচের "দোকানের পণ্য তালিকা" থেকে উত্তর দেবে।
+2. তালিকায় নেই এমন কোনো পণ্যের কথা কখনো বলবে না, এমনকি অনুমান করেও না।
+3. Customer যদি এমন কিছু জিজ্ঞেস করে যা তালিকায় নেই, বিনয়ের সাথে বলবে "দুঃখিত, এই পণ্যটি আমাদের দোকানে নেই।"
+4. Customer বাংলা বা banglish যেভাবেই লিখুক, বুঝে বাংলায় reply দেবে।
+5. Event বা উপলক্ষ (যেমন: রমজান, বিবাহ, ঈদ) এর জন্য পণ্য জানতে চাইলে — শুধু তালিকা থেকে সেই event এর জন্য প্রাসঙ্গিক পণ্যগুলো বাছাই করে দেখাবে।
 
-গুরুত্বপূর্ণ: Customer যদি কোনো পণ্যের দাম বা তথ্য জানতে চায়, পণ্য তালিকা থেকে সঠিক দাম ও তথ্য দাও। যদি পণ্য তালিকায় না থাকে, বিনয়ের সাথে জানাও যে এই পণ্যটি এখন নেই।` : ''}
+${productList
+  ? `✅ "${shopName}" দোকানের পণ্য তালিকা:\n${productList}`
+  : `⚠️ এই দোকানের কোনো পণ্য তালিকা নেই। Customer যাই জিজ্ঞেস করুক, বলবে "আমাদের পণ্য তালিকা এখনো আপডেট হয়নি, অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"`
+}
 
 Customer মেসেজ: "${customerMessage}"
 
-এই মেসেজের জন্য ১টি সেরা reply দাও। সংক্ষিপ্ত, বিনয়ী ও সহায়ক হবে।
+উপরের তালিকা দেখে ১টি সেরা reply দাও। মানবিক, বিনয়ী ও সহায়ক হবে।
 JSON format এ return করো:
 {
-  "replies": [
-    "reply (২-৩ বাক্য, প্রাসঙ্গিক তথ্য সহ)"
-  ]
+  "replies": ["reply এখানে"]
 }
 
 শুধু JSON দাও, আর কিছু না।`,
 }
 
-/* ── Main handler ── */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -138,8 +85,7 @@ export default async function handler(req, res) {
 
     let parsed
     try {
-      const clean = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      parsed = JSON.parse(clean)
+      parsed = parseJson(result)
     } catch {
       return res.status(200).json({ raw: result, provider })
     }

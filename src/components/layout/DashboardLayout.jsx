@@ -135,6 +135,32 @@ function playServiceChime() {
   } catch (_) { /* audio blocked */ }
 }
 
+/* ── New message toast (shop owner) ── */
+function NewMessageToast({ t, senderName, preview, navigate }) {
+  return (
+    <div className={cn(
+      'flex items-start gap-3 bg-white rounded-2xl shadow-xl border border-blue-200 p-4 max-w-sm w-full transition-opacity',
+      t.visible ? 'opacity-100' : 'opacity-0'
+    )}>
+      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
+        {(senderName || '?')[0].toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-800 text-sm">💬 নতুন বার্তা</p>
+        <p className="text-xs font-medium text-blue-600 mt-0.5">{senderName}</p>
+        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{preview}</p>
+        <button
+          className="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline"
+          onClick={() => { toast.dismiss(t.id); navigate('/dashboard/chat') }}>
+          উত্তর দিন →
+        </button>
+      </div>
+      <button onClick={() => toast.dismiss(t.id)}
+        className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0">✕</button>
+    </div>
+  )
+}
+
 /* ── Admin: new order toast ── */
 function NewOrderToast({ t, order }) {
   return (
@@ -371,6 +397,47 @@ export default function DashboardLayout({ type = 'user' }) {
       })
     return () => supabase.removeChannel(ch)
   }, [type, user?.id]) // eslint-disable-line
+
+  /* ── Realtime: shop owner listens for new messages (global, works on any page) ── */
+  useEffect(() => {
+    if (type === 'admin' || !isShopOwner || !user) return
+    const ch = supabase
+      .channel(`owner-new-messages-${user.id}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        async (payload) => {
+          const msg = payload.new
+          // Skip own messages
+          if (msg.sender_id === user.id) return
+          // Check if the conversation belongs to this owner
+          const { data: conv } = await supabase
+            .from('conversations')
+            .select('owner_id, customer:customer_id(full_name)')
+            .eq('id', msg.conversation_id)
+            .single()
+          if (!conv || conv.owner_id !== user.id) return
+
+          const senderName = conv.customer?.full_name || 'কেউ একজন'
+
+          // Don't show toast if already on chat page
+          if (window.location.pathname.includes('/chat')) {
+            qc.invalidateQueries({ queryKey: ['conversations'] })
+            qc.invalidateQueries({ queryKey: ['messages', msg.conversation_id] })
+            qc.invalidateQueries({ queryKey: ['unread-count'] })
+            return
+          }
+
+          toast.custom(t => (
+            <NewMessageToast t={t} senderName={senderName} preview={msg.content} navigate={navigate} />
+          ), { duration: 8000, position: 'top-right' })
+
+          playBeep(440, 560)
+          qc.invalidateQueries({ queryKey: ['conversations'] })
+          qc.invalidateQueries({ queryKey: ['unread-count'] })
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [type, isShopOwner, user]) // eslint-disable-line
 
   /* ── Realtime: shop owner listens for confirmed orders (UPDATE) ── */
   // ManageOrders.tsx sets status='confirmed' when admin assigns order to a shop

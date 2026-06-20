@@ -5,8 +5,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 
-const AUTO_REPLY_KEY = 'chat_auto_reply'
-
 function PresenceStatus({ userId }) {
   const lastSeen = useOtherUserPresence(userId)
   if (!lastSeen) return null
@@ -27,12 +25,12 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
           {senderInitial}
         </div>
       )}
-      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[70%]`}>
+      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[75%]`}>
         {!isOwn && <p className="text-xs text-gray-500 px-3">{senderName}</p>}
         <div className="flex flex-col gap-0.5">
           {group.map((msg, idx) => (
             <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm leading-relaxed ${
+              <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 isOwn ? 'bg-blue-500 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
               }`}>
                 <p className="break-words whitespace-pre-wrap">{msg.content}</p>
@@ -54,14 +52,11 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
 export default function ChatWindow({ conversation, otherName }) {
   const { user, isOwner } = useAuth()
   const [text, setText] = useState('')
-  const [autoReply, setAutoReply] = useState(() => localStorage.getItem(AUTO_REPLY_KEY) === 'true')
-  const [aiTyping, setAiTyping] = useState(false)
   const [otherTyping, setOtherTyping] = useState(false)
-  const [shopProducts, setShopProducts] = useState([])
-  const bottomRef = useRef(null)
-  const inputRef  = useRef(null)
-  const lastMsgIdRef  = useRef(null)
-  const replyingRef   = useRef(false)
+  const [autoReply, setAutoReply] = useState(false)
+  const [togglingAR, setTogglingAR] = useState(false)
+  const bottomRef      = useRef(null)
+  const inputRef       = useRef(null)
   const typingTimerRef = useRef(null)
   const channelRef     = useRef(null)
 
@@ -78,88 +73,46 @@ export default function ChatWindow({ conversation, otherName }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
+  /* ── Load auto_reply_enabled from shop ── */
+  useEffect(() => {
+    if (!isOwner || !conversation?.shop_id) return
+    supabase
+      .from('shops')
+      .select('auto_reply_enabled')
+      .eq('id', conversation.shop_id)
+      .single()
+      .then(({ data }) => { if (data) setAutoReply(!!data.auto_reply_enabled) })
+  }, [isOwner, conversation?.shop_id])
+
+  /* ── Toggle auto-reply (saves to DB) ── */
+  async function toggleAutoReply() {
+    if (!conversation?.shop_id || togglingAR) return
+    const next = !autoReply
+    setTogglingAR(true)
+    const { error } = await supabase
+      .from('shops')
+      .update({ auto_reply_enabled: next })
+      .eq('id', conversation.shop_id)
+    if (!error) setAutoReply(next)
+    setTogglingAR(false)
+  }
+
   /* ── Typing indicator via Supabase broadcast ── */
   useEffect(() => {
     if (!conversation?.id || !user?.id) return
-
     const ch = supabase.channel(`typing:${conversation.id}`)
     channelRef.current = ch
-
     ch.on('broadcast', { event: 'typing' }, ({ payload }) => {
       if (payload.user_id === user.id) return
       setOtherTyping(true)
       clearTimeout(typingTimerRef.current)
       typingTimerRef.current = setTimeout(() => setOtherTyping(false), 3000)
     }).subscribe()
-
-    return () => {
-      clearTimeout(typingTimerRef.current)
-      supabase.removeChannel(ch)
-    }
+    return () => { clearTimeout(typingTimerRef.current); supabase.removeChannel(ch) }
   }, [conversation?.id, user?.id])
 
   function broadcastTyping() {
     channelRef.current?.send({ type: 'broadcast', event: 'typing', payload: { user_id: user?.id } })
-  }
-
-  /* ── Load shop products for AI context ── */
-  useEffect(() => {
-    const shopId = conversation?.shop_id
-    if (!shopId) return
-    supabase
-      .from('products')
-      .select('name, price, unit, description')
-      .eq('shop_id', shopId)
-      .eq('is_active', true)
-      .limit(50)
-      .then(({ data }) => {
-        if (data?.length) setShopProducts(data)
-      })
-  }, [conversation?.shop_id])
-
-  /* ── Auto-reply: fires when new customer message arrives ── */
-  useEffect(() => {
-    if (!isOwner || !autoReply || !conversation?.id || messages.length === 0) return
-
-    const last = messages[messages.length - 1]
-    if (!last) return
-    if (last.sender_id === user?.id) return           // own message, skip
-    if (last.id === lastMsgIdRef.current) return      // already handled
-    if (replyingRef.current) return                   // already replying
-
-    lastMsgIdRef.current = last.id
-    replyingRef.current  = true
-    setAiTyping(true)
-
-    // broadcast typing every 2s while AI is generating
-    broadcastTyping()
-    const typingInterval = setInterval(broadcastTyping, 2000)
-
-    fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'smart_reply',
-        customerMessage: last.content,
-        shopName: conversation?.shops?.shop_name || 'আমাদের দোকান',
-        productList: shopProducts.length
-          ? shopProducts.map(p => `${p.name}: ৳${p.price}${p.unit ? `/${p.unit}` : ''}${p.description ? ` (${p.description})` : ''}`).join(', ')
-          : '',
-      }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        const reply = data.replies?.[0]
-        if (reply) return sendMsg.mutateAsync({ conversationId: conversation.id, content: reply })
-      })
-      .catch(() => {})
-      .finally(() => { clearInterval(typingInterval); setAiTyping(false); replyingRef.current = false })
-  }, [messages]) // eslint-disable-line
-
-  const toggleAutoReply = () => {
-    const next = !autoReply
-    setAutoReply(next)
-    localStorage.setItem(AUTO_REPLY_KEY, String(next))
   }
 
   async function handleSend(e) {
@@ -185,7 +138,6 @@ export default function ChatWindow({ conversation, otherName }) {
   // Group messages by sender and date
   const grouped = []
   let lastDate = null, lastSenderId = null, currentGroup = []
-
   messages.forEach((msg) => {
     const dateKey = format(new Date(msg.created_at), 'yyyy-MM-dd')
     if (dateKey !== lastDate) {
@@ -210,25 +162,28 @@ export default function ChatWindow({ conversation, otherName }) {
           {otherName?.[0] || '?'}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm">{otherName}</p>
+          <p className="font-semibold text-gray-800 text-sm truncate">{otherName}</p>
           <PresenceStatus userId={otherUserId} />
         </div>
 
         {/* Auto-reply toggle — shop owner only */}
         {isOwner && (
-          <button onClick={toggleAutoReply}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all"
+          <button
+            onClick={toggleAutoReply}
+            disabled={togglingAR}
+            title={autoReply ? 'AI auto-reply চালু আছে — বন্ধ করতে ক্লিক করুন' : 'AI auto-reply চালু করুন'}
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all flex-shrink-0 disabled:opacity-60"
             style={autoReply
               ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
               : { background: '#f3f4f6', color: '#9ca3af', borderColor: '#e5e7eb' }}>
-            <span className={`w-2 h-2 rounded-full ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
-            AI {autoReply ? 'চালু' : 'বন্ধ'}
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
+            {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
           </button>
         )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 bg-gray-50">
         {grouped.length === 0 && (
           <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
         )}
@@ -272,13 +227,13 @@ export default function ChatWindow({ conversation, otherName }) {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="px-4 py-3 bg-white border-t border-gray-100 flex gap-2 flex-shrink-0">
+      <form onSubmit={handleSend} className="px-3 sm:px-4 py-3 bg-white border-t border-gray-100 flex gap-2 flex-shrink-0">
         <input
           ref={inputRef}
           value={text}
           onChange={e => { setText(e.target.value); broadcastTyping() }}
           placeholder="বার্তা লিখুন..."
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0"
         />
         <button
           type="submit"
