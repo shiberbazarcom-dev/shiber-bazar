@@ -1,9 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
 import { format, formatDistance } from 'date-fns'
 import { bn } from 'date-fns/locale'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
+
+function OrderCard({ orderNumber }) {
+  return (
+    <Link
+      to={`/track-order?order=${orderNumber}`}
+      className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
+    >
+      <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0 text-sm">✓</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold text-green-800">অর্ডার নিশ্চিত হয়েছে</p>
+        <p className="text-[11px] text-green-600 font-mono">{orderNumber}</p>
+      </div>
+      <span className="text-xs text-green-600 font-semibold flex-shrink-0">ট্র্যাক করুন →</span>
+    </Link>
+  )
+}
 
 async function callAiAutoReply(conversationId) {
   try {
@@ -56,7 +73,7 @@ function CopyButton({ text }) {
   )
 }
 
-function MessageGroup({ group, isOwn, senderName, senderInitial, onQuickReply }) {
+function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, onQuickReply }) {
   const isAiGroup = !isOwn && group.some(m => m.is_ai)
   const lastMsg = group[group.length - 1]
   const quickReplies = !isOwn ? (lastMsg?.quick_replies || null) : null
@@ -64,11 +81,13 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, onQuickReply })
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 mb-3 animate-fadeIn`}>
       {!isOwn && (
-        <div className={`w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto ${
-          isAiGroup ? 'bg-gradient-to-br from-purple-500 to-violet-600' : 'bg-gradient-to-br from-blue-400 to-blue-600'
-        }`}>
-          {isAiGroup ? '✨' : senderInitial}
-        </div>
+        isAiGroup && shopLogo
+          ? <img src={shopLogo} alt="shop" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-auto border border-purple-200" />
+          : <div className={`w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto ${
+              isAiGroup ? 'bg-gradient-to-br from-purple-500 to-violet-600' : 'bg-gradient-to-br from-blue-400 to-blue-600'
+            }`}>
+              {isAiGroup ? '🏪' : senderInitial}
+            </div>
       )}
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[75%]`}>
         {!isOwn && (
@@ -78,23 +97,32 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, onQuickReply })
           </p>
         )}
         <div className="flex flex-col gap-0.5">
-          {group.map((msg, idx) => (
-            <div key={msg.id} className={`group flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                isOwn
-                  ? 'bg-blue-500 text-white rounded-br-sm'
-                  : msg.is_ai
-                    ? 'bg-purple-50 border border-purple-200 text-gray-800 rounded-bl-sm shadow-sm'
-                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
-              }`}>
-                <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+          {group.map((msg, idx) => {
+            const orderMatch = msg.is_ai ? msg.content.match(/\b(SB\d+)\b/) : null
+            const orderNumber = orderMatch?.[1] || null
+            // Clean display text — remove the "(অর্ডার নং: SBxxx)" suffix
+            const displayText = orderNumber
+              ? msg.content.replace(/\s*\(অর্ডার নং: SB\d+\)/, '').trim()
+              : msg.content
+            return (
+              <div key={msg.id} className={`group flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  isOwn
+                    ? 'bg-blue-500 text-white rounded-br-sm'
+                    : msg.is_ai
+                      ? 'bg-purple-50 border border-purple-200 text-gray-800 rounded-bl-sm shadow-sm'
+                      : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
+                }`}>
+                  <p className="break-words whitespace-pre-wrap">{displayText}</p>
+                  {orderNumber && <OrderCard orderNumber={orderNumber} />}
+                </div>
+                <CopyButton text={msg.content} />
+                {idx === group.length - 1 && isOwn && msg.is_read && (
+                  <span className="text-xs text-green-600 font-bold">✓✓</span>
+                )}
               </div>
-              <CopyButton text={msg.content} />
-              {idx === group.length - 1 && isOwn && msg.is_read && (
-                <span className="text-xs text-green-600 font-bold">✓✓</span>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
         <p className={`text-xs mt-1 px-3 ${isOwn ? 'text-gray-400' : 'text-gray-500'}`}>
           {format(new Date(lastMsg.created_at), 'h:mm a')}
@@ -127,6 +155,7 @@ export default function ChatWindow({ conversation, otherName }) {
   const [aiPersona, setAiPersona] = useState('')
   const [savingPersona, setSavingPersona] = useState(false)
   const [showCanned, setShowCanned] = useState(false)
+  const [aiPaused, setAiPaused] = useState(false)
   const bottomRef      = useRef(null)
   const inputRef       = useRef(null)
   const typingTimerRef = useRef(null)
@@ -145,14 +174,15 @@ export default function ChatWindow({ conversation, otherName }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping, aiTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
-  /* ── Load shop settings ── */
+  /* ── Load shop settings + conversation ai_paused state ── */
   useEffect(() => {
     if (!conversation?.shop_id) return
     supabase.from('shops').select('auto_reply_enabled, ai_persona').eq('id', conversation.shop_id).single()
       .then(({ data }) => {
         if (data) { setAutoReply(!!data.auto_reply_enabled); setAiPersona(data.ai_persona || '') }
       })
-  }, [conversation?.shop_id])
+    setAiPaused(!!conversation.ai_paused)
+  }, [conversation?.shop_id, conversation?.ai_paused])
 
   async function saveAiPersona() {
     if (!conversation?.shop_id) return
@@ -250,13 +280,27 @@ export default function ChatWindow({ conversation, otherName }) {
         </div>
         {isOwner && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={toggleAutoReply} disabled={togglingAR}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
-              style={autoReply ? { background:'#ede9fe',color:'#6d28d9',borderColor:'#c4b5fd' } : { background:'#f3f4f6',color:'#9ca3af',borderColor:'#e5e7eb' }}>
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
-              {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
-            </button>
-            {autoReply && (
+            {/* AI paused indicator — customer requested human */}
+            {aiPaused && autoReply && (
+              <button
+                onClick={async () => {
+                  await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation.id)
+                  setAiPaused(false)
+                }}
+                title="Customer মালিকের সাথে কথা বলতে চেয়েছে। AI pause আছে — click করে resume করুন"
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-300 bg-orange-50 text-orange-600 animate-pulse">
+                ⏸ AI pause — resume করুন
+              </button>
+            )}
+            {!aiPaused && (
+              <button onClick={toggleAutoReply} disabled={togglingAR}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
+                style={autoReply ? { background:'#ede9fe',color:'#6d28d9',borderColor:'#c4b5fd' } : { background:'#f3f4f6',color:'#9ca3af',borderColor:'#e5e7eb' }}>
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
+                {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
+              </button>
+            )}
+            {autoReply && !aiPaused && (
               <button onClick={() => setShowAiSettings(s => !s)} title="AI সেটিং"
                 className="w-7 h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors">
                 ⚙️
@@ -302,6 +346,7 @@ export default function ChatWindow({ conversation, otherName }) {
                 isOwn={item.senderId === user?.id}
                 senderName={item.group[0].sender?.full_name || 'ব্যবহারকারী'}
                 senderInitial={(item.group[0].sender?.full_name || '?')[0].toUpperCase()}
+                shopLogo={conversation?.shops?.logo}
                 onQuickReply={!isOwner ? (qr) => sendContent(qr) : null}
               />
             )

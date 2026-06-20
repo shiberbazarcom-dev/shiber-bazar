@@ -31,29 +31,19 @@ Customer: ${customerMessage}
 - আগের কথোপকথন মনে রেখো — যা আগে জানা গেছে তা আর জিজ্ঞেস করবে না
 - শুধু তালিকার পণ্য নিয়ে কথা বলো
 - Customer order দিতে চাইলে এক এক করে নাম, মোবাইল, ঠিকানা চাও
-- সব তথ্য পেলে order confirm করো
+- কথোপকথনে যদি ইতিমধ্যে "অর্ডার নেওয়া হয়েছে" বা অর্ডার নম্বর (SB...) থাকে — order আর নতুন করে দিও না, "order": null দাও
+- Customer "thanks", "ধন্যবাদ", "ok thanks", "আচ্ছা", "okay" বললে — "ধন্যবাদ ভাই, ভালো থাকবেন!" বা "জী ভাই, আর কিছু লাগলে জানাবেন।" — আগের কথা repeat করবে না, "order": null দাও
+- Conversation শেষ মনে হলে বিদায়সূচক ছোট একটা কথা বলো
+- Customer যদি বলে "মালিকের সাথে কথা বলতে চাই", "owner এর সাথে কথা বলব", "আপনি কি মালিক?", "real person চাই", "human চাই" বা এই ধরনের কিছু — তাহলে "handoff": true দাও এবং reply-এ বলো "ঠিক আছে ভাই, আপনাকে এখন দোকান মালিকের কাছে পাঠানো হচ্ছে। কিছুক্ষণ অপেক্ষা করুন, তিনি অনলাইন আসলেই reply দেবেন।"
 
-অর্ডার হলে এই JSON দাও:
-{
-  "reply": "ঠিক আছে ভাই, অর্ডার নেওয়া হয়েছে। শীঘ্রই যোগাযোগ করব।",
-  "order": {
-    "product_name": "পণ্যের নাম",
-    "quantity": 1,
-    "customer_name": "নাম",
-    "customer_phone": "01XXXXXXXXX",
-    "customer_address": "ঠিকানা",
-    "notes": ""
-  }
-}
+অর্ডার নেওয়ার সময় (প্রথমবার, যদি আগে confirm না হয়ে থাকে):
+{"reply":"...","order":{"product_name":"...","quantity":1,"price":0,"customer_name":"...","customer_phone":"...","customer_address":"...","notes":""},"handoff":false,"quick_replies":[]}
 
-অর্ডার না হলে:
-{
-  "reply": "reply এখানে",
-  "order": null,
-  "quick_replies": ["বিকল্প ১", "বিকল্প ২"]
-}
+অর্ডার না হলে বা আগেই হয়ে গেলে:
+{"reply":"...","order":null,"handoff":false,"quick_replies":["বিকল্প ১","বিকল্প ২"]}
 
-quick_replies হলো customer-কে দেওয়া ২-৩টি suggestion বাটন। যদি suggestion দেওয়ার দরকার না থাকে তাহলে খালি array [] দাও।
+Customer মালিকের সাথে কথা বলতে চাইলে:
+{"reply":"ঠিক আছে ভাই, আপনাকে এখন দোকান মালিকের কাছে পাঠানো হচ্ছে। কিছুক্ষণ অপেক্ষা করুন, তিনি অনলাইন আসলেই reply দেবেন।","order":null,"handoff":true,"quick_replies":[]}
 
 শুধু JSON দাও।`
 }
@@ -82,14 +72,23 @@ export default async function handler(req, res) {
     // Fetch conversation
     const { data: conv } = await supabase
       .from('conversations')
-      .select('shop_id, owner_id')
+      .select('shop_id, owner_id, ai_paused')
       .eq('id', conversation_id)
       .single()
 
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
-    // Skip if message is from the owner
-    if (sender_id === conv.owner_id) return res.status(200).json({ skipped: 'owner message' })
+    // Skip if message is from the owner (owner replying re-enables AI)
+    if (sender_id === conv.owner_id) {
+      // If owner manually replied, unpause AI for this conversation
+      if (conv.ai_paused) {
+        await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation_id)
+      }
+      return res.status(200).json({ skipped: 'owner message' })
+    }
+
+    // Skip if AI is paused for this conversation (customer requested human)
+    if (conv.ai_paused) return res.status(200).json({ skipped: 'ai paused for this conversation' })
 
     // Fetch shop separately (avoids join dependency on FK setup)
     const { data: shop } = await supabase
@@ -131,33 +130,60 @@ export default async function handler(req, res) {
     const prompt = smartReplyPrompt({ shopName: shop.shop_name, productList, chatHistory, customerMessage: content })
     const { result } = await generate(prompt)
 
-    let reply, order, quickReplies
+    let reply, order, quickReplies, handoff
     try {
       const parsed = parseJson(result)
       reply = parsed.reply
       order = parsed.order
       quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
+      handoff = !!parsed.handoff
     } catch {
       reply = result.slice(0, 500)
     }
 
     if (!reply) return res.status(200).json({ skipped: 'no reply generated' })
 
-    // If AI detected a complete order — create it in DB
-    if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
-      const { data: createdOrder } = await supabase.from('orders').insert({
-        shop_id: shop.id,
-        product_name: order.product_name,
-        quantity: order.quantity || 1,
-        customer_name: order.customer_name,
-        customer_phone: order.customer_phone,
-        customer_address: order.customer_address,
-        notes: order.notes || '',
-        status: 'pending',
-      }).select('order_number').single()
+    // If customer wants to talk to owner — pause AI for this conversation
+    if (handoff) {
+      await supabase.from('conversations').update({ ai_paused: true }).eq('id', conversation_id)
+    }
 
-      if (createdOrder?.order_number) {
-        reply = reply.replace('অর্ডার নিবন্ধন হয়েছে', `অর্ডার নিবন্ধন হয়েছে (${createdOrder.order_number})`)
+    // If AI detected a complete order — create it in DB (only if no recent order exists for this conversation)
+    if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
+      // Duplicate guard: check if an order was already created in the last 10 minutes for same phone+shop
+      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('order_number')
+        .eq('shop_id', shop.id)
+        .eq('customer_phone', order.customer_phone)
+        .gte('created_at', tenMinsAgo)
+        .maybeSingle()
+
+      if (existingOrder) {
+        // Order already exists — don't duplicate, just mention existing order number
+        console.log('[auto-reply] duplicate order skipped, existing:', existingOrder.order_number)
+      } else {
+        // Calculate total from product list
+        const matchedProduct = products?.find(p => p.name?.toLowerCase().includes(order.product_name?.toLowerCase()))
+        const unitPrice = matchedProduct?.price || order.price || 0
+        const total = unitPrice * (order.quantity || 1)
+
+        const { data: createdOrder } = await supabase.from('orders').insert({
+          shop_id: shop.id,
+          product_name: order.product_name,
+          quantity: order.quantity || 1,
+          total,
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+          customer_address: order.customer_address,
+          notes: order.notes || '',
+          status: 'pending',
+        }).select('order_number').single()
+
+        if (createdOrder?.order_number) {
+          reply = `${reply} (অর্ডার নং: ${createdOrder.order_number})`
+        }
       }
     }
 
