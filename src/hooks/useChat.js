@@ -105,6 +105,8 @@ export function useMessages(conversationId) {
       return data || []
     },
     enabled: !!conversationId && !!user,
+    staleTime: 0,        // always consider stale — realtime keeps it fresh
+    gcTime: 1000 * 60,  // keep in memory 1 min after unmount
   })
 }
 
@@ -137,9 +139,38 @@ export function useSendMessage() {
         .eq('id', conversationId)
       return data
     },
-    onSuccess: async (_, { conversationId }) => {
-      await syncMessages(qc, conversationId)
+    // Step 1: show message INSTANTLY before network response
+    onMutate: async ({ conversationId, content }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] })
+      const prev = qc.getQueryData(['messages', conversationId]) || []
+      const tempId = `temp-${Date.now()}`
+      const tempMsg = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content,
+        created_at: new Date().toISOString(),
+        is_read: false,
+        is_ai: false,
+        sender: { id: user.id, full_name: user.user_metadata?.full_name || '' },
+        quick_replies: null,
+        _temp: true,
+      }
+      qc.setQueryData(['messages', conversationId], [...prev, tempMsg])
+      return { prev, tempId }
+    },
+    // Step 2: replace temp message with real DB message + sync
+    onSuccess: async (newMsg, { conversationId }, ctx) => {
+      qc.setQueryData(['messages', conversationId], (old = []) =>
+        old.map(m => m.id === ctx?.tempId ? { ...newMsg, sender: m.sender } : m)
+      )
+      // Background sync to get full sender join & any AI messages
+      syncMessages(qc, conversationId)
       qc.invalidateQueries({ queryKey: ['conversations'] })
+    },
+    // Step 3: rollback on error
+    onError: (_err, { conversationId }, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['messages', conversationId], ctx.prev)
     },
   })
 }
