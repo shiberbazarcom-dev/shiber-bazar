@@ -53,23 +53,31 @@ export default async function handler(req, res) {
   if (!conversation_id || !content) return res.status(200).json({ skipped: 'missing fields' })
 
   try {
-    // Fetch conversation with shop + owner info
+    // Fetch conversation
     const { data: conv } = await supabase
       .from('conversations')
-      .select('*, shops(id, shop_name, owner_id, auto_reply_enabled)')
+      .select('shop_id, owner_id')
       .eq('id', conversation_id)
       .single()
 
-    if (!conv?.shops) return res.status(200).json({ skipped: 'no shop' })
+    if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
-    const shop = conv.shops
-    console.log('[auto-reply] shop:', JSON.stringify({ id: shop.id, name: shop.shop_name, auto_reply: shop.auto_reply_enabled, owner: shop.owner_id }))
+    // Skip if message is from the owner
+    if (sender_id === conv.owner_id) return res.status(200).json({ skipped: 'owner message' })
 
-    // Skip if auto-reply disabled or message is from the owner
+    // Fetch shop separately (avoids join dependency on FK setup)
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('id, shop_name, owner_id, auto_reply_enabled')
+      .eq('id', conv.shop_id)
+      .single()
+
+    console.log('[auto-reply] shop:', JSON.stringify({ id: shop?.id, name: shop?.shop_name, auto_reply: shop?.auto_reply_enabled }))
+
+    if (!shop) return res.status(200).json({ skipped: 'shop not found' })
     if (!shop.auto_reply_enabled) return res.status(200).json({ skipped: 'disabled' })
-    if (sender_id === shop.owner_id) return res.status(200).json({ skipped: 'owner message' })
 
-    // Fetch shop products for context — try without is_active filter first as fallback
+    // Fetch shop products
     const { data: products, error: prodErr } = await supabase
       .from('products')
       .select('name, price, unit, description')
