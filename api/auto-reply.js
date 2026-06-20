@@ -427,12 +427,12 @@ export default async function handler(req, res) {
           shop_id: shop.id,
           product_name: order.product_name,
           quantity: qty,
-          total,
+          total_amount: total,
           customer_name: order.customer_name,
           customer_phone: order.customer_phone,
           customer_address: order.customer_address,
           notes: order.notes || '',
-          status: 'pending',   // admin/owner panels both filter by this
+          status: 'pending',
         }).select('order_number, id').single()
 
         if (insertError || !created?.order_number) {
@@ -491,7 +491,7 @@ export default async function handler(req, res) {
           shop_id: shop.id,
           product_name: firstProduct.product_name,
           quantity: Number(firstProduct.quantity) || 1,
-          total,
+          total_amount: total,
           customer_name: name,
           customer_phone: phone,
           customer_address: address,
