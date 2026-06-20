@@ -231,21 +231,40 @@ export function useRealtimeMessages(conversationId, senderName = '') {
   }, [conversationId, senderName, qc, user?.id])
 }
 
-/* ── Realtime: conversation list updates ── */
+/* ── Realtime: conversation list + new messages (global, any page) ── */
 export function useRealtimeConversations() {
   const { user } = useAuth()
   const qc = useQueryClient()
   useEffect(() => {
     if (!user) return
-    const ch = supabase
+
+    // Listen for conversation updates
+    const convCh = supabase
       .channel(`conversations-user-${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'conversations' },
         () => {
           qc.invalidateQueries({ queryKey: ['conversations'] })
-          qc.invalidateQueries({ queryKey: ['unread-message-count'] })
+          qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
         })
       .subscribe()
-    return () => supabase.removeChannel(ch)
-  }, [user, qc])
+
+    // Listen for new messages globally — updates unread badge on any page
+    const msgCh = supabase
+      .channel(`global-messages-${user.id}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          if (payload.new?.sender_id === user.id) return // own message
+          qc.invalidateQueries({ queryKey: ['conversations'] })
+          qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
+          qc.invalidateQueries({ queryKey: ['messages', payload.new?.conversation_id] })
+        })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(convCh)
+      supabase.removeChannel(msgCh)
+    }
+  }, [user?.id, qc]) // eslint-disable-line
 }
