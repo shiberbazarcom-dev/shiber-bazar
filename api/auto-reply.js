@@ -5,31 +5,31 @@
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
-function smartReplyPrompt({ customerMessage, shopName, productList }) {
-  return `
-তুমি "${shopName}" দোকানের একজন অভিজ্ঞ বিক্রয়কর্মী। তোমার কাজ হলো শুধুমাত্র এই দোকানের পণ্য বিক্রি করা।
+function smartReplyPrompt({ shopName, productList, chatHistory, customerMessage }) {
+  return `তুমি "${shopName}" দোকানের একজন স্মার্ট AI বিক্রয়কর্মী। তুমি একজন বাস্তব মানুষের মতো কথা বলো।
 
 🔴 কঠোর নিয়ম:
-1. শুধুমাত্র নিচের "দোকানের পণ্য তালিকা" থেকে উত্তর দেবে।
-2. তালিকায় নেই এমন কোনো পণ্যের কথা কখনো বলবে না, এমনকি অনুমান করেও না।
-3. Customer যদি এমন কিছু জিজ্ঞেস করে যা তালিকায় নেই, বিনয়ের সাথে বলবে "দুঃখিত, এই পণ্যটি আমাদের দোকানে নেই।"
+1. উপরের কথোপকথন মনে রাখবে — আগে যা বলা হয়েছে তা আর জিজ্ঞেস করবে না।
+2. Customer যদি আগেই কোনো পণ্যের নাম বলে থাকে, সেটা নিয়েই এগিয়ে যাবে।
+3. শুধুমাত্র নিচের পণ্য তালিকা থেকে উত্তর দেবে — তালিকার বাইরে কিছু বলবে না।
 4. Customer বাংলা বা banglish যেভাবেই লিখুক, বুঝে বাংলায় reply দেবে।
-5. Event বা উপলক্ষ (যেমন: রমজান, বিবাহ, ঈদ) এর জন্য পণ্য জানতে চাইলে — শুধু তালিকা থেকে সেই event এর জন্য প্রাসঙ্গিক পণ্যগুলো বাছাই করে দেখাবে।
+5. Order confirm হলে মোট দাম বলবে এবং delivery address চাইবে।
+6. ছোট ও স্বাভাবিক কথায় reply দেবে — বড় paragraph না।
 
 ${productList
   ? `✅ "${shopName}" দোকানের পণ্য তালিকা:\n${productList}`
-  : `⚠️ এই দোকানের কোনো পণ্য তালিকা নেই। Customer যাই জিজ্ঞেস করুক, বলবে "আমাদের পণ্য তালিকা এখনো আপডেট হয়নি, অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"`
+  : `⚠️ পণ্য তালিকা এখনো আপডেট হয়নি। সব প্রশ্নে বলবে: "অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"`
 }
 
-Customer মেসেজ: "${customerMessage}"
+--- এখন পর্যন্ত কথোপকথন ---
+${chatHistory}
+Customer: ${customerMessage}
+---
 
-উপরের তালিকা দেখে ১টি সেরা reply দাও। মানবিক, বিনয়ী ও সহায়ক হবে।
-JSON format এ return করো:
-{
-  "replies": ["reply এখানে"]
-}
+উপরের পুরো কথোপকথন বিবেচনা করে এখন reply দাও। JSON format:
+{"replies": ["reply এখানে"]}
 
-শুধু JSON দাও, আর কিছু না।`
+শুধু JSON দাও।`
 }
 
 export default async function handler(req, res) {
@@ -85,11 +85,24 @@ export default async function handler(req, res) {
       .limit(50)
 
     const productList = products?.length
-      ? products.map((p, i) => `${i + 1}. ${p.name} — ৳${p.price}${p.unit ? `/${p.unit}` : ''}${p.description ? ` (${p.description})` : ''}`).join('\n')
+      ? products.map((p, i) => `${i + 1}. ${p.name} — ৳${p.price}${p.description ? ` (${p.description})` : ''}`).join('\n')
       : ''
 
+    // Fetch recent conversation history (last 14 messages for memory)
+    const { data: recentMsgs } = await supabase
+      .from('messages')
+      .select('sender_id, content')
+      .eq('conversation_id', conversation_id)
+      .order('created_at', { ascending: false })
+      .limit(14)
+
+    const chatHistory = (recentMsgs || [])
+      .reverse()
+      .map(m => m.sender_id === conv.owner_id ? `বিক্রয়কর্মী: ${m.content}` : `Customer: ${m.content}`)
+      .join('\n')
+
     // Generate AI reply
-    const prompt = smartReplyPrompt({ customerMessage: content, shopName: shop.shop_name, productList })
+    const prompt = smartReplyPrompt({ shopName: shop.shop_name, productList, chatHistory, customerMessage: content })
     const { result } = await generate(prompt)
 
     let reply
