@@ -73,8 +73,10 @@ function CopyButton({ text }) {
   )
 }
 
-function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, onQuickReply }) {
+function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwnerHuman, onQuickReply }) {
   const isAiGroup = !isOwn && group.some(m => m.is_ai)
+  // isOwnerHuman = messages from owner but NOT AI (real human reply after handoff)
+  const isHumanOwner = !isOwn && !isAiGroup && isOwnerHuman
   const lastMsg = group[group.length - 1]
   const quickReplies = !isOwn ? (lastMsg?.quick_replies || null) : null
 
@@ -84,16 +86,19 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, onQui
         isAiGroup && shopLogo
           ? <img src={shopLogo} alt="shop" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-auto border border-purple-200" />
           : <div className={`w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto ${
-              isAiGroup ? 'bg-gradient-to-br from-purple-500 to-violet-600' : 'bg-gradient-to-br from-blue-400 to-blue-600'
+              isHumanOwner ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+              : isAiGroup ? 'bg-gradient-to-br from-purple-500 to-violet-600'
+              : 'bg-gradient-to-br from-blue-400 to-blue-600'
             }`}>
-              {isAiGroup ? '🏪' : senderInitial}
+              {isHumanOwner ? '👤' : isAiGroup ? '🏪' : senderInitial}
             </div>
       )}
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[75%]`}>
         {!isOwn && (
           <p className="text-xs text-gray-500 px-3 flex items-center gap-1">
-            {senderName}
+            {isHumanOwner ? 'দোকানদার' : senderName}
             {isAiGroup && <span className="text-[10px] bg-purple-100 text-purple-600 font-semibold px-1.5 py-0.5 rounded-full">AI</span>}
+            {isHumanOwner && <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full">দোকানদার</span>}
           </p>
         )}
         <div className="flex flex-col gap-0.5">
@@ -156,6 +161,7 @@ export default function ChatWindow({ conversation, otherName }) {
   const [savingPersona, setSavingPersona] = useState(false)
   const [showCanned, setShowCanned] = useState(false)
   const [aiPaused, setAiPaused] = useState(false)
+  const [popularProducts, setPopularProducts] = useState([])
   const bottomRef      = useRef(null)
   const inputRef       = useRef(null)
   const typingTimerRef = useRef(null)
@@ -183,6 +189,17 @@ export default function ChatWindow({ conversation, otherName }) {
       })
     setAiPaused(!!conversation.ai_paused)
   }, [conversation?.shop_id, conversation?.ai_paused])
+
+  /* ── Fetch popular products for welcome screen ── */
+  useEffect(() => {
+    if (!conversation?.shop_id) return
+    supabase.from('products')
+      .select('name, price')
+      .eq('shop_id', conversation.shop_id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => setPopularProducts(data || []))
+  }, [conversation?.shop_id])
 
   async function saveAiPersona() {
     if (!conversation?.shop_id) return
@@ -326,9 +343,65 @@ export default function ChatWindow({ conversation, otherName }) {
         </div>
       )}
 
+      {/* Handoff status banner — shown to customer when AI is paused */}
+      {!isOwner && aiPaused && (
+        <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2 flex-shrink-0">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+          <p className="text-xs text-amber-700 font-medium">দোকানদারের উত্তর অপেক্ষমাণ — কিছুক্ষণের মধ্যে উত্তর পাবেন</p>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 bg-gray-50">
-        {grouped.length === 0 && (
+        {/* Welcome screen — shown to customer on empty conversation */}
+        {!isOwner && grouped.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full gap-4 px-2">
+            <div className="w-full max-w-xs bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              <p className="text-sm font-semibold text-gray-800 mb-1">
+                স্বাগতম 😊
+              </p>
+              <p className="text-xs text-gray-500 mb-3">
+                আপনি <span className="font-semibold text-blue-600">{conversation?.shops?.shop_name || otherName}</span>-এ এসেছেন।
+              </p>
+              {popularProducts.length > 0 ? (
+                <>
+                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-2">জনপ্রিয় পণ্য</p>
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    {popularProducts.slice(0, 3).map((p, i) => (
+                      <button key={i}
+                        onClick={() => sendContent(`${p.name} সম্পর্কে জানতে চাই`)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-gray-100 transition-colors text-left">
+                        <span className="text-xs text-gray-700 font-medium">{p.name}</span>
+                        <span className="text-xs text-blue-600 font-bold flex-shrink-0 ml-2">৳{p.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-gray-400 mb-3">আপনি কোন পণ্য খুঁজছেন বলুন, আমি সাহায্য করব।</p>
+              )}
+              <p className="text-xs text-gray-500">আজকে কী খুঁজছেন?</p>
+            </div>
+
+            {/* Quick action chips */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                { label: 'সব পণ্য দেখুন', msg: 'আপনাদের সব পণ্য দেখাবেন?' },
+                { label: 'জনপ্রিয় পণ্য', msg: 'সবচেয়ে জনপ্রিয় পণ্যগুলো কী?' },
+                { label: 'অর্ডার করতে চাই', msg: 'অর্ডার করতে চাই' },
+                { label: 'দাম জানতে চাই', msg: 'পণ্যের দাম জানতে চাই' },
+              ].map((chip, i) => (
+                <button key={i} onClick={() => sendContent(chip.msg)}
+                  className="text-xs px-4 py-2 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all font-medium shadow-sm">
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Owner empty state */}
+        {isOwner && grouped.length === 0 && (
           <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
         )}
         <div className="space-y-2">
@@ -347,11 +420,27 @@ export default function ChatWindow({ conversation, otherName }) {
                 senderName={item.group[0].sender?.full_name || 'ব্যবহারকারী'}
                 senderInitial={(item.group[0].sender?.full_name || '?')[0].toUpperCase()}
                 shopLogo={conversation?.shops?.logo}
+                isOwnerHuman={
+                  item.senderId === conversation?.owner_id &&
+                  !item.group.some(m => m.is_ai)
+                }
                 onQuickReply={!isOwner ? (qr) => sendContent(qr) : null}
               />
             )
           )}
         </div>
+
+        {/* Returning customer quick chips — shown at bottom of messages */}
+        {!isOwner && grouped.length > 0 && !aiPaused && (
+          <div className="flex flex-wrap gap-1.5 mt-3 mb-1">
+            {['সব পণ্য দেখুন', 'অর্ডার করতে চাই', 'দাম জানতে চাই'].map((chip, i) => (
+              <button key={i} onClick={() => sendContent(chip)}
+                className="text-[11px] px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors">
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Human typing indicator */}
         {otherTyping && !aiTyping && (
