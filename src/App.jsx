@@ -79,6 +79,8 @@ const ManageUsers      = lazy(() => import('./pages/admin/ManageUsers'))
 const ManageOrders     = lazy(() => import('./pages/admin/ManageOrders'))
 const ManageProducts   = lazy(() => import('./pages/admin/ManageProducts'))
 const ManageAds        = lazy(() => import('./pages/admin/ManageAds'))
+const ManageNotices    = lazy(() => import('./pages/admin/ManageNotices'))
+const EmergencyContacts = lazy(() => import('./pages/EmergencyContacts'))
 const ManageRoles          = lazy(() => import('./pages/admin/ManageRoles'))
 const ManageVerifications  = lazy(() => import('./pages/admin/ManageVerifications'))
 const ManageShopRequests   = lazy(() => import('./pages/admin/ManageShopRequests'))
@@ -180,6 +182,7 @@ export default function App() {
 
             {/* ── সেবাসমূহ — স্থানীয় সেবা ডিরেক্টরি (services page এখন এটাই) ── */}
             <Route path="/hatkhula-union"  element={<PublicLayout><HatkhulaUnion /></PublicLayout>} />
+            <Route path="/emergency"       element={<PublicLayout><EmergencyContacts /></PublicLayout>} />
             <Route path="/services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
             <Route path="/services/detail/:id"         element={<PublicLayout><ServiceDetail /></PublicLayout>} />
             <Route path="/services/provider/:userId"   element={<PublicLayout><ProviderProfile /></PublicLayout>} />
@@ -286,6 +289,7 @@ export default function App() {
               <Route path="orders"       element={<ManageOrders />} />
               <Route path="products"     element={<ManageProducts />} />
               <Route path="ads"          element={<ManageAds />} />
+              <Route path="notices"      element={<ManageNotices />} />
               <Route path="roles"          element={<ManageRoles />} />
               <Route path="verifications"  element={<ManageVerifications />} />
               <Route path="shop-requests" element={<ManageShopRequests />} />

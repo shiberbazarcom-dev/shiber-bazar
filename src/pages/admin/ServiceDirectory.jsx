@@ -9,8 +9,9 @@ import toast from 'react-hot-toast'
 const BLUE = '#2563EB'
 
 const EMPTY = {
-  full_name: '', phone_number: '', address: '',
-  description: '', additional_info: '', photo_url: '', is_active: true, is_verified: false,
+  full_name: '', phone_number: '', whatsapp_number: '', address: '',
+  description: '', additional_info: '', experience: '', photo_url: '',
+  is_active: true, is_verified: false, is_featured: false,
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -42,9 +43,10 @@ export default function ServiceDirectory() {
   function openEdit(e) {
     setForm({
       full_name: e.full_name || '', phone_number: e.phone_number || '',
-      address: e.address || '', description: e.description || '',
-      additional_info: e.additional_info || '', photo_url: e.photo_url || '',
-      is_active: e.is_active, is_verified: !!e.is_verified,
+      whatsapp_number: e.whatsapp_number || '', address: e.address || '',
+      description: e.description || '', additional_info: e.additional_info || '',
+      experience: e.experience || '', photo_url: e.photo_url || '',
+      is_active: e.is_active, is_verified: !!e.is_verified, is_featured: !!e.is_featured,
     })
     setEditId(e.id); setModalOpen(true)
   }
@@ -160,8 +162,14 @@ export default function ServiceDirectory() {
                   {!e.is_active && <span className="ml-2 text-[10px] font-bold text-gray-400">(নিষ্ক্রিয়)</span>}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {e.phone_number}{e.additional_info ? ` • ${e.additional_info}` : ''}{e.address ? ` • ${e.address}` : ''}
+                  {e.phone_number}{e.whatsapp_number ? ` • WA: ${e.whatsapp_number}` : ''}{e.additional_info ? ` • ${e.additional_info}` : ''}{e.address ? ` • ${e.address}` : ''}
                 </p>
+                {(e.is_featured || e.experience) && (
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {e.is_featured && <span className="text-amber-500 mr-1.5">⭐ বিশেষ</span>}
+                    {e.experience && <span>অভিজ্ঞতা: {e.experience}</span>}
+                  </p>
+                )}
               </div>
               <div className="flex gap-1.5 flex-shrink-0">
                 <button onClick={() => toggleActive(e)} title={e.is_active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
@@ -217,8 +225,12 @@ export default function ServiceDirectory() {
               value={form.full_name} onChange={e => set('full_name', e.target.value)} />
             <input className={inputCls} type="tel" placeholder="মোবাইল নম্বর * (01XXXXXXXXX)"
               value={form.phone_number} onChange={e => set('phone_number', e.target.value)} />
+            <input className={inputCls} type="tel" placeholder="WhatsApp নম্বর (ঐচ্ছিক, 880XXXXXXXXXX)"
+              value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)} />
             <input className={inputCls} placeholder="ঠিকানা"
               value={form.address} onChange={e => set('address', e.target.value)} />
+            <input className={inputCls} placeholder="অভিজ্ঞতা (যেমন: ১০ বছর, ঐচ্ছিক)"
+              value={form.experience} onChange={e => set('experience', e.target.value)} />
             <input className={inputCls}
               placeholder={activeCat?.display_type === 'profile' ? 'পদবি / বিশেষত্ব (যেমন: মেডিসিন বিশেষজ্ঞ)' : 'অতিরিক্ত তথ্য (যেমন: রক্তের গ্রুপ, বিষয়)'}
               value={form.additional_info} onChange={e => set('additional_info', e.target.value)} />
@@ -226,7 +238,7 @@ export default function ServiceDirectory() {
               className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 resize-none"
               value={form.description} onChange={e => set('description', e.target.value)} />
 
-            <div className="flex items-center gap-5 pt-1">
+            <div className="flex flex-wrap items-center gap-5 pt-1">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} className="w-4 h-4 accent-blue-600" />
                 সক্রিয়
@@ -234,6 +246,10 @@ export default function ServiceDirectory() {
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} className="w-4 h-4 accent-blue-600" />
                 ভেরিফাইড ব্যাজ
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={form.is_featured} onChange={e => set('is_featured', e.target.checked)} className="w-4 h-4 accent-amber-500" />
+                ⭐ বিশেষ
               </label>
             </div>
 

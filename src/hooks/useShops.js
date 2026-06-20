@@ -331,6 +331,23 @@ export function useToggleFeatured() {
   })
 }
 
+export function useUpdateFeaturedMeta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, featured_priority, featured_until }) => {
+      const { error } = await supabase
+        .from('shops')
+        .update({ featured_priority: featured_priority ?? 0, featured_until: featured_until || null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-shops'] })
+      qc.invalidateQueries({ queryKey: ['featured-shops'] })
+    },
+  })
+}
+
 export function useDeleteShop() {
   const qc = useQueryClient()
   return useMutation({

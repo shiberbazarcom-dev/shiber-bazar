@@ -1,5 +1,6 @@
 import SEO from '../../components/SEO'
 import { useSiteSettings } from '../../hooks/useSettings'
+import { usePublicNotices } from '../../hooks/useNotices'
 
 // Fallback constants — used when CMS row is empty
 const CHAIRMAN = {
@@ -98,8 +99,14 @@ function ucms(settings, key, fallback) {
   return (v !== undefined && v !== null && v !== '') ? v : fallback
 }
 
+function fmtDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 export default function HatkhulaUnion() {
   const { data: u = {} } = useSiteSettings()
+  const { data: notices = [] } = usePublicNotices()
 
   // CMS values with hardcoded fallbacks
   const unionName    = ucms(u, 'union_name',  '২নং হাটখোলা ইউনিয়ন পরিষদ')
@@ -301,6 +308,42 @@ export default function HatkhulaUnion() {
             ))}
           </div>
         </div>
+
+        {/* ── Notice Board ── */}
+        {notices.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-base font-bold text-gray-100 mb-4 flex items-center gap-2">
+              📋 নোটিস বোর্ড
+              {notices.some(n => n.is_featured) && (
+                <span className="text-xs bg-amber-400 text-white font-bold px-2 py-0.5 rounded-full">নতুন</span>
+              )}
+            </h2>
+            <div className="space-y-3">
+              {notices.map(n => (
+                <div key={n.id}
+                  className={`rounded-2xl p-4 ${n.is_featured ? 'bg-amber-500/20 border border-amber-400/30' : 'bg-white/10'}`}>
+                  {n.is_featured && (
+                    <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider">⭐ বিশেষ নোটিস</span>
+                  )}
+                  <p className="text-sm font-bold text-white mt-0.5">{n.title}</p>
+                  {n.description && (
+                    <p className="text-xs text-gray-300 mt-1 leading-relaxed">{n.description}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    <span className="text-[11px] text-gray-400">📅 {fmtDate(n.publish_date)}</span>
+                    {n.expiry_date && (
+                      <span className="text-[11px] text-gray-400">মেয়াদ: {fmtDate(n.expiry_date)}</span>
+                    )}
+                    {n.attachment_url && (
+                      <a href={n.attachment_url} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] text-emerald-300 hover:underline">📎 সংযুক্তি দেখুন</a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Source */}
         <p className="text-center text-xs text-gray-300">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAdminShops, useApproveShop, useToggleFeatured, useDeleteShop } from '../../hooks/useShops'
+import { useAdminShops, useApproveShop, useToggleFeatured, useDeleteShop, useUpdateFeaturedMeta } from '../../hooks/useShops'
 import { useCategories } from '../../hooks/useCategories'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -22,9 +22,11 @@ export default function ManageShops() {
 
   const { data: shops = [], isLoading } = useAdminShops(filter)
   const { data: categories = [] }      = useCategories()
-  const approve  = useApproveShop()
-  const featured = useToggleFeatured()
-  const del      = useDeleteShop()
+  const approve     = useApproveShop()
+  const featured    = useToggleFeatured()
+  const featMeta    = useUpdateFeaturedMeta()
+  const del         = useDeleteShop()
+  const [featEdit, setFeatEdit] = useState(null) // { id, priority, until }
 
   const filtered = shops.filter(s => {
     const matchCat      = !catFilter || s.category_id === catFilter
@@ -226,11 +228,19 @@ export default function ManageShops() {
                         </button>
                       </td>
                       <td className="table-cell text-center hidden md:table-cell">
-                        <button onClick={() => toggleFeat(shop)}>
+                        <button onClick={() => toggleFeat(shop)}
+                          className="focus:outline-none">
                           <Badge variant={shop.is_featured ? 'gold' : 'gray'} className="cursor-pointer hover:opacity-80 transition-opacity">
                             {shop.is_featured ? '⭐ হ্যাঁ' : '— না'}
                           </Badge>
                         </button>
+                        {shop.is_featured && (
+                          <button
+                            onClick={() => setFeatEdit({ id: shop.id, priority: shop.featured_priority ?? 0, until: shop.featured_until || '' })}
+                            className="block mx-auto text-[10px] text-blue-500 hover:underline mt-0.5">
+                            অগ্রাধিকার সেট
+                          </button>
+                        )}
                       </td>
                       <td className="table-cell text-center">
                         <div className="flex items-center justify-center gap-1.5">
@@ -250,6 +260,47 @@ export default function ManageShops() {
           </div>
         )}
       </div>
+
+      {/* Featured Meta Modal */}
+      {featEdit && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setFeatEdit(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-5 w-80 space-y-3">
+            <h3 className="font-bold text-gray-900">⭐ বিশেষ দোকান সেটিংস</h3>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">অগ্রাধিকার (বেশি সংখ্যা = আগে দেখাবে)</label>
+              <input type="number" min="0" max="100"
+                className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+                value={featEdit.priority}
+                onChange={e => setFeatEdit(f => ({ ...f, priority: parseInt(e.target.value) || 0 }))} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">মেয়াদ শেষ (ঐচ্ছিক)</label>
+              <input type="date"
+                className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400"
+                value={featEdit.until}
+                onChange={e => setFeatEdit(f => ({ ...f, until: e.target.value }))} />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setFeatEdit(null)}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm text-gray-600">বাতিল</button>
+              <button
+                disabled={featMeta.isPending}
+                onClick={async () => {
+                  try {
+                    await featMeta.mutateAsync({ id: featEdit.id, featured_priority: featEdit.priority, featured_until: featEdit.until })
+                    toast.success('সংরক্ষিত হয়েছে')
+                    setFeatEdit(null)
+                  } catch { toast.error('সমস্যা হয়েছে') }
+                }}
+                className="flex-1 h-10 rounded-xl text-sm font-bold text-white"
+                style={{ background: '#2563EB' }}>
+                {featMeta.isPending ? 'সংরক্ষণ...' : '✓ সংরক্ষণ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={!!deleteConfirm}
