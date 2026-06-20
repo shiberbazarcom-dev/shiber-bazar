@@ -4,8 +4,43 @@
 import { createClient } from '@supabase/supabase-js'
 import { generate, parseJson } from './_generate.js'
 
-function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona }) {
+/* Detect customer gender/addressing style from conversation history */
+function detectAddressingStyle(msgs, ownerId) {
+  // Check what the AI has already used — if found, lock it in
+  const aiMsgs = msgs.filter(m => m.sender_id === ownerId && m.is_ai).map(m => m.content)
+  for (const msg of aiMsgs) {
+    if (/ভাই/.test(msg)) return 'male'
+    if (/আপু/.test(msg)) return 'female'
+    if (/স্যার/.test(msg)) return 'male'
+    if (/ম্যাডাম/.test(msg)) return 'female'
+  }
+  // Check if customer revealed their gender explicitly
+  const customerMsgs = msgs.filter(m => m.sender_id !== ownerId).map(m => m.content)
+  for (const msg of customerMsgs) {
+    const lc = msg.toLowerCase()
+    if (/আমি (একজন )?(মহিলা|মেয়ে|আপু|বোন)/.test(lc) || /আমার (স্বামী|ছেলে|মেয়ে)/.test(lc)) return 'female'
+    if (/আমি (একজন )?(পুরুষ|ছেলে|ভাই|ব্যক্তি)/.test(lc) || /আমার (স্ত্রী|বউ|বাবা)/.test(lc)) return 'male'
+  }
+  return 'neutral'
+}
+
+function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona, addressingStyle }) {
   const pharmacyMode = shopCategory?.toLowerCase().includes('pharma') || shopCategory?.toLowerCase().includes('ঔষধ') || shopCategory?.toLowerCase().includes('medicine')
+
+  const genderRule = addressingStyle === 'male'
+    ? `## সম্বোধন (LOCKED — পরিবর্তন করবে না)
+- এই conversation-এ customer কে সবসময় "ভাই" বলো
+- "আপু", "ম্যাডাম" কখনো বলবে না
+- উদাহরণ: "জি ভাই", "ঠিক আছে ভাই", "কত প্যাকেট লাগবে ভাই?"`
+    : addressingStyle === 'female'
+    ? `## সম্বোধন (LOCKED — পরিবর্তন করবে না)
+- এই conversation-এ customer কে সবসময় "আপু" বলো
+- "ভাই", "স্যার" কখনো বলবে না
+- উদাহরণ: "জি আপু", "ঠিক আছে আপু", "কত পিস লাগবে আপু?"`
+    : `## সম্বোধন (NEUTRAL — gender নিশ্চিত না)
+- "ভাই" বা "আপু" কখনো বলবে না — gender অনুমান করবে না
+- Neutral phrases ব্যবহার করো: "জি 😊", "ঠিক আছে", "অবশ্যই", "কতটি লাগবে?", "ধন্যবাদ"
+- Customer নিজে gender বললে পরবর্তী reply থেকে সেটা use করো এবং সারা conversation lock রাখো`
 
   return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী (ShiberBazar platform)।
 দোকানের ধরন: ${shopCategory || 'সাধারণ দোকান'}
@@ -14,6 +49,8 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
 - তুমি একজন বাস্তব মানুষ, professional sales representative
 - কখনো AI/bot/robot বলে স্বীকার করবে না — প্রসঙ্গ পরিবর্তন করো
 - Customer যদি মালিক/owner/real person চায় → handoff: true
+
+${genderRule}
 
 ## কথা বলার নিয়ম
 - সবসময় স্বাভাবিক বাংলায় বলো
@@ -259,6 +296,7 @@ export default async function handler(req, res) {
     const lastAiReply = lastAiMsg?.content || ''
 
     const shopCategory = shop.categories?.name || ''
+    const addressingStyle = detectAddressingStyle(msgs, conv.owner_id)
 
     const promptText = buildPrompt({
       shopName: shop.shop_name,
@@ -268,6 +306,7 @@ export default async function handler(req, res) {
       customerMessage: content,
       lastAiReply,
       aiPersona: shop.ai_persona || '',
+      addressingStyle,
     })
 
     // ── Human delay: send acknowledgment first ──
