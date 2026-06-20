@@ -5,6 +5,16 @@ import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 
+async function callAiAutoReply(conversationId) {
+  try {
+    await supabase.functions.invoke('ai-auto-reply', {
+      body: { conversation_id: conversationId },
+    })
+  } catch (_) {
+    // AI reply failure is silent — user can still chat normally
+  }
+}
+
 function PresenceStatus({ userId }) {
   const lastSeen = useOtherUserPresence(userId)
   if (!lastSeen) return null
@@ -18,20 +28,32 @@ function PresenceStatus({ userId }) {
 }
 
 function MessageGroup({ group, isOwn, senderName, senderInitial }) {
+  const isAiGroup = !isOwn && group.some(m => m.is_ai)
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 mb-3 animate-fadeIn`}>
       {!isOwn && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto">
-          {senderInitial}
+        <div className={`w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-auto ${
+          isAiGroup ? 'bg-gradient-to-br from-purple-500 to-violet-600' : 'bg-gradient-to-br from-blue-400 to-blue-600'
+        }`}>
+          {isAiGroup ? '✨' : senderInitial}
         </div>
       )}
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[75%]`}>
-        {!isOwn && <p className="text-xs text-gray-500 px-3">{senderName}</p>}
+        {!isOwn && (
+          <p className="text-xs text-gray-500 px-3 flex items-center gap-1">
+            {senderName}
+            {isAiGroup && <span className="text-[10px] bg-purple-100 text-purple-600 font-semibold px-1.5 py-0.5 rounded-full">AI</span>}
+          </p>
+        )}
         <div className="flex flex-col gap-0.5">
           {group.map((msg, idx) => (
             <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
               <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                isOwn ? 'bg-blue-500 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
+                isOwn
+                  ? 'bg-blue-500 text-white rounded-br-sm'
+                  : msg.is_ai
+                    ? 'bg-purple-50 border border-purple-200 text-gray-800 rounded-bl-sm shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
               }`}>
                 <p className="break-words whitespace-pre-wrap">{msg.content}</p>
               </div>
@@ -55,6 +77,10 @@ export default function ChatWindow({ conversation, otherName }) {
   const [otherTyping, setOtherTyping] = useState(false)
   const [autoReply, setAutoReply] = useState(false)
   const [togglingAR, setTogglingAR] = useState(false)
+  const [aiTyping, setAiTyping] = useState(false)
+  const [showAiSettings, setShowAiSettings] = useState(false)
+  const [aiPersona, setAiPersona] = useState('')
+  const [savingPersona, setSavingPersona] = useState(false)
   const bottomRef      = useRef(null)
   const inputRef       = useRef(null)
   const typingTimerRef = useRef(null)
@@ -70,19 +96,32 @@ export default function ChatWindow({ conversation, otherName }) {
 
   useRealtimeMessages(conversation?.id, otherName)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping, aiTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
-  /* ── Load auto_reply_enabled from shop ── */
+  /* ── Load auto_reply_enabled + ai_persona from shop ── */
   useEffect(() => {
-    if (!isOwner || !conversation?.shop_id) return
+    if (!conversation?.shop_id) return
     supabase
       .from('shops')
-      .select('auto_reply_enabled')
+      .select('auto_reply_enabled, ai_persona')
       .eq('id', conversation.shop_id)
       .single()
-      .then(({ data }) => { if (data) setAutoReply(!!data.auto_reply_enabled) })
-  }, [isOwner, conversation?.shop_id])
+      .then(({ data }) => {
+        if (data) {
+          setAutoReply(!!data.auto_reply_enabled)
+          setAiPersona(data.ai_persona || '')
+        }
+      })
+  }, [conversation?.shop_id])
+
+  async function saveAiPersona() {
+    if (!conversation?.shop_id) return
+    setSavingPersona(true)
+    await supabase.from('shops').update({ ai_persona: aiPersona }).eq('id', conversation.shop_id)
+    setSavingPersona(false)
+    setShowAiSettings(false)
+  }
 
   /* ── Toggle auto-reply (saves to DB) ── */
   async function toggleAutoReply() {
@@ -122,6 +161,13 @@ export default function ChatWindow({ conversation, otherName }) {
     setText('')
     inputRef.current?.focus()
     await sendMsg.mutateAsync({ conversationId: conversation.id, content })
+
+    // If customer sent a message and shop has AI auto-reply enabled, trigger AI
+    if (!isOwner && autoReply) {
+      setAiTyping(true)
+      await callAiAutoReply(conversation.id)
+      setAiTyping(false)
+    }
   }
 
   if (!conversation) {
@@ -166,21 +212,51 @@ export default function ChatWindow({ conversation, otherName }) {
           <PresenceStatus userId={otherUserId} />
         </div>
 
-        {/* Auto-reply toggle — shop owner only */}
+        {/* Auto-reply toggle + settings — shop owner only */}
         {isOwner && (
-          <button
-            onClick={toggleAutoReply}
-            disabled={togglingAR}
-            title={autoReply ? 'AI auto-reply চালু আছে — বন্ধ করতে ক্লিক করুন' : 'AI auto-reply চালু করুন'}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all flex-shrink-0 disabled:opacity-60"
-            style={autoReply
-              ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
-              : { background: '#f3f4f6', color: '#9ca3af', borderColor: '#e5e7eb' }}>
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
-            {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={toggleAutoReply}
+              disabled={togglingAR}
+              title={autoReply ? 'AI auto-reply চালু আছে — বন্ধ করতে ক্লিক করুন' : 'AI auto-reply চালু করুন'}
+              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
+              style={autoReply
+                ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                : { background: '#f3f4f6', color: '#9ca3af', borderColor: '#e5e7eb' }}>
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
+              {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
+            </button>
+            {autoReply && (
+              <button
+                onClick={() => setShowAiSettings(s => !s)}
+                title="AI সেটিং"
+                className="w-7 h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors">
+                ⚙️
+              </button>
+            )}
+          </div>
         )}
       </div>
+
+      {/* AI Persona Settings Panel */}
+      {isOwner && showAiSettings && (
+        <div className="px-4 py-3 bg-purple-50 border-b border-purple-200 flex-shrink-0">
+          <p className="text-xs font-semibold text-purple-700 mb-1.5">✨ AI-এর জন্য বিশেষ নির্দেশনা</p>
+          <textarea
+            value={aiPersona}
+            onChange={e => setAiPersona(e.target.value)}
+            placeholder="যেমন: সবসময় বিনম্র ভাষায় কথা বলো। ডেলিভারি ৩-৫ দিনের মধ্যে হয়। নগদ পেমেন্ট গ্রহণ করা হয়।"
+            rows={3}
+            className="w-full text-xs rounded-lg border border-purple-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
+          />
+          <div className="flex gap-2 mt-2 justify-end">
+            <button onClick={() => setShowAiSettings(false)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">বাতিল</button>
+            <button onClick={saveAiPersona} disabled={savingPersona} className="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:opacity-60">
+              {savingPersona ? 'সংরক্ষণ হচ্ছে...' : '💾 সংরক্ষণ করুন'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 bg-gray-50">
@@ -207,8 +283,8 @@ export default function ChatWindow({ conversation, otherName }) {
           )}
         </div>
 
-        {/* Typing indicator */}
-        {otherTyping && (
+        {/* Human typing indicator */}
+        {otherTyping && !aiTyping && (
           <div className="flex justify-start gap-2 mb-3 animate-fadeIn">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
               {(otherName || '?')[0].toUpperCase()}
@@ -218,6 +294,23 @@ export default function ChatWindow({ conversation, otherName }) {
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI typing indicator */}
+        {aiTyping && (
+          <div className="flex justify-start gap-2 mb-3 animate-fadeIn">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              ✨
+            </div>
+            <div className="bg-purple-50 border border-purple-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+              <div className="flex gap-1 items-center">
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="text-xs text-purple-500 ml-1">AI উত্তর দিচ্ছে...</span>
               </div>
             </div>
           </div>
