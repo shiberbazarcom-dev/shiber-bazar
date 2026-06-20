@@ -3,26 +3,20 @@ import { format, formatDistance } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { useAuth } from '../../context/AuthContext'
 import { useMessages, useSendMessage, useRealtimeMessages, useMarkMessagesRead, useOtherUserPresence } from '../../hooks/useChat'
+import { supabase } from '../../lib/supabase'
+
+const AUTO_REPLY_KEY = 'chat_auto_reply'
 
 function PresenceStatus({ userId }) {
   const lastSeen = useOtherUserPresence(userId)
   if (!lastSeen) return null
-
   const diff = Date.now() - new Date(lastSeen).getTime()
-  const isOnline = diff < 90000 // within 90s = online
-
-  if (isOnline) return (
+  if (diff < 90000) return (
     <p className="text-xs text-green-500 font-medium flex items-center gap-1">
-      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-      অনলাইন
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />অনলাইন
     </p>
   )
-
-  return (
-    <p className="text-xs text-gray-400">
-      শেষ দেখা {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}
-    </p>
-  )
+  return <p className="text-xs text-gray-400">শেষ দেখা {formatDistance(new Date(lastSeen), new Date(), { addSuffix: true, locale: bn })}</p>
 }
 
 function MessageGroup({ group, isOwn, senderName, senderInitial }) {
@@ -34,16 +28,12 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
         </div>
       )}
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[70%]`}>
-        {!isOwn && (
-          <p className="text-xs text-gray-500 px-3">{senderName}</p>
-        )}
+        {!isOwn && <p className="text-xs text-gray-500 px-3">{senderName}</p>}
         <div className="flex flex-col gap-0.5">
           {group.map((msg, idx) => (
             <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
               <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm leading-relaxed ${
-                isOwn
-                  ? 'bg-blue-500 text-white rounded-br-sm'
-                  : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
+                isOwn ? 'bg-blue-500 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm'
               }`}>
                 <p className="break-words whitespace-pre-wrap">{msg.content}</p>
               </div>
@@ -62,12 +52,15 @@ function MessageGroup({ group, isOwn, senderName, senderInitial }) {
 }
 
 export default function ChatWindow({ conversation, otherName }) {
-  const { user } = useAuth()
+  const { user, isOwner } = useAuth()
   const [text, setText] = useState('')
-  const [aiReplies, setAiReplies] = useState([])
-  const [aiLoading, setAiLoading] = useState(false)
+  const [autoReply, setAutoReply] = useState(() => localStorage.getItem(AUTO_REPLY_KEY) === 'true')
+  const [aiTyping, setAiTyping] = useState(false)
+  const [shopProducts, setShopProducts] = useState([])
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
+  const lastMsgIdRef = useRef(null)
+  const replyingRef  = useRef(false)
 
   const otherUserId = conversation
     ? (conversation.customer_id === user?.id ? conversation.owner_id : conversation.customer_id)
@@ -82,25 +75,60 @@ export default function ChatWindow({ conversation, otherName }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
 
-  async function getSmartReplies() {
-    const lastCustomerMsg = [...messages].reverse().find(m => m.sender_id !== user?.id)?.content
-    if (!lastCustomerMsg) return
-    setAiLoading(true)
-    setAiReplies([])
-    try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'smart_reply',
-          customerMessage: lastCustomerMsg,
-          shopName: conversation?.shops?.shop_name || 'আমাদের দোকান',
-        }),
+  /* ── Load shop products for AI context ── */
+  useEffect(() => {
+    const shopId = conversation?.shop_id
+    if (!shopId) return
+    supabase
+      .from('products')
+      .select('name, price, unit, description')
+      .eq('shop_id', shopId)
+      .eq('is_active', true)
+      .limit(50)
+      .then(({ data }) => {
+        if (data?.length) setShopProducts(data)
       })
-      const data = await res.json()
-      if (data.replies?.length) setAiReplies(data.replies)
-    } catch { /* silent fail */ }
-    setAiLoading(false)
+  }, [conversation?.shop_id])
+
+  /* ── Auto-reply: fires when new customer message arrives ── */
+  useEffect(() => {
+    if (!isOwner || !autoReply || !conversation?.id || messages.length === 0) return
+
+    const last = messages[messages.length - 1]
+    if (!last) return
+    if (last.sender_id === user?.id) return           // own message, skip
+    if (last.id === lastMsgIdRef.current) return      // already handled
+    if (replyingRef.current) return                   // already replying
+
+    lastMsgIdRef.current = last.id
+    replyingRef.current  = true
+    setAiTyping(true)
+
+    fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'smart_reply',
+        customerMessage: last.content,
+        shopName: conversation?.shops?.shop_name || 'আমাদের দোকান',
+        productList: shopProducts.length
+          ? shopProducts.map(p => `${p.name}: ৳${p.price}${p.unit ? `/${p.unit}` : ''}${p.description ? ` (${p.description})` : ''}`).join(', ')
+          : '',
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const reply = data.replies?.[0]
+        if (reply) return sendMsg.mutateAsync({ conversationId: conversation.id, content: reply })
+      })
+      .catch(() => {})
+      .finally(() => { setAiTyping(false); replyingRef.current = false })
+  }, [messages]) // eslint-disable-line
+
+  const toggleAutoReply = () => {
+    const next = !autoReply
+    setAutoReply(next)
+    localStorage.setItem(AUTO_REPLY_KEY, String(next))
   }
 
   async function handleSend(e) {
@@ -108,7 +136,6 @@ export default function ChatWindow({ conversation, otherName }) {
     if (!text.trim() || !conversation?.id) return
     const content = text.trim()
     setText('')
-    setAiReplies([])
     inputRef.current?.focus()
     await sendMsg.mutateAsync({ conversationId: conversation.id, content })
   }
@@ -126,55 +153,50 @@ export default function ChatWindow({ conversation, otherName }) {
 
   // Group messages by sender and date
   const grouped = []
-  let lastDate = null
-  let lastSenderId = null
-  let currentGroup = []
+  let lastDate = null, lastSenderId = null, currentGroup = []
 
-  messages.forEach((msg, idx) => {
+  messages.forEach((msg) => {
     const dateKey = format(new Date(msg.created_at), 'yyyy-MM-dd')
-
-    // If date changed, push date separator
     if (dateKey !== lastDate) {
-      if (currentGroup.length > 0) {
-        grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
-        currentGroup = []
-      }
+      if (currentGroup.length > 0) { grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId }); currentGroup = [] }
       grouped.push({ type: 'date', key: dateKey, label: format(new Date(msg.created_at), 'd MMMM yyyy', { locale: bn }) })
-      lastDate = dateKey
-      lastSenderId = null
+      lastDate = dateKey; lastSenderId = null
     }
-
-    // If sender changed, start new group
     if (msg.sender_id !== lastSenderId) {
-      if (currentGroup.length > 0) {
-        grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
-      }
-      currentGroup = [msg]
-      lastSenderId = msg.sender_id
+      if (currentGroup.length > 0) grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
+      currentGroup = [msg]; lastSenderId = msg.sender_id
     } else {
       currentGroup.push(msg)
     }
   })
-
-  // Push last group
-  if (currentGroup.length > 0) {
-    grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
-  }
+  if (currentGroup.length > 0) grouped.push({ type: 'group', group: currentGroup, senderId: lastSenderId })
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
+      {/* Header */}
       <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-        <div className="relative">
-          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
-            {otherName?.[0] || '?'}
-          </div>
+        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+          {otherName?.[0] || '?'}
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm">{otherName}</p>
           <PresenceStatus userId={otherUserId} />
         </div>
+
+        {/* Auto-reply toggle — shop owner only */}
+        {isOwner && (
+          <button onClick={toggleAutoReply}
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all"
+            style={autoReply
+              ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+              : { background: '#f3f4f6', color: '#9ca3af', borderColor: '#e5e7eb' }}>
+            <span className={`w-2 h-2 rounded-full ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
+            AI {autoReply ? 'চালু' : 'বন্ধ'}
+          </button>
+        )}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
         {grouped.length === 0 && (
           <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
@@ -198,31 +220,27 @@ export default function ChatWindow({ conversation, otherName }) {
             )
           )}
         </div>
+
+        {/* AI typing indicator */}
+        {aiTyping && (
+          <div className="flex justify-start gap-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              AI
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+              <div className="flex gap-1 items-center">
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
-      {/* Smart Reply suggestions */}
-      {(aiReplies.length > 0 || aiLoading) && (
-        <div className="px-3 py-2 bg-purple-50 border-t border-purple-100">
-          {aiLoading ? (
-            <div className="flex items-center gap-2 text-xs text-purple-500 py-1">
-              <span className="w-3 h-3 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
-              AI reply তৈরি করছে...
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wide">✨ AI Suggestions</p>
-              {aiReplies.map((r, i) => (
-                <button key={i} onClick={() => { setText(r); setAiReplies([]); inputRef.current?.focus() }}
-                  className="w-full text-left text-xs text-purple-800 bg-white border border-purple-200 rounded-xl px-3 py-2 hover:bg-purple-50 active:scale-98 transition-all line-clamp-2">
-                  {r}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Input */}
       <form onSubmit={handleSend} className="px-4 py-3 bg-white border-t border-gray-100 flex gap-2 flex-shrink-0">
         <input
           ref={inputRef}
@@ -231,15 +249,6 @@ export default function ChatWindow({ conversation, otherName }) {
           placeholder="বার্তা লিখুন..."
           className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
         />
-        <button type="button" onClick={getSmartReplies} disabled={aiLoading}
-          title="AI Smart Reply"
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors text-white"
-          style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
-          {aiLoading
-            ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            : <span className="text-sm font-bold">✨</span>
-          }
-        </button>
         <button
           type="submit"
           disabled={!text.trim() || sendMsg.isPending}
