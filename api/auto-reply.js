@@ -379,7 +379,18 @@ export default async function handler(req, res) {
       quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
       handoff = !!parsed.handoff
     } catch {
-      reply = result.slice(0, 600)
+      // parseJson failed (malformed or truncated JSON from AI).
+      // Try extracting the reply field with regex before falling back to raw text.
+      try {
+        const m = result.match(/"reply"\s*:\s*"((?:[^"\\]|\\[\s\S])*)"/)
+        if (m) {
+          reply = m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\t/g, '\t')
+        } else {
+          reply = result.replace(/^\s*\{.*$/ms, '').trim() || result.slice(0, 600)
+        }
+      } catch {
+        reply = result.slice(0, 600)
+      }
     }
 
     if (!reply) return res.status(200).json({ skipped: 'no reply' })

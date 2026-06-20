@@ -14,7 +14,7 @@ async function callDeepSeek(prompt) {
       model: 'deepseek-chat',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1500,
     }),
     signal: AbortSignal.timeout(15000),
   })
@@ -29,7 +29,7 @@ async function callGemini(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 1500 },
     }),
     signal: AbortSignal.timeout(15000),
   })
