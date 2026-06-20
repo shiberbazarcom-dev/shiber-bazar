@@ -5,6 +5,7 @@
  */
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useSiteSettings } from '../hooks/useSettings'
 
 export const SITE_URL  = 'https://shiberbazar.vercel.app'
 export const SITE_NAME = 'শিবের বাজার'
@@ -54,40 +55,51 @@ export default function SEO({
   jsonLd      = null,
 }) {
   const { pathname } = useLocation()
+  const { data: s = {} } = useSiteSettings()
+
+  const siteName = (s['site_name'] && s['site_name'] !== '') ? s['site_name'] : SITE_NAME
+  const siteTagline = s['site_tagline'] || 'আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা'
+  const siteUrl = (s['site_url'] && s['site_url'] !== '') ? s['site_url'] : SITE_URL
+  const cmsDesc = (s['meta_description'] && s['meta_description'] !== '') ? s['meta_description'] : null
+  const cmsImg = (s['og_image_url'] && s['og_image_url'] !== '') ? s['og_image_url'] : null
+
+  const resolvedDesc = cmsDesc || description
+  const resolvedImg  = cmsImg  || image
+
   const fullTitle = title
-    ? `${title} — ${SITE_NAME}`
-    : `${SITE_NAME} — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা`
-  const canonical = `${SITE_URL}${pathname}`
+    ? `${title} — ${siteName}`
+    : `${siteName} — ${siteTagline}`
+  const canonical = `${siteUrl}${pathname}`
 
   useEffect(() => {
     // Title
     document.title = fullTitle
 
     // Standard
-    setMeta('description',     description)
+    setMeta('description',     resolvedDesc)
     setMeta('robots',          noindex ? 'noindex,nofollow' : 'index,follow')
 
     // Open Graph
-    setMeta('og:title',        fullTitle,  'property')
-    setMeta('og:description',  description, 'property')
-    setMeta('og:url',          canonical,   'property')
-    setMeta('og:image',        image,       'property')
-    setMeta('og:type',         type,        'property')
-    setMeta('og:site_name',    SITE_NAME,   'property')
-    setMeta('og:locale',       'bn_BD',     'property')
+    setMeta('og:title',        fullTitle,     'property')
+    setMeta('og:description',  resolvedDesc,  'property')
+    setMeta('og:url',          canonical,     'property')
+    setMeta('og:image',        resolvedImg,   'property')
+    setMeta('og:type',         type,          'property')
+    setMeta('og:site_name',    siteName,      'property')
+    setMeta('og:locale',       'bn_BD',       'property')
 
     // Twitter Card
     setMeta('twitter:card',        'summary_large_image')
     setMeta('twitter:title',       fullTitle)
-    setMeta('twitter:description', description)
-    setMeta('twitter:image',       image)
+    setMeta('twitter:description', resolvedDesc)
+    setMeta('twitter:image',       resolvedImg)
 
     // Canonical
     setLink('canonical', canonical)
 
     // JSON-LD structured data
     setJsonLd(jsonLd)
-  }, [fullTitle, description, image, canonical, type, noindex, jsonLd])
+  }, [fullTitle, resolvedDesc, resolvedImg, canonical, type, noindex, jsonLd, siteName])
 
   return null
 }

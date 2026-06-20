@@ -19,6 +19,13 @@ export function useSiteSettings() {
   })
 }
 
+/* ── Convenience: read one CMS value with a hardcoded fallback ── */
+export function useCMSValue(key, fallback = '') {
+  const { data: settings = {} } = useSiteSettings()
+  const val = settings[key]
+  return (val !== undefined && val !== null && val !== '') ? val : fallback
+}
+
 /* ── Convenience: just the admin WhatsApp number ── */
 export function useAdminWhatsapp() {
   const { data: settings = {} } = useSiteSettings()

@@ -46,6 +46,7 @@ export default function AdminLayout() {
             </span>
           </NavLink>
           <NavLink to="/admin/categories" className={navClass}>📋 বিভাগ ব্যবস্থাপনা</NavLink>
+          <NavLink to="/admin/settings" className={navClass}>🖊️ CMS সেটিংস</NavLink>
         </nav>
       </aside>
 

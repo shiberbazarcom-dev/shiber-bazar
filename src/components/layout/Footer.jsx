@@ -1,10 +1,28 @@
 import { Link } from 'react-router-dom'
 import { useCategories } from '../../hooks/useCategories'
+import { useSiteSettings } from '../../hooks/useSettings'
 
 const YEAR = new Date().getFullYear()
 
+// Fallback constants — used when CMS value is empty
+const FB = {
+  site_name:            'শিবের বাজার',
+  footer_about:         'আপনার এলাকার সকল দোকানের তথ্য এক জায়গায়। সহজে খুঁজুন, যোগাযোগ করুন।',
+  contact_address:      'শিবের বাজার, সিলেট সদর, সিলেট',
+  contact_phone:        '01310012276',
+  contact_phone_display:'০১৩১০-০১২২৭৬',
+  whatsapp_number:      '8801310012276',
+  site_footer_copyright:'শিবের বাজার। সর্বস্বত্ব সংরক্ষিত।',
+}
+
+function cms(settings, key) {
+  const v = settings[key]
+  return (v !== undefined && v !== null && v !== '') ? v : (FB[key] ?? '')
+}
+
 export default function Footer() {
   const { data: categories = [] } = useCategories()
+  const { data: settings = {} } = useSiteSettings()
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-10">
@@ -14,19 +32,19 @@ export default function Footer() {
           {/* Brand — full width on smallest screens */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <img src="/logo.png" alt="শিবের বাজার" className="w-9 h-9 object-contain flex-shrink-0"
+              <img src={cms(settings,'site_logo_url') || '/logo.png'} alt={cms(settings,'site_name')} className="w-9 h-9 object-contain flex-shrink-0"
                    onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
               <div className="w-9 h-9 rounded-lg items-center justify-center text-white font-bold flex-shrink-0 hidden"
                    style={{ background: '#2563EB' }}>
                 শ
               </div>
               <div>
-                <p className="font-bold text-gray-800">শিবের বাজার</p>
+                <p className="font-bold text-gray-800">{cms(settings,'site_name')}</p>
                 <p className="text-xs text-gray-400">দোকান ডিরেক্টরি</p>
               </div>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed mb-4">
-              আপনার এলাকার সকল দোকানের তথ্য এক জায়গায়। সহজে খুঁজুন, যোগাযোগ করুন।
+              {cms(settings,'footer_about')}
             </p>
           </div>
 
@@ -73,17 +91,17 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li className="flex items-start gap-2 text-sm text-gray-500">
                 <span className="flex-shrink-0 mt-0.5">📍</span>
-                <span>শিবের বাজার, সিলেট সদর, সিলেট</span>
+                <span>{cms(settings,'contact_address')}</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="flex-shrink-0">📞</span>
-                <a href="tel:+8801310012276" className="hover:text-blue-700 transition-colors">
-                  ০১৩১০-০১২২৭৬
+                <a href={`tel:${cms(settings,'contact_phone')}`} className="hover:text-blue-700 transition-colors">
+                  {cms(settings,'contact_phone_display')}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="flex-shrink-0">💬</span>
-                <a href="https://wa.me/8801310012276" target="_blank" rel="noopener noreferrer"
+                <a href={`https://wa.me/${cms(settings,'whatsapp_number')}`} target="_blank" rel="noopener noreferrer"
                    className="hover:text-green-600 transition-colors">
                   WhatsApp করুন
                 </a>
@@ -98,7 +116,7 @@ export default function Footer() {
       <div className="border-t border-gray-100 pt-4 pb-20 md:pb-4">
         <div className="container-app flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <p className="text-xs text-gray-400">
-            © {YEAR} শিবের বাজার। সর্বস্বত্ব সংরক্ষিত।
+            © {YEAR} {cms(settings,'site_footer_copyright')}
           </p>
           <div className="flex gap-4">
             <Link to="/policy" className="text-xs text-gray-400 hover:text-blue-600 transition-colors">

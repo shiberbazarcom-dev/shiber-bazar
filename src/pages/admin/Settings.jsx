@@ -57,6 +57,20 @@ function SettingField({ row, onChange }) {
       </label>
     )
   }
+  if (row.type === 'textarea') {
+    return (
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-gray-700">{row.label}</label>
+        <textarea
+          rows={3}
+          value={row.value || ''}
+          onChange={e => onChange(row.key, e.target.value)}
+          className="input resize-none"
+          placeholder={`${row.label} লিখুন`}
+        />
+      </div>
+    )
+  }
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-gray-700">{row.label}</label>
@@ -123,11 +137,37 @@ export default function Settings() {
   const groups = [
     {
       title: '🌐 সাইটের তথ্য',
-      keys: ['site_name', 'site_tagline'],
+      keys: ['site_name', 'site_tagline', 'site_logo_url', 'site_favicon_url', 'site_url', 'site_footer_copyright'],
+    },
+    {
+      title: '🔍 SEO সেটিংস',
+      keys: ['meta_description', 'og_image_url', 'meta_keywords'],
+    },
+    {
+      title: '🏠 হোমপেজ Hero',
+      keys: ['hero_title', 'hero_subtitle', 'hero_search_placeholder_shop', 'hero_search_placeholder_product'],
+    },
+    {
+      title: '📢 CTA সেকশন',
+      keys: ['cta_badge', 'cta_title', 'cta_subtitle', 'cta_btn_primary', 'cta_btn_secondary'],
     },
     {
       title: '📞 যোগাযোগ',
-      keys: ['contact_phone', 'contact_email', 'contact_address', 'whatsapp_number'],
+      keys: ['contact_phone', 'contact_phone_display', 'contact_email', 'whatsapp_number', 'contact_address', 'map_embed_url'],
+    },
+    {
+      title: '🦶 Footer',
+      keys: ['footer_about'],
+    },
+    {
+      title: '🏛️ ইউনিয়ন পরিষদ',
+      keys: [
+        'union_name', 'union_area', 'union_email',
+        'union_chairman_name', 'union_chairman_phone', 'union_chairman_title',
+        'union_secretary_name', 'union_secretary_phone',
+        'union_krishi_name', 'union_krishi_phone',
+        'union_police_name', 'union_police_phone',
+      ],
     },
     {
       title: '⚙️ ফিচার নিয়ন্ত্রণ',

@@ -10,6 +10,28 @@ import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
 import { useDirectoryCategories } from '../hooks/useServiceDirectory'
+import { useSiteSettings } from '../hooks/useSettings'
+
+// CMS fallbacks for Home page
+const HOME_FB = {
+  hero_title:                      'শিবের বাজার',
+  hero_subtitle:                   'আপনার এলাকার সকল দোকান এক জায়গায় — সহজে খুঁজুন, যোগাযোগ করুন',
+  hero_search_placeholder_shop:    'দোকানের নাম বা ক্যাটাগরি লিখুন...',
+  hero_search_placeholder_product: 'পণ্যের নাম লিখুন...',
+  cta_badge:        'ফ্রি রেজিস্ট্রেশন',
+  cta_title:        'আপনার দোকান যোগ করুন',
+  cta_subtitle:     'বিনামূল্যে আপনার দোকানের তথ্য দিন এবং লক্ষাধিক মানুষের কাছে পৌঁছান। আমাদের প্ল্যাটফর্মে আজই যোগ দিন।',
+  cta_btn_primary:  'বিনামূল্যে রেজিস্ট্রেশন করুন',
+  cta_btn_secondary:'দোকান ব্রাউজ করুন',
+  contact_address:  'শিবের বাজার, সিলেট সদর, সিলেট',
+  contact_phone:    '01310012276',
+  contact_phone_display: '০১৩১০-০১২২৭৬',
+  whatsapp_number:  '8801310012276',
+}
+function hcms(settings, key) {
+  const v = settings[key]
+  return (v !== undefined && v !== null && v !== '') ? v : (HOME_FB[key] ?? '')
+}
 
 // Animated counter component
 function AnimatedCounter({ value, suffix = '' }) {
@@ -374,6 +396,7 @@ export default function Home() {
   const { data: latestShops = [], isLoading: isLatestLoading, refetch: refetchLatest } = useLatestShops(12)
   const { data: categories = [], refetch: refetchCategories } = useCategoryWithCount()
   const { data: ads = [] } = useActiveAds()
+  const { data: cmsSettings = {} } = useSiteSettings()
 
   // Filter by date validity
   const today = new Date().toISOString().slice(0, 10)
@@ -481,10 +504,10 @@ export default function Home() {
         <div className="container-app relative z-10 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
-              শিবের বাজার
+              {hcms(cmsSettings,'hero_title')}
             </h1>
             <p className="text-white/90 text-sm sm:text-base mb-8 max-w-xl mx-auto">
-              আপনার এলাকার সকল দোকান এক জায়গায় — সহজে খুঁজুন, যোগাযোগ করুন
+              {hcms(cmsSettings,'hero_subtitle')}
             </p>
 
             {/* Modern Search Bar */}
@@ -520,7 +543,7 @@ export default function Home() {
                       setShowDropdown(true)
                     }}
                     onFocus={() => setShowDropdown(true)}
-                    placeholder={searchTab === 'shops' ? 'দোকানের নাম বা ক্যাটাগরি লিখুন...' : 'পণ্যের নাম লিখুন...'}
+                    placeholder={searchTab === 'shops' ? hcms(cmsSettings,'hero_search_placeholder_shop') : hcms(cmsSettings,'hero_search_placeholder_product')}
                     className="flex-1 px-5 py-4 text-gray-700 placeholder:text-gray-400 text-sm focus:outline-none"
                   />
                   {query && (
@@ -843,30 +866,29 @@ export default function Home() {
           <div className="max-w-3xl mx-auto text-center">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-300 bg-brand-800/50 rounded-full px-3 py-1 mb-4 border border-brand-700">
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              ফ্রি রেজিস্ট্রেশন
+              {hcms(cmsSettings,'cta_badge')}
             </span>
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">
-              আপনার দোকান যোগ করুন
+              {hcms(cmsSettings,'cta_title')}
             </h2>
             <p className="text-brand-200 text-sm sm:text-base mb-8 max-w-xl mx-auto">
-              বিনামূল্যে আপনার দোকানের তথ্য দিন এবং লক্ষাধিক মানুষের কাছে পৌঁছান। 
-              আমাদের প্ল্যাটফর্মে আজই যোগ দিন।
+              {hcms(cmsSettings,'cta_subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link 
+              <Link
                 to="/register"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-brand-900/20"
               >
-                বিনামূল্যে রেজিস্ট্রেশন করুন
+                {hcms(cmsSettings,'cta_btn_primary')}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
-              <Link 
+              <Link
                 to="/shops"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold px-8 py-3.5 rounded-xl border-2 border-brand-600 hover:bg-brand-800/50 transition-all"
               >
-                দোকান ব্রাউজ করুন
+                {hcms(cmsSettings,'cta_btn_secondary')}
               </Link>
             </div>
           </div>
@@ -879,17 +901,17 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <span>📍</span>
-              <span>শিবের বাজার, সিলেট সদর, সিলেট</span>
+              <span>{hcms(cmsSettings,'contact_address')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span>📞</span>
-              <a href="tel:+8801310012276" className="font-medium text-blue-600 hover:underline">
-                ০১৩১০-০১২২৭৬
+              <a href={`tel:${hcms(cmsSettings,'contact_phone')}`} className="font-medium text-blue-600 hover:underline">
+                {hcms(cmsSettings,'contact_phone_display')}
               </a>
             </div>
             <div className="flex items-center gap-2">
               <span>💬</span>
-              <a href="https://wa.me/8801310012276" target="_blank" rel="noopener noreferrer"
+              <a href={`https://wa.me/${hcms(cmsSettings,'whatsapp_number')}`} target="_blank" rel="noopener noreferrer"
                  className="font-medium text-green-600 hover:underline">
                 WhatsApp করুন
               </a>

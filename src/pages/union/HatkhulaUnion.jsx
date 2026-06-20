@@ -1,5 +1,7 @@
 import SEO from '../../components/SEO'
+import { useSiteSettings } from '../../hooks/useSettings'
 
+// Fallback constants — used when CMS row is empty
 const CHAIRMAN = {
   name: 'মাওলানা কে এম রফিকুজ্জামান',
   title: 'ইউপি চেয়ারম্যান',
@@ -91,12 +93,33 @@ function SectionTitle({ icon, title }) {
   )
 }
 
+function ucms(settings, key, fallback) {
+  const v = settings[key]
+  return (v !== undefined && v !== null && v !== '') ? v : fallback
+}
+
 export default function HatkhulaUnion() {
+  const { data: u = {} } = useSiteSettings()
+
+  // CMS values with hardcoded fallbacks
+  const unionName    = ucms(u, 'union_name',  '২নং হাটখোলা ইউনিয়ন পরিষদ')
+  const unionArea    = ucms(u, 'union_area',  'সিলেট সদর উপজেলা, সিলেট জেলা')
+  const unionEmail   = ucms(u, 'union_email', CHAIRMAN.email)
+  const chairName    = ucms(u, 'union_chairman_name',  CHAIRMAN.name)
+  const chairPhone   = ucms(u, 'union_chairman_phone', CHAIRMAN.phone)
+  const chairTitle   = ucms(u, 'union_chairman_title', CHAIRMAN.title)
+  const secName      = ucms(u, 'union_secretary_name',  STAFF[0].name)
+  const secPhone     = ucms(u, 'union_secretary_phone', STAFF[0].phone)
+  const krishiName   = ucms(u, 'union_krishi_name',  STAFF[STAFF.length - 1].name)
+  const krishiPhone  = ucms(u, 'union_krishi_phone', STAFF[STAFF.length - 1].phone)
+  const policeName   = ucms(u, 'union_police_name',  POLICE[0].name)
+  const policePhone  = ucms(u, 'union_police_phone', POLICE[0].phone)
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f0fdf4 0%, #eff6ff 50%, #f8fafc 100%)' }}>
       <SEO
-        title="হাটখোলা ইউনিয়ন পরিষদ"
-        description="২নং হাটখোলা ইউনিয়ন পরিষদ — চেয়ারম্যান, সদস্য, কর্মচারী ও জরুরি যোগাযোগ নম্বর।"
+        title={unionName}
+        description={`${unionName} — চেয়ারম্যান, সদস্য, কর্মচারী ও জরুরি যোগাযোগ নম্বর।`}
       />
 
       <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-10 space-y-4">
@@ -108,11 +131,11 @@ export default function HatkhulaUnion() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-white">২নং হাটখোলা ইউনিয়ন পরিষদ</h1>
-          <p className="text-xs text-emerald-100 mt-1">সিলেট সদর উপজেলা, সিলেট জেলা</p>
-          <a href="mailto:hatkhulaunion@gmail.com"
+          <h1 className="text-lg font-bold text-white">{unionName}</h1>
+          <p className="text-xs text-emerald-100 mt-1">{unionArea}</p>
+          <a href={`mailto:${unionEmail}`}
             className="inline-flex items-center gap-1 text-xs text-white/80 mt-2 hover:text-white transition-colors">
-            ✉️ hatkhulaunion@gmail.com
+            ✉️ {unionEmail}
           </a>
         </div>
 
@@ -120,15 +143,13 @@ export default function HatkhulaUnion() {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5">
           <SectionTitle icon="👮" title="পুলিশ" />
           <div className="divide-y divide-gray-50">
-            {POLICE.map(p => (
-              <div key={p.phone} className="flex items-center justify-between py-2.5">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{p.name}</p>
-                  {p.note && <p className="text-xs text-gray-400">{p.note}</p>}
-                </div>
-                <PhoneLink phone={p.phone} />
+            <div className="flex items-center justify-between py-2.5">
+              <div>
+                <p className="text-sm font-medium text-gray-800">{policeName}</p>
+                <p className="text-xs text-gray-400">{POLICE[0].note}</p>
               </div>
-            ))}
+              <PhoneLink phone={policePhone} />
+            </div>
           </div>
         </div>
 
@@ -140,12 +161,12 @@ export default function HatkhulaUnion() {
               <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wide mb-2">চেয়ারম্যান</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 font-bold text-base flex items-center justify-center flex-shrink-0">
-                  {CHAIRMAN.name[0]}
+                  {chairName[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{CHAIRMAN.name}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{CHAIRMAN.district}</p>
-                  <PhoneLink phone={CHAIRMAN.phone} />
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{chairName}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{chairTitle}</p>
+                  <PhoneLink phone={chairPhone} />
                 </div>
               </div>
             </div>
@@ -154,12 +175,12 @@ export default function HatkhulaUnion() {
               <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-2">পরিষদ সচিব</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 font-bold text-base flex items-center justify-center flex-shrink-0">
-                  {STAFF[0].name[0]}
+                  {secName[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{STAFF[0].name}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{secName}</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">সচিব</p>
-                  <PhoneLink phone={STAFF[0].phone} />
+                  <PhoneLink phone={secPhone} />
                 </div>
               </div>
             </div>
@@ -169,12 +190,12 @@ export default function HatkhulaUnion() {
             <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-2">কৃষি কর্মকর্তা</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-700 font-bold text-base flex items-center justify-center flex-shrink-0">
-                {STAFF[STAFF.length - 1].name[0]}
+                {krishiName[0]}
               </div>
               <div className="text-left">
-                <p className="text-sm font-bold text-gray-900 leading-tight">{STAFF[STAFF.length - 1].name}</p>
+                <p className="text-sm font-bold text-gray-900 leading-tight">{krishiName}</p>
                 <p className="text-[11px] text-gray-400 mt-0.5">{STAFF[STAFF.length - 1].title}</p>
-                <PhoneLink phone={STAFF[STAFF.length - 1].phone} />
+                <PhoneLink phone={krishiPhone} />
               </div>
             </div>
           </div>

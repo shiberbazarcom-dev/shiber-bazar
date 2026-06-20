@@ -2,8 +2,23 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
+import { useSiteSettings } from '../hooks/useSettings'
+
+const CONTACT_FB = {
+  contact_phone:         '01310012276',
+  contact_phone_display: '০১৩১০০১২২৭৬',
+  contact_email:         'shiberbazar.com@gmail.com',
+  contact_address:       'শিবের বাজার,\nসিলেট সদর, সিলেট',
+  whatsapp_number:       '8801310012276',
+  map_embed_url:         'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.8937088394444!2d91.8673!3d24.8949!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3751ab29c1e6c4b1%3A0x4e4e4e4e4e4e4e4e!2sSylhet!5e0!3m2!1sen!2sbd!4v1234567890',
+}
+function ccms(settings, key) {
+  const v = settings[key]
+  return (v !== undefined && v !== null && v !== '') ? v : (CONTACT_FB[key] ?? '')
+}
 
 export default function ContactPage() {
+  const { data: cmsSettings = {} } = useSiteSettings()
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -53,7 +68,7 @@ export default function ContactPage() {
     }
   }
 
-  const whatsappUrl = `https://wa.me/8801310012276?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি শিবের বাজার ওয়েবসাইট থেকে যোগাযোগ করছি।')}`
+  const whatsappUrl = `https://wa.me/${ccms(cmsSettings,'whatsapp_number')}?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি শিবের বাজার ওয়েবসাইট থেকে যোগাযোগ করছি।')}`
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,8 +102,8 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">ফোন</h3>
-              <a href="tel:01310012276" className="text-brand-600 hover:text-brand-700 font-medium">
-                ০১৩১০০১২২৭৬
+              <a href={`tel:${ccms(cmsSettings,'contact_phone')}`} className="text-brand-600 hover:text-brand-700 font-medium">
+                {ccms(cmsSettings,'contact_phone_display')}
               </a>
             </div>
 
@@ -100,8 +115,8 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">ইমেইল</h3>
-              <a href="mailto:shiberbazar.com@gmail.com" className="text-brand-600 hover:text-brand-700 font-medium text-sm break-all">
-                shiberbazar.com@gmail.com
+              <a href={`mailto:${ccms(cmsSettings,'contact_email')}`} className="text-brand-600 hover:text-brand-700 font-medium text-sm break-all">
+                {ccms(cmsSettings,'contact_email')}
               </a>
             </div>
 
@@ -114,9 +129,8 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">ঠিকানা</h3>
-              <p className="text-gray-600 text-sm">
-                শিবের বাজার,<br />
-                সিলেট সদর, সিলেট
+              <p className="text-gray-600 text-sm whitespace-pre-line">
+                {ccms(cmsSettings,'contact_address')}
               </p>
             </div>
           </div>
@@ -258,7 +272,7 @@ export default function ContactPage() {
             {/* Google Maps Placeholder - Replace iframe src with actual Google Maps embed URL */}
             <div className="relative w-full h-80 sm:h-96 bg-gray-200">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.8937088394444!2d91.8673!3d24.8949!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3751ab29c1e6c4b1%3A0x4e4e4e4e4e4e4e4e!2sSylhet!5e0!3m2!1sen!2sbd!4v1234567890"
+                src={ccms(cmsSettings,'map_embed_url')}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
