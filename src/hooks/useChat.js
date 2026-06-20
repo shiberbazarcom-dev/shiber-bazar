@@ -231,15 +231,13 @@ export function useRealtimeMessages(conversationId, senderName = '') {
   }, [conversationId, senderName, qc, user?.id])
 }
 
-/* ── Realtime: conversation list + new messages (global, any page) ── */
+/* ── Realtime: conversation list updates (used in Chat page) ── */
 export function useRealtimeConversations() {
   const { user } = useAuth()
   const qc = useQueryClient()
   useEffect(() => {
     if (!user) return
-
-    // Listen for conversation updates
-    const convCh = supabase
+    const ch = supabase
       .channel(`conversations-user-${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'conversations' },
@@ -248,23 +246,27 @@ export function useRealtimeConversations() {
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
         })
       .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [user?.id, qc]) // eslint-disable-line
+}
 
-    // Listen for new messages globally — updates unread badge on any page
-    const msgCh = supabase
+/* ── Realtime: global new message listener (used in DashboardLayout only) ── */
+export function useGlobalMessageListener() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!user) return
+    const ch = supabase
       .channel(`global-messages-${user.id}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
-          if (payload.new?.sender_id === user.id) return // own message
+          if (payload.new?.sender_id === user.id) return
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
           qc.invalidateQueries({ queryKey: ['messages', payload.new?.conversation_id] })
         })
       .subscribe()
-
-    return () => {
-      supabase.removeChannel(convCh)
-      supabase.removeChannel(msgCh)
-    }
+    return () => supabase.removeChannel(ch)
   }, [user?.id, qc]) // eslint-disable-line
 }
