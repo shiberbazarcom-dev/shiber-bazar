@@ -56,11 +56,14 @@ export default function ChatWindow({ conversation, otherName }) {
   const [text, setText] = useState('')
   const [autoReply, setAutoReply] = useState(() => localStorage.getItem(AUTO_REPLY_KEY) === 'true')
   const [aiTyping, setAiTyping] = useState(false)
+  const [otherTyping, setOtherTyping] = useState(false)
   const [shopProducts, setShopProducts] = useState([])
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
-  const lastMsgIdRef = useRef(null)
-  const replyingRef  = useRef(false)
+  const lastMsgIdRef  = useRef(null)
+  const replyingRef   = useRef(false)
+  const typingTimerRef = useRef(null)
+  const channelRef     = useRef(null)
 
   const otherUserId = conversation
     ? (conversation.customer_id === user?.id ? conversation.owner_id : conversation.customer_id)
@@ -72,8 +75,32 @@ export default function ChatWindow({ conversation, otherName }) {
 
   useRealtimeMessages(conversation?.id, otherName)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, otherTyping])
   useEffect(() => { if (conversation?.id) markRead.mutate() }, [conversation?.id]) // eslint-disable-line
+
+  /* ── Typing indicator via Supabase broadcast ── */
+  useEffect(() => {
+    if (!conversation?.id || !user?.id) return
+
+    const ch = supabase.channel(`typing:${conversation.id}`)
+    channelRef.current = ch
+
+    ch.on('broadcast', { event: 'typing' }, ({ payload }) => {
+      if (payload.user_id === user.id) return
+      setOtherTyping(true)
+      clearTimeout(typingTimerRef.current)
+      typingTimerRef.current = setTimeout(() => setOtherTyping(false), 3000)
+    }).subscribe()
+
+    return () => {
+      clearTimeout(typingTimerRef.current)
+      supabase.removeChannel(ch)
+    }
+  }, [conversation?.id, user?.id])
+
+  function broadcastTyping() {
+    channelRef.current?.send({ type: 'broadcast', event: 'typing', payload: { user_id: user?.id } })
+  }
 
   /* ── Load shop products for AI context ── */
   useEffect(() => {
@@ -104,6 +131,10 @@ export default function ChatWindow({ conversation, otherName }) {
     replyingRef.current  = true
     setAiTyping(true)
 
+    // broadcast typing every 2s while AI is generating
+    broadcastTyping()
+    const typingInterval = setInterval(broadcastTyping, 2000)
+
     fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -122,7 +153,7 @@ export default function ChatWindow({ conversation, otherName }) {
         if (reply) return sendMsg.mutateAsync({ conversationId: conversation.id, content: reply })
       })
       .catch(() => {})
-      .finally(() => { setAiTyping(false); replyingRef.current = false })
+      .finally(() => { clearInterval(typingInterval); setAiTyping(false); replyingRef.current = false })
   }, [messages]) // eslint-disable-line
 
   const toggleAutoReply = () => {
@@ -221,17 +252,17 @@ export default function ChatWindow({ conversation, otherName }) {
           )}
         </div>
 
-        {/* AI typing indicator */}
-        {aiTyping && (
-          <div className="flex justify-start gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-              AI
+        {/* Typing indicator */}
+        {otherTyping && (
+          <div className="flex justify-start gap-2 mb-3 animate-fadeIn">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              {(otherName || '?')[0].toUpperCase()}
             </div>
             <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1 items-center">
-                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -245,7 +276,7 @@ export default function ChatWindow({ conversation, otherName }) {
         <input
           ref={inputRef}
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={e => { setText(e.target.value); broadcastTyping() }}
           placeholder="বার্তা লিখুন..."
           className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
         />
