@@ -174,35 +174,45 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Announcement ticker strip */}
-        <div
-          className="text-white text-xs py-1.5 overflow-hidden hidden sm:block relative"
-          style={{ background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 40%, #3b82f6 70%, #1d4ed8 100%)', backgroundSize: '200% 100%', animation: 'gradientShift 6s ease infinite' }}
-        >
-          <style>{`
-            @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-            @keyframes tickerScroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
-            .ticker-track { display:flex; gap:0; white-space:nowrap; animation:tickerScroll 28s linear infinite; }
-            .ticker-track:hover { animation-play-state:paused; }
-          `}</style>
-          <div className="ticker-track">
-            {[
-              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
-              `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
-              stats?.totalProducts ? `🛍️ ${stats.totalProducts}+ পণ্য এক জায়গায়` : null,
-              `💬 AI চ্যাটবট — দোকানদার ঘুমালেও অর্ডার নেয়`,
-              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ ক্রেতা-বিক্রেতা যুক্ত হয়েছেন` : null,
-              `📲 অ্যাপ ইন্সটল করুন, হাতের মুঠোয় রাখুন বাজার`,
-              `⚡ সরাসরি চ্যাট করুন — দোকানদারের সাথে তাৎক্ষণিক যোগাযোগ`,
-              `🎯 আপনার দোকান এখনই যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
-            ].filter(Boolean).map((msg, i) => (
-              <span key={i} className="inline-flex items-center px-8 gap-2">
-                {msg}
-                <span className="opacity-30 mx-2">✦</span>
-              </span>
-            ))}
-          </div>
-        </div>
+        {/* Announcement ticker strip — fade rotator */}
+        {(() => {
+          const items = [
+            stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
+            `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
+            stats?.totalProducts ? `🛍️ ${stats.totalProducts}+ পণ্য এক জায়গায়` : null,
+            `💬 AI চ্যাটবট — দোকানদার ঘুমালেও অর্ডার নেয়`,
+            stats?.totalUsers    ? `👥 ${stats.totalUsers}+ ক্রেতা-বিক্রেতা যুক্ত হয়েছেন` : null,
+            `📲 অ্যাপ ইন্সটল করুন, হাতের মুঠোয় রাখুন বাজার`,
+            `⚡ সরাসরি চ্যাট করুন — তাৎক্ষণিক যোগাযোগ`,
+            `🎯 আপনার দোকান যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
+          ].filter(Boolean)
+          return (
+            <div className="hidden sm:flex items-center justify-center text-white text-xs py-1.5 overflow-hidden relative"
+              style={{ background: 'linear-gradient(90deg, #1e3a8a, #1d4ed8, #2563eb, #1d4ed8, #1e3a8a)' }}>
+              <style>{`
+                @keyframes fadeUp {
+                  0%   { opacity: 0; transform: translateY(6px); }
+                  15%  { opacity: 1; transform: translateY(0); }
+                  85%  { opacity: 1; transform: translateY(0); }
+                  100% { opacity: 0; transform: translateY(-6px); }
+                }
+                .ticker-fade { animation: fadeUp ${items.length * 3}s ease infinite; }
+                ${items.map((_, i) => `.ticker-item-${i} { animation-delay: ${i * 3}s; }`).join(' ')}
+              `}</style>
+              <div className="relative h-4 w-full flex items-center justify-center">
+                {items.map((msg, i) => (
+                  <span
+                    key={i}
+                    className={`ticker-fade ticker-item-${i} absolute inset-0 flex items-center justify-center font-medium tracking-wide`}
+                    style={{ animationDelay: `${i * 3}s` }}
+                  >
+                    {msg}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2">
           <div className="flex items-center gap-2 sm:gap-3">
