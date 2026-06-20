@@ -187,16 +187,18 @@ export default function Navbar() {
           `}</style>
           <div className="ticker-track">
             {[
-              `📍 শিবের বাজার — আপনার পাড়ার সকল দোকান এক জায়গায়`,
-              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান রেজিস্ট্রেশন হয়েছে` : null,
-              stats?.totalProducts ? `📦 ${stats.totalProducts}+ পণ্য পাওয়া যাচ্ছে` : null,
-              `🛒 সহজে অর্ডার করুন, সরাসরি দোকানদারের সাথে কথা বলুন`,
-              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ সদস্য ইতোমধ্যে যোগ দিয়েছেন` : null,
-              `✅ ডেলিভারি সেবা পাওয়া যাচ্ছে নির্বাচিত দোকানে`,
+              stats?.totalShops    ? `🏪 ${stats.totalShops}+ দোকান এখন অনলাইনে` : null,
+              `🚀 শিবের বাজার — এখন AI-চালিত স্মার্ট বাজার`,
+              stats?.totalProducts ? `🛍️ ${stats.totalProducts}+ পণ্য এক জায়গায়` : null,
+              `💬 AI চ্যাটবট — দোকানদার ঘুমালেও অর্ডার নেয়`,
+              stats?.totalUsers    ? `👥 ${stats.totalUsers}+ ক্রেতা-বিক্রেতা যুক্ত হয়েছেন` : null,
+              `📲 অ্যাপ ইন্সটল করুন, হাতের মুঠোয় রাখুন বাজার`,
+              `⚡ সরাসরি চ্যাট করুন — দোকানদারের সাথে তাৎক্ষণিক যোগাযোগ`,
+              `🎯 আপনার দোকান এখনই যোগ করুন — সম্পূর্ণ বিনামূল্যে`,
             ].filter(Boolean).map((msg, i) => (
               <span key={i} className="inline-flex items-center px-8 gap-2">
                 {msg}
-                <span className="opacity-40 mx-4">•</span>
+                <span className="opacity-30 mx-2">✦</span>
               </span>
             ))}
           </div>
