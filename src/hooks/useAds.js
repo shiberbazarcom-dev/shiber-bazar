@@ -73,6 +73,12 @@ export function useUpdateAd() {
   })
 }
 
+/* ── Public: track ad click (fire-and-forget) ── */
+export async function trackAdClick(id) {
+  // Uses a simple RPC that does: UPDATE ads SET click_count = click_count + 1
+  await supabase.rpc('increment_ad_click', { ad_id: id }).catch(() => null)
+}
+
 /* ── Admin: delete ad ── */
 export function useDeleteAd() {
   const qc = useQueryClient()

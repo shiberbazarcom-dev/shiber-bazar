@@ -90,6 +90,10 @@ const ErrorLogs            = lazy(() => import('./pages/admin/ErrorLogs'))
 const AuditLog             = lazy(() => import('./pages/admin/AuditLog'))
 const QuickAddShop         = lazy(() => import('./pages/admin/QuickAddShop'))
 const BulkImport           = lazy(() => import('./pages/admin/BulkImport'))
+const ManageSections       = lazy(() => import('./pages/admin/ManageSections'))
+const ManageJobs           = lazy(() => import('./pages/admin/ManageJobs'))
+const JobsPage             = lazy(() => import('./pages/JobsPage'))
+const JobDetail            = lazy(() => import('./pages/JobDetail'))
 
 /* Loading fallback */
 function PageLoader() {
@@ -179,6 +183,10 @@ export default function App() {
             <Route path="/contact"        element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
+
+            {/* ── চাকরির বোর্ড ── */}
+            <Route path="/jobs"     element={<PublicLayout><JobsPage /></PublicLayout>} />
+            <Route path="/jobs/:id" element={<PublicLayout><JobDetail /></PublicLayout>} />
 
             {/* ── সেবাসমূহ — স্থানীয় সেবা ডিরেক্টরি (services page এখন এটাই) ── */}
             <Route path="/hatkhula-union"  element={<PublicLayout><HatkhulaUnion /></PublicLayout>} />
@@ -305,6 +313,8 @@ export default function App() {
               <Route path="audit-log"       element={<AuditLog />} />
               <Route path="quick-add-shop"  element={<QuickAddShop />} />
               <Route path="bulk-import"     element={<BulkImport />} />
+              <Route path="sections"        element={<ManageSections />} />
+              <Route path="jobs"            element={<ManageJobs />} />
             </Route>
 
             {/* Fallback */}

@@ -46,7 +46,13 @@ export default function AdminLayout() {
             </span>
           </NavLink>
           <NavLink to="/admin/categories" className={navClass}>📋 বিভাগ ব্যবস্থাপনা</NavLink>
-          <NavLink to="/admin/settings" className={navClass}>🖊️ CMS সেটিংস</NavLink>
+
+          {/* CMS group */}
+          <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-widest text-gray-500 font-semibold">CMS</p>
+          <NavLink to="/admin/settings"  className={navClass}>🖊️ সাইট সেটিংস</NavLink>
+          <NavLink to="/admin/sections"  className={navClass}>🏠 সেকশন বিল্ডার</NavLink>
+          <NavLink to="/admin/ads"       className={navClass}>📢 বিজ্ঞাপন</NavLink>
+          <NavLink to="/admin/jobs"      className={navClass}>💼 চাকরির বোর্ড</NavLink>
         </nav>
       </aside>
 

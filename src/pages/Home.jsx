@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFeaturedShops, useLatestShops, useMarketStats } from '../hooks/useShops'
 import { useCategoryWithCount } from '../hooks/useCategories'
-import { useActiveAds } from '../hooks/useAds'
+import { useActiveAds, trackAdClick } from '../hooks/useAds'
 import { ShopCard } from '../components/shop/ShopCard'
 import { ShopCardSkeleton } from '../components/ui/Skeleton'
 import SearchDropdown from '../components/SearchDropdown'
@@ -11,6 +11,7 @@ import SEO from '../components/SEO'
 import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
 import { useDirectoryCategories } from '../hooks/useServiceDirectory'
 import { useSiteSettings } from '../hooks/useSettings'
+import { useHomeSections } from '../hooks/useHomeSections'
 
 // CMS fallbacks for Home page
 const HOME_FB = {
@@ -88,7 +89,7 @@ function BannerAd({ ads }) {
   /* ── Single slide ── */
   function Slide({ a, active }) {
     const wrap = (children) => a.target_url
-      ? <a href={a.target_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">{children}</a>
+      ? <a href={a.target_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full" onClick={() => trackAdClick(a.id)}>{children}</a>
       : <div className="w-full h-full">{children}</div>
 
     return (
@@ -222,7 +223,7 @@ function SidebarAdStrip({ ads }) {
           )
           return ad.target_url ? (
             <a key={ad.id} href={ad.target_url} target="_blank" rel="noopener noreferrer"
-              className="flex-1 min-w-[200px]">
+              className="flex-1 min-w-[200px]" onClick={() => trackAdClick(ad.id)}>
               {card}
             </a>
           ) : <div key={ad.id} className="flex-1 min-w-[200px]">{card}</div>
@@ -397,6 +398,31 @@ export default function Home() {
   const { data: categories = [], refetch: refetchCategories } = useCategoryWithCount()
   const { data: ads = [] } = useActiveAds()
   const { data: cmsSettings = {} } = useSiteSettings()
+  const { data: cmsSections = [] } = useHomeSections()
+
+  // Build a quick lookup: slug → section data
+  const sectionMap = Object.fromEntries(cmsSections.map(s => [s.section_slug, s]))
+
+  // Returns true if a section is active (defaults to true if not in CMS yet)
+  function sectionVisible(slug) {
+    if (cmsSections.length === 0) return true // DB not seeded yet — show all
+    const s = sectionMap[slug]
+    return s ? s.is_active : true
+  }
+
+  // Returns CMS title/subtitle if set, otherwise falls back to provided default
+  function sectionTitle(slug, fallback) {
+    return sectionMap[slug]?.title || fallback
+  }
+  function sectionSubtitle(slug, fallback) {
+    return sectionMap[slug]?.subtitle || fallback
+  }
+
+  // Sections in display_order; fall back to a fixed order if CMS is empty
+  const FALLBACK_ORDER = ['hero','categories','banner_ads','featured_shops','latest_shops','services','cta']
+  const orderedSlugs = cmsSections.length > 0
+    ? cmsSections.filter(s => s.is_active).map(s => s.section_slug)
+    : FALLBACK_ORDER
 
   // Filter by date validity
   const today = new Date().toISOString().slice(0, 10)
@@ -406,9 +432,16 @@ export default function Home() {
     return true
   })
 
-  const bannerAds  = validAds.filter(a => a.ad_type === 'banner')
-  const sidebarAds = validAds.filter(a => a.ad_type === 'sidebar')
-  const popupAds   = validAds.filter(a => a.ad_type === 'popup')
+  // Filter by placement (new) or fall back to ad_type (legacy)
+  const bannerAds  = validAds.filter(a => a.ad_placement
+    ? a.ad_placement === 'homepage_banner'
+    : a.ad_type === 'banner')
+  const sidebarAds = validAds.filter(a => a.ad_placement
+    ? a.ad_placement === 'sidebar'
+    : a.ad_type === 'sidebar')
+  const popupAds   = validAds.filter(a => a.ad_placement
+    ? false   // popup placement type not used in homepage_banner/sidebar/grid
+    : a.ad_type === 'popup')
 
   // Real-time subscriptions for auto-updates
   useEffect(() => {
@@ -483,13 +516,10 @@ export default function Home() {
     'url': 'https://shiberbazar.vercel.app/shops',
   }
 
-  return (
-    <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-      <SEO
-        description="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন। স্থানীয় ব্যবসার ডিজিটাল ঠিকানা।"
-        jsonLd={homeJsonLd}
-      />
-      {/* ── Hero Section (Reduced Height) ── */}
+  // ── Section render functions (closures over component state) ──
+
+  function renderHero() {
+    return (
       <section className="relative z-20 min-h-[320px] sm:min-h-[380px] flex items-center">
         {/* Dynamic Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400" />
@@ -636,8 +666,11 @@ export default function Home() {
           </svg>
         </button>
       </section>
+    )
+  }
 
-      {/* ── Sponsor Banner ── */}
+  function renderSponsorBanner() {
+    return (
       <section className="py-2" style={{ background: '#fff5f5' }}>
         <div className="container-app">
           <a
@@ -670,8 +703,213 @@ export default function Home() {
           </a>
         </div>
       </section>
+    )
+  }
 
-      {/* ── New Shop Announcement Floating Card ── */}
+  function renderCategories() {
+    return (
+      <section className="py-10 sm:py-14 bg-gray-50/50">
+        <div className="container-app">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                {sectionTitle('categories', 'ক্যাটাগরিসমূহ')}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {sectionSubtitle('categories', 'আপনার পছন্দের ক্যাটাগরি বেছে নিন')}
+              </p>
+            </div>
+            <Link
+              to="/categories"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+            >
+              সব দেখুন
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
+            {categories.map(cat => (
+              <CategoryPill key={cat.id} category={cat} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  function renderBannerAds() {
+    return (
+      <>
+        {bannerAds.length  > 0 && <BannerAd ads={bannerAds} />}
+        {sidebarAds.length > 0 && <SidebarAdStrip ads={sidebarAds} />}
+      </>
+    )
+  }
+
+  function renderFeaturedShops() {
+    if (featuredShops.length === 0) return null
+    return (
+      <section id="featured-shops" className="py-10 sm:py-14 bg-gradient-to-b from-brand-50/50 to-white">
+        <div className="container-app">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {sectionTitle('featured_shops', 'ফিচার্ড দোকান')}
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {sectionSubtitle('featured_shops', 'আমাদের বিশেষায়িত দোকানসমূহ')}
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/shops?featured=true"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+            >
+              সব দেখুন
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {isFeaturedLoading
+              ? Array.from({ length: 4 }).map((_, i) => <ShopCardSkeleton key={i} />)
+              : featuredShops.map((shop, idx) => <ShopCard key={shop.id} shop={shop} featured index={idx} />)
+            }
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  function renderLatestShops() {
+    return (
+      <section className="py-10 sm:py-14 bg-white">
+        <div className="container-app">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                {sectionTitle('latest_shops', 'নতুন দোকান')}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {sectionSubtitle('latest_shops', 'সম্প্রতি যুক্ত হওয়া দোকানসমূহ')}
+              </p>
+            </div>
+            <Link
+              to="/shops"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+            >
+              সব দেখুন
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          {latestShops.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <div className="w-20 h-20 mx-auto mb-4 bg-brand-100 rounded-full flex items-center justify-center">
+                <span className="text-3xl">🏪</span>
+              </div>
+              <p className="text-gray-500 mb-4">এখনো কোনো দোকান নেই</p>
+              <Link
+                to="/dashboard/add-shop"
+                className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors"
+              >
+                প্রথম দোকান যোগ করুন
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {isLatestLoading
+                ? Array.from({ length: 8 }).map((_, i) => <ShopCardSkeleton key={i} />)
+                : latestShops.map((shop, idx) => <ShopCard key={shop.id} shop={shop} index={idx} />)
+              }
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  function renderServices() {
+    return <HomeServicesSection />
+  }
+
+  function renderCTA() {
+    return (
+      <section className="relative py-16 pb-28 sm:py-20 sm:pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.03%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M0%2040L40%200H20L0%2020M40%2040V20L20%2040%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E')]" />
+        <div className="absolute top-0 left-0 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+        <div className="container-app relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-300 bg-brand-800/50 rounded-full px-3 py-1 mb-4 border border-brand-700">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              {hcms(cmsSettings,'cta_badge')}
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">
+              {hcms(cmsSettings,'cta_title')}
+            </h2>
+            <p className="text-brand-200 text-sm sm:text-base mb-8 max-w-xl mx-auto">
+              {hcms(cmsSettings,'cta_subtitle')}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/register"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-brand-900/20"
+              >
+                {hcms(cmsSettings,'cta_btn_primary')}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+              <Link
+                to="/shops"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold px-8 py-3.5 rounded-xl border-2 border-brand-600 hover:bg-brand-800/50 transition-all"
+              >
+                {hcms(cmsSettings,'cta_btn_secondary')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Section registry: slug → render function
+  const SECTION_RENDERERS = {
+    hero:           renderHero,
+    categories:     renderCategories,
+    banner_ads:     renderBannerAds,
+    featured_shops: renderFeaturedShops,
+    latest_shops:   renderLatestShops,
+    services:       renderServices,
+    cta:            renderCTA,
+  }
+
+  return (
+    <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+      <SEO
+        description="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন। স্থানীয় ব্যবসার ডিজিটাল ঠিকানা।"
+        jsonLd={homeJsonLd}
+      />
+
+      {/* Popup ad — overlay, not a section */}
+      <PopupAd ads={popupAds} />
+
+      {/* New shop announcement — floating card, not a section */}
       {latestShops.length > 0 && !announceDismissed && (() => {
         const newest = latestShops[0]
         return (
@@ -720,182 +958,20 @@ export default function Home() {
         )
       })()}
 
-      {/* ── Categories Section ── */}
-      <section className="py-10 sm:py-14 bg-gray-50/50">
-        <div className="container-app">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">ক্যাটাগরিসমূহ</h2>
-              <p className="text-sm text-gray-500 mt-1">আপনার পছন্দের ক্যাটাগরি বেছে নিন</p>
-            </div>
-            <Link 
-              to="/categories" 
-              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-            >
-              সব দেখুন
-              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
+      {/* Dynamic sections in CMS display_order */}
+      {orderedSlugs.map(slug => {
+        const fn = SECTION_RENDERERS[slug]
+        if (!fn) return null
+        return (
+          <div key={slug}>
+            {fn()}
+            {/* Sponsor banner always follows hero */}
+            {slug === 'hero' && renderSponsorBanner()}
           </div>
+        )
+      })}
 
-          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
-            {categories.map(cat => (
-              <CategoryPill key={cat.id} category={cat} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Banner Ads ── */}
-      {bannerAds.length > 0 && <BannerAd ads={bannerAds} />}
-
-      {/* ── Sidebar / strip Ads (between categories and featured shops) ── */}
-      {sidebarAds.length > 0 && <SidebarAdStrip ads={sidebarAds} />}
-
-      {/* ── Popup Ad ── */}
-      <PopupAd ads={popupAds} />
-
-      {/* ── Featured Shops Section ── */}
-      {featuredShops.length > 0 && (
-        <section id="featured-shops" className="py-10 sm:py-14 bg-gradient-to-b from-brand-50/50 to-white">
-          <div className="container-app">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">ফিচার্ড দোকান</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">আমাদের বিশেষায়িত দোকানসমূহ</p>
-                </div>
-              </div>
-              <Link 
-                to="/shops?featured=true" 
-                className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-              >
-                সব দেখুন
-                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {isFeaturedLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <ShopCardSkeleton key={i} />
-                ))
-              ) : (
-                featuredShops.map((shop, idx) => (
-                  <ShopCard key={shop.id} shop={shop} featured index={idx} />
-                ))
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Latest Shops Section ── */}
-      <section className="py-10 sm:py-14 bg-white">
-        <div className="container-app">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">নতুন দোকান</h2>
-              <p className="text-sm text-gray-500 mt-1">সম্প্রতি যুক্ত হওয়া দোকানসমূহ</p>
-            </div>
-            <Link 
-              to="/shops" 
-              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-            >
-              সব দেখুন
-              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-
-          {latestShops.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <div className="w-20 h-20 mx-auto mb-4 bg-brand-100 rounded-full flex items-center justify-center">
-                <span className="text-3xl">🏪</span>
-              </div>
-              <p className="text-gray-500 mb-4">এখনো কোনো দোকান নেই</p>
-              <Link 
-                to="/dashboard/add-shop"
-                className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors"
-              >
-                প্রথম দোকান যোগ করুন
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {isLatestLoading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <ShopCardSkeleton key={i} />
-                ))
-              ) : (
-                latestShops.map((shop, idx) => (
-                  <ShopCard key={shop.id} shop={shop} index={idx} />
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── Local Services Section ── */}
-      <HomeServicesSection />
-
-      {/* ── Improved CTA Section ── */}
-      <section className="relative py-16 pb-28 sm:py-20 sm:pb-20 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.03%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M0%2040L40%200H20L0%2020M40%2040V20L20%2040%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E')]" />
-        
-        {/* Decorative Elements */}
-        <div className="absolute top-0 left-0 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-
-        <div className="container-app relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-300 bg-brand-800/50 rounded-full px-3 py-1 mb-4 border border-brand-700">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              {hcms(cmsSettings,'cta_badge')}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">
-              {hcms(cmsSettings,'cta_title')}
-            </h2>
-            <p className="text-brand-200 text-sm sm:text-base mb-8 max-w-xl mx-auto">
-              {hcms(cmsSettings,'cta_subtitle')}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-brand-900/20"
-              >
-                {hcms(cmsSettings,'cta_btn_primary')}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-              <Link
-                to="/shops"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold px-8 py-3.5 rounded-xl border-2 border-brand-600 hover:bg-brand-800/50 transition-all"
-              >
-                {hcms(cmsSettings,'cta_btn_secondary')}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Contact Info Strip ── */}
+      {/* Contact strip — fixed at bottom */}
       <section className="bg-white border-t border-gray-100 py-6">
         <div className="container-app">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 text-sm text-gray-500">

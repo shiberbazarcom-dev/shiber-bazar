@@ -7,18 +7,27 @@ import toast from 'react-hot-toast'
 const GREEN = '#2563EB'
 
 const EMPTY_FORM = {
-  title:       '',
-  description: '',
-  image_url:   '',
-  target_url:  '',
-  ad_type:     'banner',
-  is_active:   true,
-  sort_order:  0,
-  start_date:  '',
-  end_date:    '',
+  title:         '',
+  description:   '',
+  image_url:     '',
+  target_url:    '',
+  ad_type:       'banner',
+  ad_placement:  'homepage_banner',
+  is_active:     true,
+  sort_order:    0,
+  priority:      0,
+  start_date:    '',
+  end_date:      '',
 }
 
 const AD_TYPE_LABELS = { banner: '🖼️ ব্যানার', sidebar: '📌 সাইডবার', popup: '🪟 পপআপ' }
+
+const AD_PLACEMENT_LABELS = {
+  homepage_banner: '🏠 হোমপেজ ব্যানার',
+  homepage_grid:   '🔲 হোমপেজ গ্রিড',
+  sidebar:         '📌 সাইডবার',
+  featured_shop:   '⭐ ফিচার্ড শপ প্রমোশন',
+}
 
 /* ── Recommended size & height per type ── */
 const AD_TYPE_SPECS = {
@@ -53,15 +62,17 @@ export default function ManageAds() {
   const openEdit = (ad) => {
     setEditing(ad.id)
     setForm({
-      title:       ad.title,
-      description: ad.description || '',
-      image_url:   ad.image_url || '',
-      target_url:  ad.target_url || '',
-      ad_type:     ad.ad_type,
-      is_active:   ad.is_active,
-      sort_order:  ad.sort_order,
-      start_date:  ad.start_date || '',
-      end_date:    ad.end_date || '',
+      title:        ad.title,
+      description:  ad.description || '',
+      image_url:    ad.image_url || '',
+      target_url:   ad.target_url || '',
+      ad_type:      ad.ad_type,
+      ad_placement: ad.ad_placement || 'homepage_banner',
+      is_active:    ad.is_active,
+      sort_order:   ad.sort_order,
+      priority:     ad.priority || 0,
+      start_date:   ad.start_date || '',
+      end_date:     ad.end_date || '',
     })
     setPreviewUrl(ad.image_url || '')
     setShowForm(true)
@@ -99,15 +110,17 @@ export default function ManageAds() {
   /* ── Sanitise form before sending to Supabase ── */
   function buildPayload() {
     return {
-      title:       form.title.trim(),
-      description: form.description.trim() || null,
-      image_url:   form.image_url   || null,
-      target_url:  form.target_url.trim() || null,
-      ad_type:     form.ad_type,
-      is_active:   form.is_active,
-      sort_order:  Number(form.sort_order) || 0,
-      start_date:  form.start_date || null,
-      end_date:    form.end_date   || null,
+      title:        form.title.trim(),
+      description:  form.description.trim() || null,
+      image_url:    form.image_url   || null,
+      target_url:   form.target_url.trim() || null,
+      ad_type:      form.ad_type,
+      ad_placement: form.ad_placement || null,
+      is_active:    form.is_active,
+      sort_order:   Number(form.sort_order) || 0,
+      priority:     Number(form.priority)   || 0,
+      start_date:   form.start_date || null,
+      end_date:     form.end_date   || null,
     }
   }
 
@@ -206,10 +219,22 @@ export default function ManageAds() {
                   placeholder="বিজ্ঞাপনের সংক্ষিপ্ত বিবরণ (ব্যানারে দেখাবে)" />
               </div>
 
-              {/* Ad Type — pick FIRST so size hint shows before upload */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Placement — where ad appears on the site */}
+              <div>
+                <label className="form-label">প্লেসমেন্ট (কোথায় দেখাবে)</label>
+                <select value={form.ad_placement}
+                  onChange={e => set('ad_placement', e.target.value)}
+                  className="input">
+                  {Object.entries(AD_PLACEMENT_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Ad Type & Order */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="form-label">ধরন</label>
+                  <label className="form-label">ভিজ্যুয়াল ধরন</label>
                   <select value={form.ad_type}
                     onChange={e => { set('ad_type', e.target.value); setPreviewUrl(''); set('image_url', '') }}
                     className="input">
@@ -217,6 +242,12 @@ export default function ManageAds() {
                       <option key={k} value={k}>{v.label}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="form-label">অগ্রাধিকার</label>
+                  <input type="number" value={form.priority}
+                    onChange={e => set('priority', parseInt(e.target.value) || 0)}
+                    className="input" min="0" />
                 </div>
                 <div>
                   <label className="form-label">ক্রম নম্বর</label>
@@ -367,10 +398,20 @@ export default function ManageAds() {
                 <p className="font-semibold text-gray-800 text-sm truncate">{ad.title}</p>
                 {ad.description && <p className="text-xs text-gray-500 truncate mt-0.5">{ad.description}</p>}
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  {ad.ad_placement && (
+                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                      {AD_PLACEMENT_LABELS[ad.ad_placement] || ad.ad_placement}
+                    </span>
+                  )}
                   <span className="text-xs text-gray-400">{AD_TYPE_LABELS[ad.ad_type]}</span>
                   <span className="text-gray-200">·</span>
-                  <span className="text-xs text-gray-400">ক্রম: {ad.sort_order}</span>
-                  {ad.start_date && <span className="text-xs text-gray-400">📅 {ad.start_date} → {ad.end_date || '∞'}</span>}
+                  <span className="text-xs text-gray-400">👆 {ad.click_count ?? 0} ক্লিক</span>
+                  {ad.start_date && (
+                    <>
+                      <span className="text-gray-200">·</span>
+                      <span className="text-xs text-gray-400">📅 {ad.start_date} → {ad.end_date || '∞'}</span>
+                    </>
+                  )}
                   {ad.target_url && (
                     <>
                       <span className="text-gray-200">·</span>
