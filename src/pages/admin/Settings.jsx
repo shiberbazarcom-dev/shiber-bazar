@@ -20,6 +20,7 @@ const PROTECTED_KEYS = new Set([
   'union_krishi_name','union_krishi_phone',
   'union_police_name','union_police_phone',
   'allow_registration','allow_shop_request',
+  'announcement_active','announcement_text',
 ])
 
 /* ── Hooks ── */
@@ -300,6 +301,10 @@ export default function Settings() {
   }
 
   const groups = [
+    {
+      title: '📣 ঘোষণা বার',
+      keys: ['announcement_active','announcement_text'],
+    },
     {
       title: '🌐 সাইটের তথ্য',
       keys: ['site_name','site_tagline','site_logo_url','site_favicon_url','site_url','site_footer_copyright'],

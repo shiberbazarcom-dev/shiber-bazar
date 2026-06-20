@@ -14,6 +14,7 @@ import { CartProvider } from './context/CartContext'
 import { useRealtimeNotifications } from './hooks/useNotifications'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import AnnouncementBar from './components/ui/AnnouncementBar'
 import DashboardLayout from './components/layout/DashboardLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
@@ -142,6 +143,7 @@ function WhatsAppButton() {
 function PublicLayout({ children, noFooter = false, showWhatsApp = false }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
+      <AnnouncementBar />
       <Navbar />
       <main className="flex-1">{children}</main>
       {!noFooter && <Footer />}
