@@ -108,6 +108,17 @@ export function useMessages(conversationId) {
   })
 }
 
+/* ── Fetch messages directly and update cache ── */
+async function syncMessages(qc, conversationId) {
+  const { data } = await supabase
+    .from('messages')
+    .select('*, sender:sender_id ( id, full_name ), quick_replies')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+    .limit(100)
+  if (data) qc.setQueryData(['messages', conversationId], data)
+}
+
 /* ── Send a message ── */
 export function useSendMessage() {
   const { user } = useAuth()
@@ -127,8 +138,7 @@ export function useSendMessage() {
       return data
     },
     onSuccess: async (_, { conversationId }) => {
-      // Immediately refetch so the new message appears without waiting for realtime
-      await qc.refetchQueries({ queryKey: ['messages', conversationId] })
+      await syncMessages(qc, conversationId)
       qc.invalidateQueries({ queryKey: ['conversations'] })
     },
   })
@@ -220,12 +230,11 @@ export function useRealtimeMessages(conversationId, senderName = '') {
           filter: `conversation_id=eq.${conversationId}` },
         async (payload) => {
           const incoming = payload.new
-          // Immediately refetch to get full message with sender join
-          await qc.refetchQueries({ queryKey: ['messages', conversationId] })
+          // Directly fetch and inject into cache — bypasses staleTime/refetch quirks
+          await syncMessages(qc, conversationId)
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count'] })
 
-          // Only react to OTHER person's messages, not my own
           if (incoming?.sender_id !== user?.id) {
             playMessageSound()
             showChatNotification(senderName || 'নতুন বার্তা', incoming?.content, conversationId)
@@ -266,11 +275,13 @@ export function useGlobalMessageListener() {
       .channel(`global-messages-${user.id}`)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
+        async (payload) => {
           if (payload.new?.sender_id === user.id) return
+          const convId = payload.new?.conversation_id
           qc.invalidateQueries({ queryKey: ['conversations'] })
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
-          qc.invalidateQueries({ queryKey: ['messages', payload.new?.conversation_id] })
+          // Direct sync so active chat window updates immediately
+          if (convId) await syncMessages(qc, convId)
         })
       .subscribe()
     return () => supabase.removeChannel(ch)

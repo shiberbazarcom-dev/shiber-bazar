@@ -248,8 +248,14 @@ export default function ChatWindow({ conversation, otherName }) {
       setAiTyping(true)
       await callAiAutoReply(conversation.id)
       setAiTyping(false)
-      // Force-fetch after AI reply so message appears without waiting for realtime
-      qc.refetchQueries({ queryKey: ['messages', conversation.id], type: 'active' })
+      // Direct fetch after AI reply — bypasses staleTime, guarantees instant display
+      const { data } = await supabase
+        .from('messages')
+        .select('*, sender:sender_id ( id, full_name ), quick_replies')
+        .eq('conversation_id', conversation.id)
+        .order('created_at', { ascending: true })
+        .limit(100)
+      if (data) qc.setQueryData(['messages', conversation.id], data)
     }
   }
 
