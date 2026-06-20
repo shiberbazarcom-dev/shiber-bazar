@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
@@ -236,17 +236,19 @@ export default function Settings() {
 
   const [local, setLocal]   = useState({})
   const [dirty, setDirty]   = useState(new Set())
-  const settingsLoaded = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !settingsLoaded.current && Object.keys(settings).length > 0) {
-      settingsLoaded.current = true
-      const vals = {}
-      Object.entries(settings).forEach(([k, row]) => { vals[k] = { ...row } })
-      setLocal(vals)
-      setDirty(new Set())
+    if (!isLoading && Object.keys(settings).length > 0) {
+      setLocal(prev => {
+        // Merge: keep dirty (unsaved) edits, update everything else from DB
+        const vals = {}
+        Object.entries(settings).forEach(([k, row]) => {
+          vals[k] = dirty.has(k) ? (prev[k] || { ...row }) : { ...row }
+        })
+        return vals
+      })
     }
-  }, [isLoading, settings])
+  }, [settings, isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (key, value) => {
     setLocal(prev => ({ ...prev, [key]: { ...prev[key], value } }))
@@ -271,7 +273,6 @@ export default function Settings() {
       await addSetting.mutateAsync(form)
       setLocal(prev => ({ ...prev, [form.key]: { key: form.key, label: form.label, value: form.value, type: form.type } }))
       toast.success('নতুন field যোগ হয়েছে ✅')
-      settingsLoaded.current = false
     } catch (e) {
       toast.error(e.message?.includes('duplicate') ? 'এই key আগে থেকেই আছে' : 'সমস্যা হয়েছে')
     }
@@ -284,7 +285,6 @@ export default function Settings() {
       await deleteSetting.mutateAsync(key)
       setLocal(prev => { const n = { ...prev }; delete n[key]; return n })
       toast.success('মুছে ফেলা হয়েছে')
-      settingsLoaded.current = false
     } catch {
       toast.error('সমস্যা হয়েছে')
     }
