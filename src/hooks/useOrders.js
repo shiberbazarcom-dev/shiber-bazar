@@ -19,16 +19,13 @@ export function usePlaceOrder() {
   })
 }
 
-/* ── Customer: track orders by phone ── */
+/* ── Customer: track orders by phone (uses RPC to avoid unrestricted table read) ── */
 export function useTrackOrder(phone) {
   return useQuery({
     queryKey: ['track-order', phone],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('orders')
-        .select('*, shops(shop_name, phone)')
-        .eq('customer_phone', phone.trim())
-        .order('created_at', { ascending: false })
+        .rpc('track_orders_by_phone', { p_phone: phone.trim() })
       if (error) throw error
       return data || []
     },

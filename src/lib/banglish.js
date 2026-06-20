@@ -410,7 +410,11 @@ export function buildOrFilter(terms, fields = ['name']) {
   const parts = []
   for (const field of fields) {
     for (const term of terms) {
-      if (term) parts.push(`${field}.ilike.%${term}%`)
+      if (!term) continue
+      // Strip PostgREST filter syntax characters to prevent filter injection.
+      // Normal Bengali/Banglish words never contain these characters.
+      const safe = term.replace(/[,()]/g, '').trim()
+      if (safe) parts.push(`${field}.ilike.%${safe}%`)
     }
   }
   return parts.join(',')

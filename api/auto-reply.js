@@ -257,7 +257,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const secret = req.headers['x-webhook-secret'] || req.headers['authorization']
-  if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
+  if (!process.env.WEBHOOK_SECRET) {
+    console.error('[auto-reply] SECURITY: WEBHOOK_SECRET env var is not configured')
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+  if (secret !== process.env.WEBHOOK_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
