@@ -320,13 +320,21 @@ export default function ChatWindow({ conversation, otherName }) {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="px-3 sm:px-4 py-3 bg-white border-t border-gray-100 flex gap-2 flex-shrink-0">
-        <input
+      <form onSubmit={handleSend} className="px-3 sm:px-4 py-3 bg-white border-t border-gray-100 flex gap-2 items-end flex-shrink-0">
+        <textarea
           ref={inputRef}
           value={text}
-          onChange={e => { setText(e.target.value); broadcastTyping() }}
-          placeholder="বার্তা লিখুন..."
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0"
+          rows={1}
+          onChange={e => { setText(e.target.value); broadcastTyping(); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              if (text.trim()) handleSend(e)
+            }
+          }}
+          placeholder="বার্তা লিখুন... (Shift+Enter নতুন লাইন)"
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0 resize-none overflow-hidden"
+          style={{ minHeight: '40px', maxHeight: '120px' }}
         />
         <button
           type="submit"
