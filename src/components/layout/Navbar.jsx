@@ -314,12 +314,7 @@ export default function Navbar() {
                 ইউনিয়ন
               </NavLink>
 
-              <NavLink to="/jobs" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
-                চাকরি
-              </NavLink>
-
-              <NavLink to="/contact" className={({ isActive }) =>
+<NavLink to="/contact" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 যোগাযোগ
               </NavLink>
@@ -423,8 +418,7 @@ export default function Navbar() {
                 { to: '/services',       label: 'সেবাসমূহ' },
                 { to: '/shops',          label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
-                { to: '/jobs',        label: 'চাকরি' },
-                { to: '/contact',     label: 'যোগাযোগ' },
+{ to: '/contact',     label: 'যোগাযোগ' },
                 { to: '/hatkhula-union', label: 'ইউনিয়ন', color: 'emerald' },
               ].map(item => (
                 <NavLink key={item.to} to={item.to}
