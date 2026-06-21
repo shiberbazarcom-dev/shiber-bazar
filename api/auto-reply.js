@@ -307,8 +307,11 @@ export default async function handler(req, res) {
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
     // Owner reply → resume AI if paused
+    // IMPORTANT: record.is_ai=true means this insert came from our own AI handler
+    // (ACK or handoff reply). Those must NOT reset ai_paused — only real human
+    // owner messages should resume the AI after a handoff.
     if (sender_id === conv.owner_id) {
-      if (conv.ai_paused) {
+      if (!record.is_ai && conv.ai_paused) {
         await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation_id)
       }
       return res.status(200).json({ skipped: 'owner message' })
@@ -429,6 +432,11 @@ export default async function handler(req, res) {
         message: `"${content.slice(0, 120)}"`,
         data: { conversation_id, customer_message: content, context: recentContext },
       })
+      // Use a fixed, clear handoff message instead of whatever the AI generated.
+      // This prevents the AI from sending an ambiguous or looping reply.
+      reply = 'অবশ্যই। আমি এখন কথোপকথনটি দোকানের মালিকের কাছে পাঠিয়ে দিচ্ছি। তিনি উত্তর দিলে এখানে দেখতে পাবেন।'
+      order = null
+      items = null
     }
 
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
