@@ -306,25 +306,9 @@ export default async function handler(req, res) {
 
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
-    // Owner message handler — must not treat AI-generated inserts as human replies.
-    // record.is_ai=true means our own handler inserted this (ACK or handoff reply).
+    // Owner message — AI never replies to its own shop's messages.
+    // State changes are driven only by the owner via the chat toggle button.
     if (sender_id === conv.owner_id) {
-      if (!record.is_ai) {
-        const hs = conv.handoff_state || 'none'
-        if (hs === 'requested') {
-          // Owner's first real reply after customer requested handoff →
-          // transition to 'active': AI stays silent, human is now handling it.
-          await supabase.from('conversations')
-            .update({ ai_paused: true, handoff_state: 'active' })
-            .eq('id', conversation_id)
-        } else if (hs === 'none' && conv.ai_paused) {
-          // Legacy ai_paused (no handoff_state): owner replied → resume AI normally.
-          await supabase.from('conversations')
-            .update({ ai_paused: false })
-            .eq('id', conversation_id)
-        }
-        // hs === 'active': owner keeps chatting in human mode, no state change.
-      }
       return res.status(200).json({ skipped: 'owner message' })
     }
 
@@ -430,18 +414,14 @@ export default async function handler(req, res) {
 
     if (!reply) return res.status(200).json({ skipped: 'no reply' })
 
-    // ── Handoff ──
+    // ── Handoff: customer wants to talk to real owner ──
     if (handoff) {
-      // Guard: if already in handoff state, AI should not have reached here
-      // (ai_paused=true blocks at line 320). This is a belt-and-suspenders check.
-      if ((conv.handoff_state || 'none') !== 'none') {
-        return res.status(200).json({ skipped: 'already in handoff' })
-      }
-
+      // Pause AI for this conversation — owner must manually re-enable
       await supabase.from('conversations')
-        .update({ ai_paused: true, handoff_state: 'requested' })
+        .update({ ai_paused: true, handoff_state: 'active' })
         .eq('id', conversation_id)
 
+      // Notify shop owner
       const recentContext = msgs.slice(-4)
         .map(m => m.sender_id === conv.owner_id ? `দোকান: ${m.content}` : `Customer: ${m.content}`)
         .join('\n')
@@ -453,7 +433,6 @@ export default async function handler(req, res) {
         data: { conversation_id, customer_message: content, context: recentContext },
       })
 
-      // Fixed handoff message — never varies, never loops.
       reply = 'অবশ্যই। আপনার বার্তাটি দোকানের মালিকের কাছে পাঠানো হয়েছে। তিনি উত্তর দিলে এখানে দেখতে পাবেন।'
       order = null
       items = null
