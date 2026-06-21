@@ -300,19 +300,30 @@ export default async function handler(req, res) {
   try {
     const { data: conv } = await supabase
       .from('conversations')
-      .select('shop_id, owner_id, ai_paused')
+      .select('shop_id, owner_id, ai_paused, handoff_state')
       .eq('id', conversation_id)
       .single()
 
     if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
 
-    // Owner reply → resume AI if paused
-    // IMPORTANT: record.is_ai=true means this insert came from our own AI handler
-    // (ACK or handoff reply). Those must NOT reset ai_paused — only real human
-    // owner messages should resume the AI after a handoff.
+    // Owner message handler — must not treat AI-generated inserts as human replies.
+    // record.is_ai=true means our own handler inserted this (ACK or handoff reply).
     if (sender_id === conv.owner_id) {
-      if (!record.is_ai && conv.ai_paused) {
-        await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation_id)
+      if (!record.is_ai) {
+        const hs = conv.handoff_state || 'none'
+        if (hs === 'requested') {
+          // Owner's first real reply after customer requested handoff →
+          // transition to 'active': AI stays silent, human is now handling it.
+          await supabase.from('conversations')
+            .update({ ai_paused: true, handoff_state: 'active' })
+            .eq('id', conversation_id)
+        } else if (hs === 'none' && conv.ai_paused) {
+          // Legacy ai_paused (no handoff_state): owner replied → resume AI normally.
+          await supabase.from('conversations')
+            .update({ ai_paused: false })
+            .eq('id', conversation_id)
+        }
+        // hs === 'active': owner keeps chatting in human mode, no state change.
       }
       return res.status(200).json({ skipped: 'owner message' })
     }
@@ -421,7 +432,16 @@ export default async function handler(req, res) {
 
     // ── Handoff ──
     if (handoff) {
-      await supabase.from('conversations').update({ ai_paused: true }).eq('id', conversation_id)
+      // Guard: if already in handoff state, AI should not have reached here
+      // (ai_paused=true blocks at line 320). This is a belt-and-suspenders check.
+      if ((conv.handoff_state || 'none') !== 'none') {
+        return res.status(200).json({ skipped: 'already in handoff' })
+      }
+
+      await supabase.from('conversations')
+        .update({ ai_paused: true, handoff_state: 'requested' })
+        .eq('id', conversation_id)
+
       const recentContext = msgs.slice(-4)
         .map(m => m.sender_id === conv.owner_id ? `দোকান: ${m.content}` : `Customer: ${m.content}`)
         .join('\n')
@@ -432,9 +452,9 @@ export default async function handler(req, res) {
         message: `"${content.slice(0, 120)}"`,
         data: { conversation_id, customer_message: content, context: recentContext },
       })
-      // Use a fixed, clear handoff message instead of whatever the AI generated.
-      // This prevents the AI from sending an ambiguous or looping reply.
-      reply = 'অবশ্যই। আমি এখন কথোপকথনটি দোকানের মালিকের কাছে পাঠিয়ে দিচ্ছি। তিনি উত্তর দিলে এখানে দেখতে পাবেন।'
+
+      // Fixed handoff message — never varies, never loops.
+      reply = 'অবশ্যই। আপনার বার্তাটি দোকানের মালিকের কাছে পাঠানো হয়েছে। তিনি উত্তর দিলে এখানে দেখতে পাবেন।'
       order = null
       items = null
     }

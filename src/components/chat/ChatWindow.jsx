@@ -207,6 +207,7 @@ export default function ChatWindow({ conversation, otherName }) {
   const [savingPersona, setSavingPersona] = useState(false)
   const [showCanned, setShowCanned] = useState(false)
   const [aiPaused, setAiPaused] = useState(false)
+  const [handoffState, setHandoffState] = useState('none') // 'none' | 'requested' | 'active'
   const [popularProducts, setPopularProducts] = useState([])
   const bottomRef      = useRef(null)
   const inputRef       = useRef(null)
@@ -235,7 +236,8 @@ export default function ChatWindow({ conversation, otherName }) {
         if (data) { setAutoReply(!!data.auto_reply_enabled); setAiPersona(data.ai_persona || '') }
       })
     setAiPaused(!!conversation.ai_paused)
-  }, [conversation?.shop_id, conversation?.ai_paused])
+    setHandoffState(conversation.handoff_state || 'none')
+  }, [conversation?.shop_id, conversation?.ai_paused, conversation?.handoff_state])
 
   /* ── Fetch popular products for welcome screen ── */
   useEffect(() => {
@@ -346,27 +348,50 @@ export default function ChatWindow({ conversation, otherName }) {
         </div>
         {isOwner && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            {/* AI paused indicator — customer requested human */}
-            {aiPaused && autoReply && (
+            {/* ── 🟠 Human Requested: customer asked, owner hasn't replied yet ── */}
+            {handoffState === 'requested' && (
               <button
                 onClick={async () => {
-                  await supabase.from('conversations').update({ ai_paused: false }).eq('id', conversation.id)
+                  await supabase.from('conversations')
+                    .update({ ai_paused: false, handoff_state: 'none' })
+                    .eq('id', conversation.id)
                   setAiPaused(false)
+                  setHandoffState('none')
                 }}
-                title="Customer মালিকের সাথে কথা বলতে চেয়েছে। AI pause আছে — click করে resume করুন"
+                title="কাস্টমার সাহায্য চাইছেন। AI বন্ধ। ক্লিক করে AI চালু করুন।"
                 className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-300 bg-orange-50 text-orange-600 animate-pulse">
-                ⏸ AI pause — resume করুন
+                🟠 Human Requested
               </button>
             )}
-            {!aiPaused && (
+
+            {/* ── 🔴 Human Active: owner replied, human mode on ── */}
+            {handoffState === 'active' && (
+              <button
+                onClick={async () => {
+                  await supabase.from('conversations')
+                    .update({ ai_paused: false, handoff_state: 'none' })
+                    .eq('id', conversation.id)
+                  setAiPaused(false)
+                  setHandoffState('none')
+                }}
+                title="আপনি সরাসরি কথা বলছেন। AI বন্ধ। ক্লিক করে AI চালু করুন।"
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-red-300 bg-red-50 text-red-600">
+                🔴 Human Active
+              </button>
+            )}
+
+            {/* ── 🟢 Normal: AI toggle ── */}
+            {handoffState === 'none' && (
               <button onClick={toggleAutoReply} disabled={togglingAR}
                 className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
                 style={autoReply ? { background:'#ede9fe',color:'#6d28d9',borderColor:'#c4b5fd' } : { background:'#f3f4f6',color:'#9ca3af',borderColor:'#e5e7eb' }}>
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
-                {togglingAR ? '...' : autoReply ? 'AI চালু' : 'AI বন্ধ'}
+                {togglingAR ? '...' : autoReply ? '🟢 AI চালু' : 'AI বন্ধ'}
               </button>
             )}
-            {autoReply && !aiPaused && (
+
+            {/* AI settings gear — only when AI is in normal active state */}
+            {handoffState === 'none' && autoReply && (
               <button onClick={() => setShowAiSettings(s => !s)} title="AI সেটিং"
                 className="w-7 h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors">
                 ⚙️
@@ -389,14 +414,6 @@ export default function ChatWindow({ conversation, otherName }) {
               {savingPersona ? 'সংরক্ষণ...' : '💾 সংরক্ষণ'}
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Handoff status banner — shown to customer when AI is paused */}
-      {!isOwner && aiPaused && (
-        <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2 flex-shrink-0">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
-          <p className="text-xs text-amber-700 font-medium">দোকানদারের উত্তর অপেক্ষমাণ — কিছুক্ষণের মধ্যে উত্তর পাবেন</p>
         </div>
       )}
 
