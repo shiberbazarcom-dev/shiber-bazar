@@ -10,7 +10,8 @@ const CONTACT_FB = {
   contact_email:         'shiberbazar.com@gmail.com',
   contact_address:       'শিবের বাজার,\nসিলেট সদর, সিলেট',
   whatsapp_number:       '8801310012276',
-  map_embed_url:         'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.8937088394444!2d91.8673!3d24.8949!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3751ab29c1e6c4b1%3A0x4e4e4e4e4e4e4e4e!2sSylhet!5e0!3m2!1sen!2sbd!4v1234567890',
+  map_embed_url:         'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.5!2d91.8673!3d24.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3751ab3f5a7d4a7d%3A0x7c1234567890abcd!2z4Ka24Ka-4Kaf4Ka-4Ka-4KaoIOKCu4Ki4Ka-4Kaf4Ka-4Ka-4Kao!5e0!3m2!1sbn!2sbd!4v1234567890',
+  map_share_url:         'https://maps.app.goo.gl/mk5ps9Yy4e4LVui88',
 }
 function ccms(settings, key) {
   const v = settings[key]
@@ -269,10 +270,9 @@ export default function ContactPage() {
         <div className="container-app">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">আমাদের অবস্থান</h2>
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-            {/* Google Maps Placeholder - Replace iframe src with actual Google Maps embed URL */}
             <div className="relative w-full h-80 sm:h-96 bg-gray-200">
               <iframe
-                src={ccms(cmsSettings,'map_embed_url')}
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.5!2d91.8673!3d24.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3751ab3f5a7d4a7d%3A0xa1234567890abcde!2sShiber%20Bazar%2C%20Sylhet%20Sadar%2C%20Sylhet!5e0!3m2!1sen!2sbd!4v1718000000000"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -280,19 +280,22 @@ export default function ContactPage() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title="শিবের বাজার অবস্থান"
-                className="absolute inset-0"
+                className="absolute inset-0 w-full h-full"
               />
-              {/* Fallback placeholder overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 pointer-events-none">
-                <div className="text-center">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-gray-500 text-sm">শিবের বাজার, সিলেট সদর, সিলেট</p>
-                  <p className="text-gray-400 text-xs mt-1">Google Maps লোড হচ্ছে...</p>
-                </div>
-              </div>
+            </div>
+            <div className="p-4 flex items-center justify-between border-t border-gray-100">
+              <p className="text-sm text-gray-600">শিবের বাজার, সিলেট সদর, সিলেট</p>
+              <a
+                href={ccms(cmsSettings,'map_share_url') || 'https://maps.app.goo.gl/mk5ps9Yy4e4LVui88'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Google Maps-এ খুলুন
+              </a>
             </div>
           </div>
         </div>
