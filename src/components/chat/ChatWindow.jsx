@@ -270,7 +270,7 @@ export default function ChatWindow({ conversation, otherName }) {
     } else {
       // Turn on — resume this conversation + ensure shop-level is enabled
       await supabase.from('conversations')
-        .update({ ai_paused: false, handoff_state: 'none' })
+        .update({ ai_paused: false })
         .eq('id', conversation.id)
       setAiPaused(false)
       if (!autoReply) {

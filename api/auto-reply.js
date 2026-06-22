@@ -295,24 +295,26 @@ export default async function handler(req, res) {
   if (type !== 'INSERT' || !record) return res.status(200).json({ skipped: 'not an insert' })
 
   const { conversation_id, sender_id, content } = record
+  console.log(`[auto-reply] msg from sender=${sender_id} conv=${conversation_id}`)
   if (!conversation_id || !content) return res.status(200).json({ skipped: 'missing fields' })
 
   try {
     const { data: conv } = await supabase
       .from('conversations')
-      .select('shop_id, owner_id, ai_paused, handoff_state')
+      .select('shop_id, owner_id, ai_paused')
       .eq('id', conversation_id)
       .single()
 
-    if (!conv?.shop_id) return res.status(200).json({ skipped: 'no shop_id' })
+    if (!conv?.shop_id) { console.log('[auto-reply] SKIP: no shop_id'); return res.status(200).json({ skipped: 'no shop_id' }) }
 
     // Owner message — AI never replies to its own shop's messages.
-    // State changes are driven only by the owner via the chat toggle button.
     if (sender_id === conv.owner_id) {
+      console.log('[auto-reply] SKIP: owner message')
       return res.status(200).json({ skipped: 'owner message' })
     }
 
-    if (conv.ai_paused) return res.status(200).json({ skipped: 'ai paused' })
+    console.log(`[auto-reply] conv ai_paused=${conv.ai_paused}`)
+    if (conv.ai_paused) { console.log('[auto-reply] SKIP: ai_paused=true'); return res.status(200).json({ skipped: 'ai paused' }) }
 
     const { data: shop } = await supabase
       .from('shops')
@@ -320,8 +322,9 @@ export default async function handler(req, res) {
       .eq('id', conv.shop_id)
       .single()
 
-    if (!shop) return res.status(200).json({ skipped: 'shop not found' })
-    if (!shop.auto_reply_enabled) return res.status(200).json({ skipped: 'disabled' })
+    if (!shop) { console.log('[auto-reply] SKIP: shop not found'); return res.status(200).json({ skipped: 'shop not found' }) }
+    console.log(`[auto-reply] shop=${shop.shop_name} auto_reply_enabled=${shop.auto_reply_enabled}`)
+    if (!shop.auto_reply_enabled) { console.log('[auto-reply] SKIP: auto_reply_enabled=false'); return res.status(200).json({ skipped: 'disabled' }) }
 
     const { data: products } = await supabase
       .from('products')
@@ -418,7 +421,7 @@ export default async function handler(req, res) {
     if (handoff) {
       // Pause AI for this conversation — owner must manually re-enable
       await supabase.from('conversations')
-        .update({ ai_paused: true, handoff_state: 'active' })
+        .update({ ai_paused: true })
         .eq('id', conversation_id)
 
       // Notify shop owner
