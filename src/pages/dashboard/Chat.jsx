@@ -20,10 +20,10 @@ export default function Chat() {
   // Sync selected conversation whenever conversations list refreshes
   // This keeps ai_paused, last_message, unread_count etc. up to date
   useEffect(() => {
-    if (!conversations.length) return
     if (conversationId) {
+      setShowList(false) // always show chat panel when URL has a conversationId
       const found = conversations.find(c => c.id === conversationId)
-      if (found) { setSelected(found); setShowList(false) }
+      if (found) setSelected(found)
     } else if (selected) {
       // Keep selected in sync even without URL param
       const found = conversations.find(c => c.id === selected.id)
@@ -45,7 +45,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-[calc(100dvh-10rem)] bg-white rounded-2xl border border-gray-100 overflow-hidden flex">
+    <div className="h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-10rem)] bg-white rounded-2xl border border-gray-100 overflow-hidden flex">
       <div className={`w-full lg:w-80 border-r border-gray-100 flex flex-col flex-shrink-0 ${!showList ? 'hidden lg:flex' : 'flex'}`}>
         <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-gray-800">💬 বার্তাসমূহ</h2>
@@ -62,13 +62,25 @@ export default function Chat() {
       </div>
 
       <div className={`flex-1 flex flex-col min-w-0 ${showList ? 'hidden lg:flex' : 'flex'}`}>
-        <div className="lg:hidden px-4 py-2 border-b border-gray-100 flex items-center">
+        <div className="lg:hidden px-3 py-1.5 border-b border-gray-100 flex items-center">
           <button
             onClick={() => { setShowList(true); navigate('/dashboard/chat', { replace: true }) }}
-            className="flex items-center gap-2 text-blue-600 text-sm font-medium"
-          >← ফিরে যান</button>
+            className="flex items-center gap-1.5 text-blue-600 text-sm font-medium min-h-[40px] px-2 touch-manipulation"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            ফিরে যান
+          </button>
         </div>
-        <ChatWindow conversation={selected} otherName={getOtherName(selected)} />
+        {conversationId && !selected ? (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <div className="text-4xl mb-3 animate-pulse">💬</div>
+              <p className="text-sm">লোড হচ্ছে...</p>
+            </div>
+          </div>
+        ) : (
+          <ChatWindow conversation={selected} otherName={getOtherName(selected)} />
+        )}
       </div>
     </div>
   )

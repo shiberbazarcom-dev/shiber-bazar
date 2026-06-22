@@ -108,7 +108,7 @@ function CopyButton({ text }) {
   }
   return (
     <button onClick={copy} title="কপি করুন"
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0">
+      className="opacity-40 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 sm:p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0 touch-manipulation">
       {copied
         ? <svg viewBox="0 0 24 24" className="w-3 h-3 fill-green-500"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
         : <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
@@ -137,7 +137,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
               {isHumanOwner ? '👤' : isAiGroup ? '🏪' : senderInitial}
             </div>
       )}
-      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[75%]`}>
+      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-0.5 max-w-[82%] sm:max-w-[75%]`}>
         {!isOwn && (
           <p className="text-xs text-gray-500 px-3 flex items-center gap-1">
             {isHumanOwner ? 'দোকানদার' : senderName}
@@ -157,7 +157,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
               : msg.content
             return (
               <div key={msg.id} className={`group flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`max-w-[280px] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                <div className={`max-w-[68vw] sm:max-w-xs px-3 sm:px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   isOwn
                     ? 'bg-blue-500 text-white rounded-br-sm'
                     : msg.is_ai
@@ -184,7 +184,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
           <div className="flex flex-wrap gap-1.5 mt-1 px-1">
             {quickReplies.map((qr, i) => (
               <button key={i} onClick={() => onQuickReply(qr)}
-                className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors font-medium">
+                className="text-xs px-3 py-2 sm:py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 transition-colors font-medium touch-manipulation">
                 {qr}
               </button>
             ))}
@@ -354,8 +354,8 @@ export default function ChatWindow({ conversation, otherName }) {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-b border-gray-100 flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
           {otherName?.[0] || '?'}
         </div>
         <div className="flex-1 min-w-0">
@@ -365,18 +365,19 @@ export default function ChatWindow({ conversation, otherName }) {
         {isOwner && (
           <div className="flex items-center gap-1 flex-shrink-0">
             <button onClick={toggleAutoReply} disabled={togglingAR}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 rounded-full border transition-all disabled:opacity-60 touch-manipulation"
               style={
                 autoReply && !aiPaused
                   ? { background:'#ede9fe', color:'#6d28d9', borderColor:'#c4b5fd' }
                   : { background:'#f3f4f6', color:'#9ca3af', borderColor:'#e5e7eb' }
               }>
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${autoReply && !aiPaused ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`} />
-              {togglingAR ? '...' : autoReply && !aiPaused ? 'AI চালু' : 'AI বন্ধ'}
+              <span className="hidden sm:inline">{togglingAR ? '...' : autoReply && !aiPaused ? 'AI চালু' : 'AI বন্ধ'}</span>
+              <span className="sm:hidden">{togglingAR ? '...' : autoReply && !aiPaused ? 'চালু' : 'বন্ধ'}</span>
             </button>
             {autoReply && !aiPaused && (
               <button onClick={() => setShowAiSettings(s => !s)} title="AI সেটিং"
-                className="w-7 h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors">
+                className="w-8 h-8 sm:w-7 sm:h-7 rounded-full border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center text-xs hover:bg-purple-100 transition-colors touch-manipulation">
                 ⚙️
               </button>
             )}
@@ -401,7 +402,7 @@ export default function ChatWindow({ conversation, otherName }) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 py-4 bg-gray-50" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Welcome screen — shown to customer on empty conversation */}
         {!isOwner && grouped.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 px-2">
@@ -419,7 +420,7 @@ export default function ChatWindow({ conversation, otherName }) {
                     {popularProducts.slice(0, 3).map((p, i) => (
                       <button key={i}
                         onClick={() => sendContent(`${p.name} সম্পর্কে জানতে চাই`)}
-                        className="flex items-center justify-between px-3 py-2 rounded-xl bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-gray-100 transition-colors text-left">
+                        className="flex items-center justify-between px-3 py-2.5 sm:py-2 rounded-xl bg-gray-50 hover:bg-blue-50 active:bg-blue-50 hover:border-blue-200 border border-gray-100 transition-colors text-left touch-manipulation">
                         <span className="text-xs text-gray-700 font-medium">{p.name}</span>
                         <span className="text-xs text-blue-600 font-bold flex-shrink-0 ml-2">৳{p.price}</span>
                       </button>
@@ -436,12 +437,12 @@ export default function ChatWindow({ conversation, otherName }) {
             <div className="flex flex-wrap gap-2 justify-center">
               {[
                 { label: 'সব পণ্য দেখুন', msg: 'আপনাদের সব পণ্য দেখাবেন?' },
-                { label: 'জনপ্রিয় পণ্য', msg: 'সবচেয়ে জনপ্রিয় পণ্যগুলো কী?' },
                 { label: 'অর্ডার করতে চাই', msg: 'অর্ডার করতে চাই' },
                 { label: 'দাম জানতে চাই', msg: 'পণ্যের দাম জানতে চাই' },
+                { label: 'মালিকের সাথে কথা বলতে চাই', msg: 'দোকানের মালিকের সাথে সরাসরি কথা বলতে চাই' },
               ].map((chip, i) => (
                 <button key={i} onClick={() => sendContent(chip.msg)}
-                  className="text-xs px-4 py-2 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all font-medium shadow-sm">
+                  className="text-xs px-4 py-2.5 rounded-full border border-blue-200 bg-white text-blue-700 active:bg-blue-600 active:text-white hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all font-medium shadow-sm touch-manipulation">
                   {chip.label}
                 </button>
               ))}
@@ -481,10 +482,10 @@ export default function ChatWindow({ conversation, otherName }) {
 
         {/* Returning customer quick chips — shown at bottom of messages */}
         {!isOwner && grouped.length > 0 && !aiPaused && (
-          <div className="flex flex-wrap gap-1.5 mt-3 mb-1">
+          <div className="flex flex-wrap gap-2 mt-3 mb-1">
             {['সব পণ্য দেখুন', 'অর্ডার করতে চাই', 'দাম জানতে চাই'].map((chip, i) => (
               <button key={i} onClick={() => sendContent(chip)}
-                className="text-[11px] px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors">
+                className="text-xs px-3 py-2 sm:py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 active:bg-blue-50 active:text-blue-700 transition-colors touch-manipulation">
                 {chip}
               </button>
             ))}
@@ -526,12 +527,12 @@ export default function ChatWindow({ conversation, otherName }) {
 
       {/* Canned responses panel (owner only) */}
       {isOwner && showCanned && (
-        <div className="px-3 py-2 bg-white border-t border-gray-100 flex-shrink-0 max-h-40 overflow-y-auto">
+        <div className="px-3 py-2 bg-white border-t border-gray-100 flex-shrink-0 max-h-48 overflow-y-auto overscroll-contain">
           <p className="text-[10px] text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">দ্রুত উত্তর</p>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {CANNED.map((c, i) => (
               <button key={i} type="button" onClick={() => sendContent(c)}
-                className="text-left text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors">
+                className="text-left text-xs px-3 py-2.5 sm:py-1.5 rounded-lg active:bg-blue-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors touch-manipulation min-h-[40px] sm:min-h-0">
                 {c}
               </button>
             ))}
@@ -540,12 +541,14 @@ export default function ChatWindow({ conversation, otherName }) {
       )}
 
       {/* Input */}
-      <form onSubmit={handleSend} className="px-3 sm:px-4 py-3 bg-white border-t border-gray-100 flex gap-2 items-end flex-shrink-0">
+      <form onSubmit={handleSend}
+        className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-t border-gray-100 flex gap-2 items-end flex-shrink-0"
+        style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom, 10px))' }}>
         {/* Canned responses button (owner only) */}
         {isOwner && (
           <button type="button" onClick={() => setShowCanned(s => !s)}
             title="দ্রুত উত্তর"
-            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors border ${
+            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors border touch-manipulation ${
               showCanned ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200'
             }`}>
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
@@ -568,12 +571,12 @@ export default function ChatWindow({ conversation, otherName }) {
               if (text.trim()) handleSend(e)
             }
           }}
-          placeholder={isOwner ? 'বার্তা লিখুন... (Shift+Enter নতুন লাইন)' : 'বার্তা লিখুন...'}
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0 resize-none overflow-hidden"
-          style={{ minHeight: '40px', maxHeight: '120px' }}
+          placeholder="বার্তা লিখুন..."
+          className="flex-1 bg-gray-100 rounded-xl px-3 sm:px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors min-w-0 resize-none overflow-hidden"
+          style={{ minHeight: '40px', maxHeight: '120px', fontSize: '16px', lineHeight: '1.5' }}
         />
         <button type="submit" disabled={!text.trim() || sendMsg.isPending}
-          className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0">
+          className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 transition-colors flex-shrink-0 touch-manipulation">
           {sendMsg.isPending
             ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             : <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>

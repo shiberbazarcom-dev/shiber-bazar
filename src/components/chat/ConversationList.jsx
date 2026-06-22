@@ -69,7 +69,7 @@ export default function ConversationList({ conversations, selected, onSelect, is
             key={conv.id}
             onClick={() => onSelect(conv)}
             className={cn(
-              'w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 transition-colors',
+              'w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation',
               isActive && 'bg-blue-50 border-l-2 border-blue-500'
             )}
           >
