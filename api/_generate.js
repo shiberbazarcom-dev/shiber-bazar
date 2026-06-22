@@ -1,7 +1,7 @@
 /* Shared AI generation — used by api/ai.js and api/auto-reply.js */
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
-const GEMINI_URL   = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+const GEMINI_URL   = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 async function callDeepSeek(prompt) {
   const res = await fetch(DEEPSEEK_URL, {

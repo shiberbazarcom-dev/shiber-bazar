@@ -99,6 +99,8 @@ export default function Products() {
   const [autoDescLoading, setAutoDescLoading] = useState(false)
   const [autoDescDone, setAutoDescDone] = useState(false)
   const [autoDescCount, setAutoDescCount] = useState(0)
+  const [autoDescHasMore, setAutoDescHasMore] = useState(false)
+  const [autoDescTotalMissing, setAutoDescTotalMissing] = useState(0)
 
   const { data: { products = [], shops = [] } = {}, isLoading } = useQuery({
     queryKey: ['my-products', user?.id],
@@ -285,6 +287,8 @@ export default function Products() {
       const data = await res.json().catch(() => ({}))
       if (res.ok && data.count > 0) {
         setAutoDescCount(data.count)
+        setAutoDescHasMore(!!data.hasMore)
+        setAutoDescTotalMissing(data.totalMissing ?? 0)
         setAutoDescDone(true)
         qc.invalidateQueries({ queryKey: ['my-products'] })
       } else if (data.error) {
@@ -517,11 +521,27 @@ export default function Products() {
 
       {/* ── Success state ── */}
       {autoDescDone && (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-          <p className="text-sm font-semibold text-green-800">
-            ✅ {autoDescCount}টি পণ্যের AI বিবরণ তৈরি হয়েছে! পণ্য সম্পাদনায় দেখুন।
-          </p>
+        <div className="space-y-2">
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-3 sm:p-4 flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <p className="text-sm font-semibold text-green-800">
+              ✅ {autoDescCount}টি পণ্যের AI বিবরণ তৈরি হয়েছে!
+            </p>
+          </div>
+          {autoDescHasMore && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 sm:p-4 flex items-start gap-3">
+              <span className="text-lg flex-shrink-0">🔒</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">
+                  আরও {autoDescTotalMissing - autoDescCount}টি পণ্যের বিবরণ বাকি
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  ফ্রি প্ল্যানে একসাথে সর্বোচ্চ ১০টি পণ্যের AI বিবরণ তৈরি করা যায়।
+                  বাকি পণ্যগুলোর জন্য <strong>Pro প্ল্যান</strong> দরকার।
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

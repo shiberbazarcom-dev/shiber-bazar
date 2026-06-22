@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL  = process.env.SUPABASE_URL  || process.env.VITE_SUPABASE_URL
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY
 const GEMINI_KEY    = process.env.GEMINI_API_KEY
-const GEMINI_URL    = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+const GEMINI_URL    = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 async function callGemini(prompt) {
   const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
@@ -48,16 +48,24 @@ export default async function handler(req, res) {
     .from('shops').select('id').eq('id', shopId).single()
   if (shopErr || !shop) return res.status(404).json({ error: 'Shop not found' })
 
-  // Fetch first 25 products without descriptions
+  const FREE_LIMIT = 10
+
+  // Fetch products without descriptions (free plan: max 10)
   const { data: products, error: fetchErr } = await admin
     .from('products')
     .select('id, name, price')
     .eq('shop_id', shopId)
     .is('description', null)
-    .limit(25)
+    .limit(FREE_LIMIT)
 
   if (fetchErr) return res.status(500).json({ error: fetchErr.message })
-  if (!products?.length) return res.status(200).json({ ok: true, count: 0 })
+
+  // Count total missing for upgrade prompt
+  const { count: totalMissing } = await admin
+    .from('products').select('*', { count: 'exact', head: true })
+    .eq('shop_id', shopId).is('description', null)
+
+  if (!products?.length) return res.status(200).json({ ok: true, count: 0, totalMissing: 0 })
 
   console.log(`[auto-describe] ${products.length} products for shop ${shopId}, category: ${categoryName}`)
 
@@ -110,5 +118,11 @@ JSON array return করো (সব ${products.length}টি item):
   }))
 
   console.log(`[auto-describe] Done: ${updated} products updated`)
-  return res.status(200).json({ ok: true, count: updated })
+  return res.status(200).json({
+    ok: true,
+    count: updated,
+    totalMissing: totalMissing ?? 0,
+    freeLimit: FREE_LIMIT,
+    hasMore: (totalMissing ?? 0) > FREE_LIMIT,
+  })
 }
