@@ -534,7 +534,7 @@ export default function Products() {
                   আরও {autoDescTotalMissing - autoDescCount}টি পণ্যের বিবরণ বাকি
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  ফ্রি প্ল্যানে একসাথে সর্বোচ্চ ১০টি পণ্যের AI বিবরণ তৈরি করা যায়।
+                  ফ্রি প্ল্যানে একসাথে সর্বোচ্চ ৫টি পণ্যের AI বিবরণ তৈরি করা যায়।
                   বাকি পণ্যগুলোর জন্য <strong>Pro প্ল্যান</strong> দরকার।
                 </p>
               </div>

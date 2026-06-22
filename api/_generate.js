@@ -1,7 +1,12 @@
-/* Shared AI generation — used by api/ai.js and api/auto-reply.js */
+/* Shared AI generation — used by api/ai.js, api/auto-reply.js, api/auto-describe.js
+   DeepSeek  → chat/auto-reply
+   Fireworks → product descriptions (replaces Gemini)
+   Gemini    → fallback if others fail
+*/
 
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
-const GEMINI_URL   = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const DEEPSEEK_URL  = 'https://api.deepseek.com/chat/completions'
+const FIREWORKS_URL = 'https://api.fireworks.ai/inference/v1/chat/completions'
+const GEMINI_URL    = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 async function callDeepSeek(prompt) {
   const res = await fetch(DEEPSEEK_URL, {
@@ -23,6 +28,29 @@ async function callDeepSeek(prompt) {
   return data.choices[0].message.content.trim()
 }
 
+async function callFireworks(prompt) {
+  const res = await fetch(FIREWORKS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.FIREWORKS_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'accounts/fireworks/models/llama4-scout-instruct-basic',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) {
+    const err = await res.text().catch(() => '')
+    throw new Error(`Fireworks error: ${res.status} ${err.slice(0, 100)}`)
+  }
+  const data = await res.json()
+  return data.choices[0].message.content.trim()
+}
+
 async function callGemini(prompt) {
   const res = await fetch(`${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
     method: 'POST',
@@ -38,13 +66,22 @@ async function callGemini(prompt) {
   return data.candidates[0].content.parts[0].text.trim()
 }
 
+/* Default: DeepSeek → Fireworks → Gemini fallback chain */
 export async function generate(prompt) {
   if (process.env.DEEPSEEK_API_KEY) {
     try {
       const result = await callDeepSeek(prompt)
       return { result, provider: 'deepseek' }
     } catch (err) {
-      console.warn('DeepSeek failed, trying Gemini:', err.message)
+      console.warn('DeepSeek failed:', err.message)
+    }
+  }
+  if (process.env.FIREWORKS_API_KEY) {
+    try {
+      const result = await callFireworks(prompt)
+      return { result, provider: 'fireworks' }
+    } catch (err) {
+      console.warn('Fireworks failed:', err.message)
     }
   }
   if (process.env.GEMINI_API_KEY) {
@@ -54,21 +91,47 @@ export async function generate(prompt) {
   throw new Error('No AI provider configured')
 }
 
-/* Always use Gemini — for product descriptions */
-export async function generateGemini(prompt) {
-  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
-  const result = await callGemini(prompt)
-  return { result, provider: 'gemini' }
+/* Product descriptions — Fireworks, fallback to DeepSeek then Gemini */
+export async function generateForDescriptions(prompt) {
+  if (process.env.FIREWORKS_API_KEY) {
+    try {
+      const result = await callFireworks(prompt)
+      return { result, provider: 'fireworks' }
+    } catch (err) {
+      console.warn('Fireworks failed, trying fallback:', err.message)
+    }
+  }
+  if (process.env.DEEPSEEK_API_KEY) {
+    try {
+      const result = await callDeepSeek(prompt)
+      return { result, provider: 'deepseek' }
+    } catch (err) {
+      console.warn('DeepSeek failed:', err.message)
+    }
+  }
+  if (process.env.GEMINI_API_KEY) {
+    const result = await callGemini(prompt)
+    return { result, provider: 'gemini' }
+  }
+  throw new Error('No AI provider configured')
 }
 
-/* Always use DeepSeek — for chat replies. Falls back to Gemini if DeepSeek is down. */
+/* Chat auto-reply — DeepSeek first, fallback chain */
 export async function generateDeepSeek(prompt) {
   if (process.env.DEEPSEEK_API_KEY) {
     try {
       const result = await callDeepSeek(prompt)
       return { result, provider: 'deepseek' }
     } catch (err) {
-      console.warn('DeepSeek failed, falling back to Gemini:', err.message)
+      console.warn('DeepSeek failed, falling back:', err.message)
+    }
+  }
+  if (process.env.FIREWORKS_API_KEY) {
+    try {
+      const result = await callFireworks(prompt)
+      return { result, provider: 'fireworks' }
+    } catch (err) {
+      console.warn('Fireworks failed:', err.message)
     }
   }
   if (process.env.GEMINI_API_KEY) {
@@ -78,16 +141,17 @@ export async function generateDeepSeek(prompt) {
   throw new Error('No AI provider configured')
 }
 
-export function parseJson(text) {
-  // Strip markdown code fences
-  let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+/* Keep for backward compat */
+export async function generateGemini(prompt) {
+  return generateForDescriptions(prompt)
+}
 
-  // If AI prefixed text before the JSON, extract the first {...} block
+export function parseJson(text) {
+  let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
   const jsonStart = clean.indexOf('{')
   const jsonEnd   = clean.lastIndexOf('}')
   if (jsonStart > 0 && jsonEnd > jsonStart) {
     clean = clean.slice(jsonStart, jsonEnd + 1)
   }
-
   return JSON.parse(clean)
 }

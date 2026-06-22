@@ -1,29 +1,32 @@
-/* Vercel serverless function — AI product description generation via Gemini
-   Processes first 25 products in one call to stay within timeout limits.
+/* Vercel serverless function — AI product description generation
+   Uses Fireworks AI (primary), fallback to DeepSeek/Gemini via _generate.js
 */
 import { createClient } from '@supabase/supabase-js'
+import { generateForDescriptions } from './_generate.js'
 
-const SUPABASE_URL  = process.env.SUPABASE_URL  || process.env.VITE_SUPABASE_URL
-const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY
-const GEMINI_KEY    = process.env.GEMINI_API_KEY
-const GEMINI_URL    = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
+const FREE_LIMIT   = 5
 
-async function callGemini(prompt) {
-  const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: 4000 },
-    }),
-    signal: AbortSignal.timeout(25000),
-  })
-  if (!res.ok) {
-    const err = await res.text().catch(() => '')
-    throw new Error(`Gemini ${res.status}: ${err.slice(0, 100)}`)
-  }
-  const data = await res.json()
-  return data.candidates[0].content.parts[0].text.trim()
+function buildPrompt(products, categoryName) {
+  const list = products.map((p, i) => `${i + 1}|${p.name}|${p.price}`).join('\n')
+  return `তুমি একজন বাংলাদেশী e-commerce কপিরাইটার। দোকানের ধরন: ${categoryName || 'সাধারণ'}
+
+নিচের ${products.length}টি পণ্যের জন্য বাংলায় সংক্ষিপ্ত description ও features লেখো।
+ফরম্যাট: idx|name|price
+${list}
+
+JSON array return করো (সব ${products.length}টি item):
+[{"idx":1,"desc":"১ বাক্যে বিবরণ","feat":"বৈশিষ্ট্য ১\\nবৈশিষ্ট্য ২"},{"idx":2,"desc":"...","feat":"..."}]
+
+শুধু JSON array দাও।`
+}
+
+function parseArray(text) {
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  const s = clean.indexOf('['), e = clean.lastIndexOf(']')
+  if (s === -1 || e === -1) throw new Error('No JSON array found')
+  return JSON.parse(clean.slice(s, e + 1))
 }
 
 export default async function handler(req, res) {
@@ -33,91 +36,60 @@ export default async function handler(req, res) {
   if (!shopId) return res.status(400).json({ error: 'shopId required' })
 
   if (!SUPABASE_URL || !SERVICE_KEY) {
-    console.error('[auto-describe] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
     return res.status(500).json({ error: 'Server misconfigured' })
-  }
-  if (!GEMINI_KEY) {
-    console.error('[auto-describe] Missing GEMINI_API_KEY')
-    return res.status(500).json({ error: 'GEMINI_API_KEY not set' })
   }
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY)
 
-  // Verify shop exists
-  const { data: shop, error: shopErr } = await admin
-    .from('shops').select('id').eq('id', shopId).single()
-  if (shopErr || !shop) return res.status(404).json({ error: 'Shop not found' })
+  const { data: shop } = await admin.from('shops').select('id').eq('id', shopId).single()
+  if (!shop) return res.status(404).json({ error: 'Shop not found' })
 
-  const FREE_LIMIT = 10
-
-  // Fetch products without descriptions (free plan: max 10)
-  const { data: products, error: fetchErr } = await admin
-    .from('products')
-    .select('id, name, price')
-    .eq('shop_id', shopId)
-    .is('description', null)
-    .limit(FREE_LIMIT)
-
-  if (fetchErr) return res.status(500).json({ error: fetchErr.message })
-
-  // Count total missing for upgrade prompt
+  // Count total missing
   const { count: totalMissing } = await admin
     .from('products').select('*', { count: 'exact', head: true })
     .eq('shop_id', shopId).is('description', null)
 
+  // Fetch free limit products
+  const { data: products, error: fetchErr } = await admin
+    .from('products').select('id, name, price')
+    .eq('shop_id', shopId).is('description', null)
+    .limit(FREE_LIMIT)
+
+  if (fetchErr) return res.status(500).json({ error: fetchErr.message })
   if (!products?.length) return res.status(200).json({ ok: true, count: 0, totalMissing: 0 })
 
-  console.log(`[auto-describe] ${products.length} products for shop ${shopId}, category: ${categoryName}`)
-
-  // Build compact prompt for all products in one call
-  const list = products.map((p, i) => `${i + 1}|${p.name}|৳${p.price}`).join('\n')
-  const prompt = `তুমি একজন বাংলাদেশী e-commerce কপিরাইটার। দোকানের ধরন: ${categoryName || 'সাধারণ'}
-
-নিচের ${products.length}টি পণ্যের জন্য বাংলায় সংক্ষিপ্ত description ও features লেখো।
-ফরম্যাট: idx|name|price
-${list}
-
-JSON array return করো (সব ${products.length}টি item):
-[{"idx":1,"desc":"১ বাক্যে বিবরণ","feat":"বৈশিষ্ট্য ১\\nবৈশিষ্ট্য ২"},{"idx":2,...}]
-
-শুধু JSON array দাও।`
+  console.log(`[auto-describe] ${products.length} products, shop: ${shopId}`)
 
   let rawResult
   try {
-    rawResult = await callGemini(prompt)
-    console.log('[auto-describe] Gemini responded, length:', rawResult.length)
+    const { result, provider } = await generateForDescriptions(buildPrompt(products, categoryName))
+    rawResult = result
+    console.log(`[auto-describe] Got response from ${provider}`)
   } catch (err) {
-    console.error('[auto-describe] Gemini call failed:', err.message)
-    return res.status(500).json({ error: 'Gemini failed: ' + err.message })
+    console.error('[auto-describe] AI call failed:', err.message)
+    return res.status(500).json({ error: 'AI call failed: ' + err.message })
   }
 
-  // Parse JSON array from response
   let items
   try {
-    const clean = rawResult.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    const s = clean.indexOf('['), e = clean.lastIndexOf(']')
-    if (s === -1 || e === -1) throw new Error('No array found in response')
-    items = JSON.parse(clean.slice(s, e + 1))
-  } catch (parseErr) {
-    console.error('[auto-describe] JSON parse failed:', parseErr.message)
-    console.error('[auto-describe] Raw response:', rawResult.slice(0, 500))
+    items = parseArray(rawResult)
+  } catch (err) {
+    console.error('[auto-describe] Parse failed:', err.message, rawResult.slice(0, 200))
     return res.status(500).json({ error: 'JSON parse failed', raw: rawResult.slice(0, 200) })
   }
 
-  // Update each product in DB
   let updated = 0
   await Promise.all(items.map(async (item) => {
     const product = products[item.idx - 1]
     if (!product?.id) return
-    const { error: upErr } = await admin.from('products').update({
-      description: item.desc?.trim()  || null,
-      features:    item.feat?.trim()  || null,
+    const { error } = await admin.from('products').update({
+      description: item.desc?.trim() || null,
+      features:    item.feat?.trim() || null,
     }).eq('id', product.id)
-    if (!upErr) updated++
-    else console.warn('[auto-describe] update failed:', product.name, upErr.message)
+    if (!error) updated++
   }))
 
-  console.log(`[auto-describe] Done: ${updated} products updated`)
+  console.log(`[auto-describe] Done: ${updated} updated`)
   return res.status(200).json({
     ok: true,
     count: updated,
