@@ -44,6 +44,15 @@ export default async function handler(req, res) {
   const { data: shop } = await admin.from('shops').select('id').eq('id', shopId).single()
   if (!shop) return res.status(404).json({ error: 'Shop not found' })
 
+  // Count already AI-described products (free limit check)
+  const { count: alreadyDescribed } = await admin
+    .from('products').select('*', { count: 'exact', head: true })
+    .eq('shop_id', shopId).not('description', 'is', null)
+
+  if ((alreadyDescribed ?? 0) >= FREE_LIMIT) {
+    return res.status(200).json({ ok: false, limitReached: true, freeLimit: FREE_LIMIT })
+  }
+
   // Count total missing
   const { count: totalMissing } = await admin
     .from('products').select('*', { count: 'exact', head: true })

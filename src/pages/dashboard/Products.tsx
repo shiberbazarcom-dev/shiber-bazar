@@ -285,7 +285,11 @@ export default function Products() {
         body: JSON.stringify({ shopId, categoryName }),
       })
       const data = await res.json().catch(() => ({}))
-      if (res.ok && data.count > 0) {
+      if (res.ok && data.limitReached) {
+        setAutoDescDone(true)
+        setAutoDescHasMore(true)
+        setAutoDescCount(0)
+      } else if (res.ok && data.count > 0) {
         setAutoDescCount(data.count)
         setAutoDescHasMore(!!data.hasMore)
         setAutoDescTotalMissing(data.totalMissing ?? 0)
@@ -302,11 +306,19 @@ export default function Products() {
   }
 
   /* ─── Products missing description ─── */
+  const FREE_DESC_LIMIT = 5
   const missingDescProducts = products.filter((p: Product) => !p.description && !p.features)
-  const missingByShop = shops.map((s: any) => ({
-    ...s,
-    missingCount: missingDescProducts.filter((p: Product) => p.shop_id === s.id).length,
-  })).filter((s: any) => s.missingCount > 0)
+  const shopsWithMissing = shops.map((s: any) => {
+    const shopProducts = products.filter((p: Product) => p.shop_id === s.id)
+    const describedCount = shopProducts.filter((p: Product) => p.description || p.features).length
+    return {
+      ...s,
+      missingCount: missingDescProducts.filter((p: Product) => p.shop_id === s.id).length,
+      describedCount,
+    }
+  }).filter((s: any) => s.missingCount > 0)
+  const missingByShop = shopsWithMissing.filter((s: any) => s.describedCount < FREE_DESC_LIMIT)
+  const limitReachedShops = shopsWithMissing.filter((s: any) => s.describedCount >= FREE_DESC_LIMIT)
 
   const filtered = shopFilter === 'all' ? products : products.filter((p: Product) => p.shop_id === shopFilter)
 
@@ -518,28 +530,32 @@ export default function Products() {
       )}
 
       {/* ── Success state ── */}
-      {autoDescDone && (
-        <div className="space-y-2">
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-3 sm:p-4 flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-            <p className="text-sm font-semibold text-green-800">
-              ✅ {autoDescCount}টি পণ্যের AI বিবরণ তৈরি হয়েছে!
+      {autoDescDone && autoDescCount > 0 && (
+        <div className="rounded-2xl border border-green-200 bg-green-50 p-3 sm:p-4 flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+          <p className="text-sm font-semibold text-green-800">
+            ✅ {autoDescCount}টি পণ্যের AI বিবরণ তৈরি হয়েছে!
+          </p>
+        </div>
+      )}
+
+      {/* ── Pro upsell: limit reached (after generate or on page load) ── */}
+      {(!isLoading && (limitReachedShops.length > 0 || (autoDescDone && autoDescHasMore))) && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 sm:p-4 flex items-start gap-3">
+          <span className="text-lg flex-shrink-0">🔒</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800">
+              আপনার এখনও আরও{' '}
+              {limitReachedShops.length > 0
+                ? limitReachedShops.map((s: any) => `${s.missingCount}টি`).join(', ')
+                : `${autoDescTotalMissing - autoDescCount}টি`
+              } পণ্যের description ও features বাকি
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              বাকি পণ্যগুলো AI দিয়ে সম্পন্ন করতে <strong>Pro প্ল্যান</strong> দরকার।
+              যোগাযোগ করুন: <a href="tel:01310012276" className="font-bold underline">01310012276</a>
             </p>
           </div>
-          {autoDescHasMore && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 sm:p-4 flex items-start gap-3">
-              <span className="text-lg flex-shrink-0">🔒</span>
-              <div>
-                <p className="text-sm font-semibold text-amber-800">
-                  আরও {autoDescTotalMissing - autoDescCount}টি পণ্যের বিবরণ বাকি
-                </p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  ফ্রি প্ল্যানে একসাথে সর্বোচ্চ ৫টি পণ্যের AI বিবরণ তৈরি করা যায়।
-                  বাকি পণ্যগুলোর জন্য <strong>Pro প্ল্যান</strong> দরকার।
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
