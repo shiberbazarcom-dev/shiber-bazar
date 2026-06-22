@@ -705,7 +705,7 @@ export default function ShopDetail() {
       </div>
 
       {/* ══ FLOATING LIVE CHAT BUTTON ══ */}
-      {shop?.owner_id !== user?.id && (
+      {shop?.owner_id !== user?.id && shop?.status === 'approved' && (
         <>
           {/* mobile — above sticky bar */}
           <div className="lg:hidden fixed right-4 z-50 transition-all duration-700 ease-out"
