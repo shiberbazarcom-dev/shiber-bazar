@@ -227,7 +227,7 @@ export default function ChatWindow({ conversation, otherName }) {
     : null
 
   const qc = useQueryClient()
-  const { data: messages = [] } = useMessages(conversation?.id)
+  const { data: messages = [], isLoading: msgsLoading } = useMessages(conversation?.id)
   const sendMsg  = useSendMessage()
   const markRead = useMarkMessagesRead(conversation?.id)
 
@@ -412,8 +412,8 @@ export default function ChatWindow({ conversation, otherName }) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 py-4 bg-gray-50" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {/* Welcome screen — shown to customer on empty conversation */}
-        {!isOwner && grouped.length === 0 && (
+        {/* Welcome screen — shown to customer on truly empty conversation (not loading) */}
+        {!isOwner && grouped.length === 0 && !msgsLoading && (
           <div className="flex flex-col items-center justify-center h-full gap-4 px-2">
             <div className="w-full max-w-xs bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <p className="text-sm font-semibold text-gray-800 mb-1">
@@ -459,9 +459,15 @@ export default function ChatWindow({ conversation, otherName }) {
           </div>
         )}
 
-        {/* Owner empty state */}
+        {/* Owner loading / empty state */}
         {isOwner && grouped.length === 0 && (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
+          msgsLoading
+            ? <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            : <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
         )}
         <div className="space-y-2">
           {grouped.map((item, idx) =>
