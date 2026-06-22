@@ -19,8 +19,8 @@ function sanitizePersona(text) {
     .replace(/new\s+instructions?\s*(override|replace|supersede)?/gi, '')
     .replace(/override\s+(all\s+)?(previous|above|prior)?/gi, '')
     .replace(/disregard\s+(all\s+)?(previous|above|prior)?/gi, '')
-    .replace(/^#{1,6}\s/gm, '')   // strip markdown headings used as structural injections
-    .replace(/^-{3,}$/gm, '')     // strip horizontal rules
+    .replace(/^#{1,6}\s/gm, '')
+    .replace(/^-{3,}$/gm, '')
     .replace(/^={3,}$/gm, '')
     .trim()
 }
@@ -33,58 +33,176 @@ function detectAddressingStyle(msgs, ownerId) {
     if (/আমি\s*(একজন\s*)?(মহিলা|মেয়ে|আপু|বোন)|আমার\s*(স্বামী|ছেলে সন্তান)/.test(lc)) return 'female'
     if (/আমি\s*(একজন\s*)?(পুরুষ|ছেলে|ভাই মানুষ)|আমার\s*(স্ত্রী|বউ)/.test(lc)) return 'male'
   }
-  return 'neutral' // DEFAULT — never guess from name
+  return 'neutral'
 }
 
-/* ── Parse conversation to extract already-collected order info ── */
-function extractCollectedInfo(msgs, ownerId) {
-  const info = { name: null, phone: null, address: null, hasOrderConfirmed: false }
-  const allText = msgs.map(m => m.content).join('\n')
+/* ── Server-side intent detection ── */
+function detectIntent(content) {
+  const t = content.trim().toLowerCase()
 
-  // If SB order number exists — order already placed
-  if (/\bSB\d+\b/.test(allText)) {
-    info.hasOrderConfirmed = true
-    return info
-  }
+  if (/^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(t)) return 'greeting'
 
-  const customerMsgs = msgs.filter(m => m.sender_id !== ownerId)
-  const aiMsgs = msgs.filter(m => m.sender_id === ownerId && m.is_ai)
+  if (/মালিক|real person|আসল মানুষ|মানুষের সাথে|owner|দোকানদার|ম্যানেজার/.test(t)) return 'handoff_request'
 
-  // Extract phone from customer messages
+  if (/কত\s*(দাম|টাকা|মূল্য|price)|দাম\s*(কত|জানতে|বলুন|কি)|মূল্য\s*(কত|জানতে|তালিকা)|price\s*(list|কত)|কত\s*(করে|পড়বে)|rate\s*কত/.test(t)) return 'price_inquiry'
+
+  if (/^(confirm|confirmed|হ্যাঁ|yes|ok|ঠিক আছে|order করুন|অর্ডার করুন|jee|জি|দিন|করুন)\s*$/i.test(t)) return 'confirm'
+
+  if (/অভিযোগ|সমস্যা|নষ্ট|ভুল|রাগ|ক্ষতি|ফেরত|refund|complaint|problem|wrong|damaged/.test(t)) return 'complaint'
+
+  if (/কখন\s*(পাব|আসবে|ডেলিভারি)|delivery\s*(কত|দিন|কবে)|কতদিন|কত\s*দিনে|পৌঁছাবে/.test(t)) return 'delivery_question'
+
+  return 'general'
+}
+
+/* ── Extract order context with SB order number boundary reset ── */
+function extractOrderContext(msgs, ownerId) {
+  // Find the LAST SB order number — everything before it is a completed order session
+  let lastSBIndex = -1
+  let lastOrderNumber = null
+  msgs.forEach((m, i) => {
+    const sbMatch = m.content.match(/\b(SB\d+)\b/)
+    if (sbMatch) { lastSBIndex = i; lastOrderNumber = sbMatch[1] }
+  })
+
+  const hasConfirmedBefore = lastSBIndex >= 0
+  // Only look at messages AFTER the last SB confirmation for new order info
+  const searchMsgs = hasConfirmedBefore ? msgs.slice(lastSBIndex + 1) : msgs
+  const customerMsgs = searchMsgs.filter(m => m.sender_id !== ownerId)
+  const aiMsgs = searchMsgs.filter(m => m.sender_id === ownerId && m.is_ai)
+
+  // New order session = there are customer messages after the last SB confirmation
+  const isNewOrderSession = hasConfirmedBefore && customerMsgs.length > 0
+
+  let name = null, phone = null, address = null
+
+  // Extract phone from customer messages (in current session only)
   for (const msg of customerMsgs) {
-    const phone = msg.content.match(/01[3-9]\d{8}/)
-    if (phone) { info.phone = phone[0]; break }
+    const phoneMatch = msg.content.match(/01[3-9]\d{8}/)
+    if (phoneMatch) { phone = phoneMatch[0]; break }
   }
 
-  // Extract name: look for AI message asking for name, then next customer message
+  // Extract name: AI asked for name → next customer reply
   for (let i = 0; i < aiMsgs.length; i++) {
     if (/নামটা|আপনার নাম|নাম\s*(বলুন|দিন)/i.test(aiMsgs[i].content)) {
-      // find customer message after this AI message
       const aiTime = new Date(aiMsgs[i].created_at).getTime()
       const nameMsg = customerMsgs.find(m => new Date(m.created_at).getTime() > aiTime)
       if (nameMsg && nameMsg.content.trim().length <= 30) {
-        info.name = nameMsg.content.trim()
+        name = nameMsg.content.trim()
         break
       }
     }
   }
 
-  // Extract address: look for AI message asking for address, then next customer message
+  // Extract address: AI asked for address → next customer reply
   for (let i = 0; i < aiMsgs.length; i++) {
     if (/ঠিকানা\s*(দিন|বলুন)|ডেলিভারি ঠিকানা/i.test(aiMsgs[i].content)) {
       const aiTime = new Date(aiMsgs[i].created_at).getTime()
       const addrMsg = customerMsgs.find(m => new Date(m.created_at).getTime() > aiTime)
-      if (addrMsg) {
-        info.address = addrMsg.content.trim()
-        break
-      }
+      if (addrMsg) { address = addrMsg.content.trim(); break }
     }
   }
 
-  return info
+  return { name, phone, address, hasConfirmedBefore, isNewOrderSession, lastOrderNumber }
 }
 
-function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona, addressingStyle, collectedInfo }) {
+/* ── 30+ varied ACK messages — no gender, no repetitive "জি" ── */
+const ACK_MESSAGES = [
+  'ঠিক আছে, একটু দেখছি',
+  'বুঝতে পেরেছি',
+  'অবশ্যই, এক মুহূর্ত',
+  'আচ্ছা, একটু সময় দিন',
+  'নিশ্চয়ই, দেখছি',
+  'হ্যাঁ, এক সেকেন্ড',
+  'চমৎকার, দেখছি',
+  'ঠিক আছে, এক মুহূর্ত',
+  'বুঝলাম, দেখছি',
+  'আচ্ছা, বুঝতে পেরেছি',
+  'ঠিক আছে, নোট করলাম',
+  'অবশ্যই, দেখছি',
+  'এক মুহূর্ত দিন',
+  'আচ্ছা, ঠিক আছে',
+  'বুঝেছি, একটু দেখি',
+  'ঠিক আছে, চেক করছি',
+  'হ্যাঁ, দেখছি',
+  'আচ্ছা, এক সেকেন্ড',
+  'ঠিক আছে, প্রসেস করছি',
+  'বুঝতে পারলাম',
+  'অবশ্যই, এক মিনিট',
+  'হ্যাঁ, বুঝেছি',
+  'আচ্ছা, দেখছি',
+  'ঠিক আছে, একটু অপেক্ষা করুন',
+  'নিশ্চয়ই, এক মুহূর্ত',
+  'বুঝলাম, একটু দেখি',
+  'হ্যাঁ, এক মুহূর্ত',
+  'আচ্ছা, একটু সময়',
+  'ঠিক আছে, দেখছি',
+  'অবশ্যই, দেখি',
+  'বুঝেছি, দেখছি',
+  'হ্যাঁ, দেখি',
+]
+
+/* ── Pick ACK avoiding same first word as last AI reply ── */
+function pickAck(lastAiReply) {
+  const lastFirst = (lastAiReply || '').split(/[\s।,।]/)[0].trim()
+  const pool = lastFirst
+    ? ACK_MESSAGES.filter(a => a.split(/[\s।,।]/)[0].trim() !== lastFirst)
+    : ACK_MESSAGES
+  const src = pool.length ? pool : ACK_MESSAGES
+  return src[Math.floor(Math.random() * src.length)]
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+/* ── Robust product name matching (handles spelling variations) ── */
+function findProduct(products, orderProductName) {
+  if (!products?.length || !orderProductName) return null
+  const norm = s => s?.toLowerCase().replace(/[^ঀ-৿A-za-z0-9]/g, '').trim()
+  const target = norm(orderProductName)
+  if (!target) return null
+
+  let match = products.find(p => norm(p.name) === target)
+  if (match) return match
+
+  const prefix8 = target.slice(0, 8)
+  if (prefix8.length >= 4) {
+    match = products.find(p => norm(p.name)?.includes(prefix8))
+    if (match) return match
+  }
+
+  match = products.find(p => {
+    const pn = norm(p.name)
+    return pn?.length >= 4 && target.includes(pn.slice(0, 8))
+  })
+  if (match) return match
+
+  const prefix4 = target.slice(0, 4)
+  if (prefix4.length === 4) {
+    match = products.find(p => norm(p.name)?.startsWith(prefix4))
+  }
+  return match || null
+}
+
+/* ── Format beautiful order confirmation message ── */
+function formatOrderConfirmation({ orderNumber, shopName, productName, quantity, total, customerName, customerPhone, customerAddress }) {
+  return `✅ অর্ডার সফলভাবে গ্রহণ করা হয়েছে
+
+অর্ডার নং: ${orderNumber}
+দোকান: ${shopName}
+
+পণ্য: ${productName}
+পরিমাণ: ${quantity}
+মোট মূল্য: ৳${total}
+
+নাম: ${customerName}
+ফোন: ${customerPhone}
+ঠিকানা: ${customerAddress}
+
+স্ট্যাটাস: Pending ⏳
+দোকানদার শীঘ্রই যোগাযোগ করবেন।`
+}
+
+function buildPrompt({ shopName, shopCategory, productList, chatHistory, customerMessage, lastAiReply, aiPersona, addressingStyle, ctx, intent }) {
   const pharmacyMode = /pharma|ঔষধ|medicine|pharmacy/i.test(shopCategory || '')
 
   const addressRule = addressingStyle === 'male'
@@ -105,19 +223,38 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
 সব পেলে: "সব তথ্য পাওয়া গেছে।", "অর্ডারটি প্রস্তুত করছি।"
 সাহায্যে: "অবশ্যই।", "নিশ্চয়ই।", "হ্যাঁ, বলুন।"
 
-আগের reply যদি "বুঝতে পেরেছি" দিয়ে শুরু হয় → পরেরটা ভিন্ন opener দাও।`
+আগের reply যদি "${(lastAiReply || '').split(/[\s।,]/)[0].trim()}" দিয়ে শুরু হয় → পরেরটা ভিন্ন opener দাও।`
 
   const alreadyHave = []
-  if (collectedInfo.name)    alreadyHave.push(`নাম: ${collectedInfo.name}`)
-  if (collectedInfo.phone)   alreadyHave.push(`ফোন: ${collectedInfo.phone}`)
-  if (collectedInfo.address) alreadyHave.push(`ঠিকানা: ${collectedInfo.address}`)
+  if (ctx.name)    alreadyHave.push(`নাম: ${ctx.name}`)
+  if (ctx.phone)   alreadyHave.push(`ফোন: ${ctx.phone}`)
+  if (ctx.address) alreadyHave.push(`ঠিকানা: ${ctx.address}`)
 
-  const greetingRule = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(customerMessage?.trim())
+  const prevOrderNote = ctx.hasConfirmedBefore && ctx.isNewOrderSession
+    ? `\n## পূর্ববর্তী অর্ডার\nআগের অর্ডার (${ctx.lastOrderNumber}) সম্পন্ন হয়েছে। এটি একটি নতুন অর্ডার session — নতুনভাবে তথ্য সংগ্রহ করো।\n`
+    : ctx.hasConfirmedBefore
+    ? `\n## পূর্ববর্তী অর্ডার\nএই কথোপকথনে আগে একটি অর্ডার (${ctx.lastOrderNumber}) নেওয়া হয়েছে। Customer নতুন পণ্য চাইলেই নতুন অর্ডার নাও।\n`
+    : ''
+
+  const intentSection = intent === 'greeting'
     ? `## GREETING — এটি একটি সাধারণ অভিবাদন
 - Casual, সংক্ষিপ্ত reply দাও (১ লাইন)
 - যেমন: "hlw, কী দরকার?" বা "হ্যালো, বলুন কী লাগবে?" বা "হ্যা, কীভাবে সাহায্য করতে পারি?"
 - ACK বা "এক সেকেন্ড" টাইপ কিছু বলবে না`
-    : ''
+    : intent === 'price_inquiry'
+    ? `## PRICE INQUIRY — শুধু দাম জিজ্ঞেস করছে
+- শুধু পণ্যের দাম জানাও, order flow শুরু করবে না
+- Customer নিজে কিনতে চাইলে তখন STEP 1 শুরু করো
+- order: null রাখো`
+    : intent === 'complaint'
+    ? `## COMPLAINT — Customer সমস্যায় আছেন
+- সহানুভূতিশীল হও, প্রথমে apologize করো
+- সমস্যাটি বোঝার চেষ্টা করো
+- দরকার হলে handoff: true দাও`
+    : intent === 'delivery_question'
+    ? `## DELIVERY QUESTION — ডেলিভারি সম্পর্কে প্রশ্ন
+- যদি জানো তাহলে বলো, না জানলে handoff: true দাও`
+    : variedStarters
 
   return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী।
 দোকানের ধরন: ${shopCategory || 'সাধারণ দোকান'}
@@ -129,7 +266,7 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
 ## সম্বোধন নিয়ম
 ${addressRule}
 
-${greetingRule || variedStarters}
+${intentSection}
 
 ## কথা বলার নিয়ম
 - সহজ স্বাভাবিক বাংলায় কথা বলো
@@ -144,7 +281,7 @@ ${greetingRule || variedStarters}
 "${lastAiReply || ''}"
 
 ${alreadyHave.length ? `## ইতিমধ্যে সংগ্রহ করা তথ্য:\n${alreadyHave.join('\n')}` : ''}
-
+${prevOrderNote}
 ## দোকানের পণ্য তালিকা:
 ${productList || 'পণ্য তালিকা পাওয়া যায়নি। জিজ্ঞেস করলে বলো "একটু পরে জানাচ্ছি।"'}
 ${aiPersona ? `\n## দোকানের বিশেষ তথ্য:\n${sanitizePersona(aiPersona)}` : ''}
@@ -250,72 +387,6 @@ Handoff:
 {"reply":"এই বিষয়ে দোকানদার ভালো বলতে পারবেন, এখনই জানাচ্ছি।","order":null,"items":null,"handoff":true,"quick_replies":[]}`
 }
 
-/* ── Neutral acknowledgment messages — varied, no gender, no repetitive "জি" ── */
-const ACK_MESSAGES = [
-  'ঠিক আছে, একটু দেখছি',
-  'বুঝতে পেরেছি',
-  'অবশ্যই, এক মুহূর্ত',
-  'আচ্ছা, একটু সময় দিন',
-  'ধন্যবাদ জানানোর জন্য',
-  'নিশ্চয়ই, দেখছি',
-  'হ্যাঁ, এক সেকেন্ড',
-  'চমৎকার, দেখছি',
-]
-
-const sleep = ms => new Promise(r => setTimeout(r, ms))
-
-/* ── Robust product name matching (handles spelling variations) ── */
-function findProduct(products, orderProductName) {
-  if (!products?.length || !orderProductName) return null
-  const norm = s => s?.toLowerCase().replace(/[^ঀ-৿A-za-z0-9]/g, '').trim()
-  const target = norm(orderProductName)
-  if (!target) return null
-
-  // 1. Exact normalized match
-  let match = products.find(p => norm(p.name) === target)
-  if (match) return match
-
-  // 2. Product list name contains the order name (first 8 chars)
-  const prefix8 = target.slice(0, 8)
-  if (prefix8.length >= 4) {
-    match = products.find(p => norm(p.name)?.includes(prefix8))
-    if (match) return match
-  }
-
-  // 3. Order name contains product list name (first 8 chars)
-  match = products.find(p => {
-    const pn = norm(p.name)
-    return pn?.length >= 4 && target.includes(pn.slice(0, 8))
-  })
-  if (match) return match
-
-  // 4. First 4 characters match (loose fallback)
-  const prefix4 = target.slice(0, 4)
-  if (prefix4.length === 4) {
-    match = products.find(p => norm(p.name)?.startsWith(prefix4))
-  }
-  return match || null
-}
-
-/* ── Format beautiful order confirmation message ── */
-function formatOrderConfirmation({ orderNumber, shopName, productName, quantity, total, customerName, customerPhone, customerAddress }) {
-  return `✅ অর্ডার সফলভাবে গ্রহণ করা হয়েছে
-
-অর্ডার নং: ${orderNumber}
-দোকান: ${shopName}
-
-পণ্য: ${productName}
-পরিমাণ: ${quantity}
-মোট মূল্য: ৳${total}
-
-নাম: ${customerName}
-ফোন: ${customerPhone}
-ঠিকানা: ${customerAddress}
-
-স্ট্যাটাস: Pending ⏳
-দোকানদার শীঘ্রই যোগাযোগ করবেন।`
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -349,7 +420,6 @@ export default async function handler(req, res) {
 
     if (!conv?.shop_id) { console.log('[auto-reply] SKIP: no shop_id'); return res.status(200).json({ skipped: 'no shop_id' }) }
 
-    // Owner message — AI never replies to its own shop's messages.
     if (sender_id === conv.owner_id) {
       console.log('[auto-reply] SKIP: owner message')
       return res.status(200).json({ skipped: 'owner message' })
@@ -396,16 +466,14 @@ export default async function handler(req, res) {
 
     const shopCategory = shop.categories?.name || ''
     const addressingStyle = detectAddressingStyle(msgs, conv.owner_id)
-    const collectedInfo = extractCollectedInfo(msgs, conv.owner_id)
+    const ctx = extractOrderContext(msgs, conv.owner_id)
+    const intent = detectIntent(content)
 
-    // If order already confirmed in this conversation, skip
-    if (collectedInfo.hasOrderConfirmed) {
-      // Still reply, just don't create another order
-    }
+    console.log(`[auto-reply] intent=${intent} hasConfirmedBefore=${ctx.hasConfirmedBefore} isNewOrderSession=${ctx.isNewOrderSession}`)
 
-    // ── Server-side guard: "confirm" checks ──
-    const isConfirmAttempt = /^(confirm|confirmed|হ্যাঁ|yes|ok|ঠিক আছে|order করুন|অর্ডার করুন|jee|জি)\s*$/i.test(content.trim())
-    if (isConfirmAttempt && collectedInfo.hasOrderConfirmed) {
+    // ── Server-side guard: "confirm" with already-confirmed non-new-session ──
+    const isConfirmAttempt = intent === 'confirm'
+    if (isConfirmAttempt && ctx.hasConfirmedBefore && !ctx.isNewOrderSession) {
       const alreadyReply = 'আপনার অর্ডার আগেই নেওয়া হয়েছে। নতুন পণ্য অর্ডার করতে চাইলে বলুন।'
       await supabase.from('messages').insert({ conversation_id, sender_id: shop.owner_id, content: alreadyReply, is_ai: true })
       await supabase.from('conversations').update({ last_message: alreadyReply, last_message_at: new Date().toISOString() }).eq('id', conversation_id)
@@ -413,21 +481,14 @@ export default async function handler(req, res) {
     }
     if (isConfirmAttempt) {
       let guardReply = null
-      if (!collectedInfo.phone) {
+      if (!ctx.phone) {
         guardReply = 'অর্ডার নিশ্চিত করতে আপনার মোবাইল নম্বরটা দিন (যেমন: 01XXXXXXXXX)'
-      } else if (!collectedInfo.address) {
+      } else if (!ctx.address) {
         guardReply = 'ডেলিভারি ঠিকানাটা বলুন।'
       }
       if (guardReply) {
-        await supabase.from('messages').insert({
-          conversation_id,
-          sender_id: shop.owner_id,
-          content: guardReply,
-          is_ai: true,
-        })
-        await supabase.from('conversations')
-          .update({ last_message: guardReply, last_message_at: new Date().toISOString() })
-          .eq('id', conversation_id)
+        await supabase.from('messages').insert({ conversation_id, sender_id: shop.owner_id, content: guardReply, is_ai: true })
+        await supabase.from('conversations').update({ last_message: guardReply, last_message_at: new Date().toISOString() }).eq('id', conversation_id)
         return res.status(200).json({ ok: true, guarded: 'missing_field' })
       }
     }
@@ -441,13 +502,14 @@ export default async function handler(req, res) {
       lastAiReply,
       aiPersona: shop.ai_persona || '',
       addressingStyle,
-      collectedInfo,
+      ctx,
+      intent,
     })
 
-    // ── Human delay: ACK first (skip for greetings) ──
-    const isGreeting = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(content.trim())
-    if (!isGreeting) {
-      const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
+    // ── Human delay: ACK first (skip for greetings and handoff requests) ──
+    const skipAck = intent === 'greeting' || intent === 'handoff_request'
+    if (!skipAck) {
+      const ack = pickAck(lastAiReply)
       await supabase.from('messages').insert({
         conversation_id,
         sender_id: shop.owner_id,
@@ -459,7 +521,7 @@ export default async function handler(req, res) {
         .eq('id', conversation_id)
     }
 
-    await sleep(isGreeting ? 800 + Math.random() * 500 : 1500 + Math.random() * 2000)
+    await sleep(skipAck ? 800 + Math.random() * 500 : 1500 + Math.random() * 2000)
 
     const { result } = await generateDeepSeek(promptText)
 
@@ -475,8 +537,6 @@ export default async function handler(req, res) {
       quickReplies = parsed.quick_replies?.length ? parsed.quick_replies : null
       handoff = !!parsed.handoff
     } catch {
-      // parseJson failed (malformed or truncated JSON from AI).
-      // Try extracting the reply field with regex before falling back to raw text.
       try {
         const m = result.match(/"reply"\s*:\s*"((?:[^"\\]|\\[\s\S])*)"/)
         if (m) {
@@ -493,12 +553,10 @@ export default async function handler(req, res) {
 
     // ── Handoff: customer wants to talk to real owner ──
     if (handoff) {
-      // Pause AI for this conversation — owner must manually re-enable
       await supabase.from('conversations')
         .update({ ai_paused: true })
         .eq('id', conversation_id)
 
-      // Notify shop owner
       const recentContext = msgs.slice(-4)
         .map(m => m.sender_id === conv.owner_id ? `দোকান: ${m.content}` : `Customer: ${m.content}`)
         .join('\n')
@@ -517,16 +575,21 @@ export default async function handler(req, res) {
 
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-    // ── Guard: if an order was already confirmed in this conversation, block new order ──
-    if (collectedInfo.hasOrderConfirmed && (order || items?.length)) {
+    // ── Guard: block new order only when confirmed before AND not a new session ──
+    if (ctx.hasConfirmedBefore && !ctx.isNewOrderSession && (order || items?.length)) {
       reply = 'আপনার অর্ডার আগেই নেওয়া হয়েছে। নতুন পণ্য অর্ডার করতে চাইলে বলুন।'
+      order = null
+      items = null
+    }
+
+    // ── Block order creation when intent is price_inquiry ──
+    if (intent === 'price_inquiry' && (order || items?.length)) {
       order = null
       items = null
     }
 
     // ── Single product order ──
     if (order?.product_name && order?.customer_name && order?.customer_phone && order?.customer_address) {
-      // Duplicate check: same phone + similar product within 5 minutes
       const { data: dup } = await supabase
         .from('orders').select('order_number')
         .eq('shop_id', shop.id)
@@ -556,11 +619,9 @@ export default async function handler(req, res) {
         }).select('order_number, id').single()
 
         if (insertError || !created?.order_number) {
-          // DB insert failed — show error, NOT success
           console.error('[auto-reply] order insert failed:', insertError)
           reply = 'দুঃখিত, এই মুহূর্তে অর্ডার নেওয়া সম্ভব হচ্ছে না। একটু পরে আবার চেষ্টা করুন বা দোকানে সরাসরি যোগাযোগ করুন।'
         } else {
-          // ✅ DB confirmed — now show success card
           reply = formatOrderConfirmation({
             orderNumber: created.order_number,
             shopName: shop.shop_name,
@@ -571,7 +632,6 @@ export default async function handler(req, res) {
             customerPhone: order.customer_phone,
             customerAddress: order.customer_address,
           })
-          // Notify shop owner of new order
           await supabase.from('notifications').insert({
             user_id: shop.owner_id,
             type: 'new_order',
@@ -584,7 +644,7 @@ export default async function handler(req, res) {
     }
 
     // ── Multiple products order ──
-    if (!collectedInfo.hasOrderConfirmed && items?.length && (customerPhone || order?.customer_phone) && (customerAddress || order?.customer_address)) {
+    if (!(ctx.hasConfirmedBefore && !ctx.isNewOrderSession) && items?.length && (customerPhone || order?.customer_phone) && (customerAddress || order?.customer_address)) {
       const phone = customerPhone || order?.customer_phone
       const address = customerAddress || order?.customer_address
       const name = customerName || order?.customer_name || ''
