@@ -509,7 +509,7 @@ export default function Products() {
                   {autoDescLoading ? (
                     <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /><span className="hidden sm:inline">তৈরি হচ্ছে...</span><span className="sm:hidden">...</span></>
                   ) : (
-                    <><Sparkles className="h-3 w-3" /><span>{s.shop_name} — AI বিবরণ তৈরি করুন</span></>
+                    <><Sparkles className="h-3 w-3" /><span>{s.shop_name} - AI বিবরণ তৈরি করুন</span></>
                   )}
                 </button>
                 ))}
