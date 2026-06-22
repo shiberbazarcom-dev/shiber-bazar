@@ -381,7 +381,7 @@ export default async function handler(req, res) {
     })
 
     // ── Human delay: ACK first (skip for greetings) ──
-    const isGreeting = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(customerMessage.trim())
+    const isGreeting = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(content.trim())
     if (!isGreeting) {
       const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
       await supabase.from('messages').insert({
