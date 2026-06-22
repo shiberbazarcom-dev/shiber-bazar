@@ -320,6 +320,19 @@ export default function AddShop() {
         const { error: prodError } = await supabase.from('products').insert(products)
         if (!prodError) {
           toast.success(`আপনার দোকানে ${templates.length}টি পণ্য স্বয়ংক্রিয়ভাবে যোগ হয়েছে! 🎉`)
+
+          // Fire-and-forget: generate AI descriptions for all template products via Gemini
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.access_token) {
+            fetch('/api/auto-describe', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({ shopId: shopData.id, categoryName }),
+            }).catch(() => {}) // non-blocking — runs in background
+          }
         }
       }
 

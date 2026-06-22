@@ -54,6 +54,30 @@ export async function generate(prompt) {
   throw new Error('No AI provider configured')
 }
 
+/* Always use Gemini — for product descriptions */
+export async function generateGemini(prompt) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
+  const result = await callGemini(prompt)
+  return { result, provider: 'gemini' }
+}
+
+/* Always use DeepSeek — for chat replies. Falls back to Gemini if DeepSeek is down. */
+export async function generateDeepSeek(prompt) {
+  if (process.env.DEEPSEEK_API_KEY) {
+    try {
+      const result = await callDeepSeek(prompt)
+      return { result, provider: 'deepseek' }
+    } catch (err) {
+      console.warn('DeepSeek failed, falling back to Gemini:', err.message)
+    }
+  }
+  if (process.env.GEMINI_API_KEY) {
+    const result = await callGemini(prompt)
+    return { result, provider: 'gemini' }
+  }
+  throw new Error('No AI provider configured')
+}
+
 export function parseJson(text) {
   // Strip markdown code fences
   let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()

@@ -2,7 +2,7 @@
    Triggered on: INSERT into messages table
 */
 import { createClient } from '@supabase/supabase-js'
-import { generate, parseJson } from './_generate.js'
+import { generateDeepSeek, parseJson } from './_generate.js'
 
 /* ── Sanitize ai_persona before prompt injection (H3) ───────────────────────
    Strips prompt-injection patterns while preserving normal business text.
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
 
     await sleep(1500 + Math.random() * 2000)
 
-    const { result } = await generate(promptText)
+    const { result } = await generateDeepSeek(promptText)
 
     let reply, order, items, customerName, customerPhone, customerAddress, quickReplies, handoff
     try {

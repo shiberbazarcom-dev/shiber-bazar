@@ -1,7 +1,7 @@
 /* Vercel serverless function — AI content generation
    Primary: DeepSeek-V3  |  Fallback: Google Gemini 1.5 Flash
 */
-import { generate, parseJson } from './_generate.js'
+import { generate, generateGemini, parseJson } from './_generate.js'
 
 const PROMPTS = {
   landing_page: ({ productName, price, category }) => `
@@ -81,7 +81,10 @@ export default async function handler(req, res) {
 
   try {
     const prompt = PROMPTS[type](params)
-    const { result, provider } = await generate(prompt)
+    // product_description always uses Gemini; everything else uses DeepSeek → Gemini fallback
+    const { result, provider } = type === 'product_description'
+      ? await generateGemini(prompt).catch(() => generate(prompt))
+      : await generate(prompt)
 
     let parsed
     try {
