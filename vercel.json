@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/auto-reply.js": { "maxDuration": 30 }
+    "api/auto-reply.js": { "maxDuration": 30 },
+    "api/auto-describe.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

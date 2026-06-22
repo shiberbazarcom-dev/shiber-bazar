@@ -317,22 +317,25 @@ export default function AddShop() {
           is_active: true,
           is_featured: false,
         }))
-        const { error: prodError } = await supabase.from('products').insert(products)
+        const { data: insertedProducts, error: prodError } = await supabase
+          .from('products').insert(products).select('id, name, price')
         if (!prodError) {
           toast.success(`আপনার দোকানে ${templates.length}টি পণ্য স্বয়ংক্রিয়ভাবে যোগ হয়েছে! 🎉`)
 
-          // Fire-and-forget: generate AI descriptions for all template products via Gemini
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session?.access_token) {
-            fetch('/api/auto-describe', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({ shopId: shopData.id, categoryName }),
-            }).catch(() => {}) // non-blocking — runs in background
-          }
+          // Background: Gemini generates descriptions for all template products
+          // Try server-side API first; on failure, do nothing (descriptions optional)
+          fetch('/api/auto-describe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopId: shopData.id, categoryName }),
+          }).then(async (r) => {
+            if (r.ok) {
+              const data = await r.json().catch(() => ({}))
+              if (data.count > 0) {
+                toast.success(`✨ AI দিয়ে ${data.count}টি পণ্যের বিবরণ তৈরি হয়েছে!`)
+              }
+            }
+          }).catch(() => {})
         }
       }
 
