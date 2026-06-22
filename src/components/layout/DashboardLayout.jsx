@@ -620,7 +620,11 @@ export default function DashboardLayout({ type = 'user' }) {
         {/* Unified topbar (mobile + desktop) */}
         <TopBar type={type} profile={profile} signOut={signOut} setSidebarOpen={setSidebarOpen} mobileBadge={mobileBadge} links={links} />
 
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        {/* Chat page needs no padding and overflow-hidden so the internal flex layout
+            controls height — critical for mobile keyboard not creating blank space */}
+        <main className={location.pathname.includes('/chat')
+          ? 'flex-1 overflow-hidden flex flex-col'
+          : 'flex-1 p-4 lg:p-8 overflow-y-auto'}>
           <Outlet />
         </main>
       </div>

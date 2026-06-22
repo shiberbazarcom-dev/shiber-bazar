@@ -213,6 +213,15 @@ export default function ChatWindow({ conversation, otherName }) {
   const typingTimerRef = useRef(null)
   const channelRef     = useRef(null)
 
+  // Scroll to bottom whenever keyboard opens on mobile (visualViewport resize)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [])
+
   const otherUserId = conversation
     ? (conversation.customer_id === user?.id ? conversation.owner_id : conversation.customer_id)
     : null
