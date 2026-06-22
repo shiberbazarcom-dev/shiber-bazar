@@ -82,6 +82,13 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
   const alreadyHave = []
   if (collectedInfo.phone) alreadyHave.push(`ফোন: ${collectedInfo.phone}`)
 
+  const greetingRule = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(customerMessage?.trim())
+    ? `## GREETING — এটি একটি সাধারণ অভিবাদন
+- Casual, সংক্ষিপ্ত reply দাও (১ লাইন)
+- যেমন: "hlw, কী দরকার?" বা "হ্যালো, বলুন কী লাগবে?" বা "হ্যা, কীভাবে সাহায্য করতে পারি?"
+- ACK বা "এক সেকেন্ড" টাইপ কিছু বলবে না`
+    : ''
+
   return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী।
 দোকানের ধরন: ${shopCategory || 'সাধারণ দোকান'}
 
@@ -92,7 +99,7 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
 ## সম্বোধন নিয়ম
 ${addressRule}
 
-${variedStarters}
+${greetingRule || variedStarters}
 
 ## কথা বলার নিয়ম
 - সহজ স্বাভাবিক বাংলায় কথা বলো
@@ -373,19 +380,22 @@ export default async function handler(req, res) {
       collectedInfo,
     })
 
-    // ── Human delay: ACK first ──
-    const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
-    await supabase.from('messages').insert({
-      conversation_id,
-      sender_id: shop.owner_id,
-      content: ack,
-      is_ai: true,
-    })
-    await supabase.from('conversations')
-      .update({ last_message: ack, last_message_at: new Date().toISOString() })
-      .eq('id', conversation_id)
+    // ── Human delay: ACK first (skip for greetings) ──
+    const isGreeting = /^(hi|hello|হ্যালো|হেলো|হাই|সালাম|আসসালামু|hy|hey|hlw|হ্যা|ola)\b/i.test(customerMessage.trim())
+    if (!isGreeting) {
+      const ack = ACK_MESSAGES[Math.floor(Math.random() * ACK_MESSAGES.length)]
+      await supabase.from('messages').insert({
+        conversation_id,
+        sender_id: shop.owner_id,
+        content: ack,
+        is_ai: true,
+      })
+      await supabase.from('conversations')
+        .update({ last_message: ack, last_message_at: new Date().toISOString() })
+        .eq('id', conversation_id)
+    }
 
-    await sleep(1500 + Math.random() * 2000)
+    await sleep(isGreeting ? 800 + Math.random() * 500 : 1500 + Math.random() * 2000)
 
     const { result } = await generateDeepSeek(promptText)
 
