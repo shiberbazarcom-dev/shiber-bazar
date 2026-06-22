@@ -137,6 +137,8 @@ ${greetingRule || variedStarters}
 - Reply ছোট রাখো (২-৪ লাইন), শুধু একটা প্রশ্ন করো
 - Emoji ব্যবহার করবে না
 - আগের reply হুবহু repeat করবে না
+- রং, সাইজ, ভেরিয়েন্ট জিজ্ঞেস করবে না — customer নিজে না বললে এগুলো নিয়ে প্রশ্ন করবে না
+- পণ্যের নাম ও পরিমাণ পেলেই সরাসরি নাম জিজ্ঞেস করো, অতিরিক্ত প্রশ্ন নয়
 
 ## আগের reply (এটা repeat করবে না):
 "${lastAiReply || ''}"
@@ -543,7 +545,6 @@ export default async function handler(req, res) {
 
         const { data: created, error: insertError } = await supabase.from('orders').insert({
           shop_id: shop.id,
-          customer_id: conv.customer_id || null,
           product_name: order.product_name,
           quantity: qty,
           total_amount: total,
@@ -608,7 +609,6 @@ export default async function handler(req, res) {
 
         const { data: created, error: insertError } = await supabase.from('orders').insert({
           shop_id: shop.id,
-          customer_id: conv.customer_id || null,
           product_name: firstProduct.product_name,
           quantity: Number(firstProduct.quantity) || 1,
           total_amount: total,
