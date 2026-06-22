@@ -83,11 +83,13 @@ async function tryChain(calls) {
   throw new Error('All AI providers failed')
 }
 
-/* Chat / auto-reply: DeepSeek → Groq */
+/* Chat / auto-reply: Groq → Cerebras → Fireworks → DeepSeek */
 export async function generateDeepSeek(prompt) {
   return tryChain([
-    { name: 'deepseek',  key: 'DEEPSEEK_API_KEY',  fn: () => callDeepSeek(prompt) },
     { name: 'groq',      key: 'GROQ_API_KEY',       fn: () => callGroq(prompt) },
+    { name: 'cerebras',  key: 'CEREBRAS_API_KEY',    fn: () => callCerebras(prompt) },
+    { name: 'fireworks', key: 'FIREWORKS_API_KEY',   fn: () => callFireworks(prompt) },
+    { name: 'deepseek',  key: 'DEEPSEEK_API_KEY',    fn: () => callDeepSeek(prompt) },
   ])
 }
 
