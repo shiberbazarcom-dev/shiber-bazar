@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DataTable } from '@/components/admin/DataTable'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Plus, Edit2, Trash2, Upload, Package, Eye, EyeOff, X, ImagePlus, LayoutList } from 'lucide-react'
+import { Plus, Edit2, Trash2, Upload, Package, Eye, EyeOff, X, ImagePlus, LayoutList, Sparkles, CheckCircle } from 'lucide-react'
 
 // @ts-ignore
 const useAuthHook = useAuth
@@ -35,7 +35,7 @@ type Product = {
 }
 
 async function fetchMyProducts(userId: string) {
-  const { data: shops } = await supabase.from('shops').select('id, shop_name').eq('owner_id', userId)
+  const { data: shops } = await supabase.from('shops').select('id, shop_name, categories(name)').eq('owner_id', userId)
   const shopIds = (shops ?? []).map((s: any) => s.id)
   if (!shopIds.length) return { products: [], shops: shops ?? [] }
   const { data, error } = await supabase
@@ -95,6 +95,10 @@ export default function Products() {
 
   const [shopFilter, setShopFilter] = useState('all')
   const imgRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const [autoDescLoading, setAutoDescLoading] = useState(false)
+  const [autoDescDone, setAutoDescDone] = useState(false)
+  const [autoDescCount, setAutoDescCount] = useState(0)
 
   const { data: { products = [], shops = [] } = {}, isLoading } = useQuery({
     queryKey: ['my-products', user?.id],
@@ -265,6 +269,40 @@ export default function Products() {
     } catch { /* silent */ }
     setAiLoading(false)
   }, [])
+
+  /* ─── Bulk AI description generation ─── */
+  async function handleAutoDescribe(shopId: string) {
+    setAutoDescLoading(true)
+    setAutoDescDone(false)
+    try {
+      const shopData = shops.find((s: any) => s.id === shopId)
+      const categoryName = (shopData as any)?.categories?.name || ''
+      const res = await fetch('/api/auto-describe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopId, categoryName }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.count > 0) {
+        setAutoDescCount(data.count)
+        setAutoDescDone(true)
+        qc.invalidateQueries({ queryKey: ['my-products'] })
+      } else if (data.error) {
+        alert('AI বিবরণ তৈরি ব্যর্থ: ' + data.error)
+      }
+    } catch (err: any) {
+      alert('AI বিবরণ তৈরি ব্যর্থ: ' + err.message)
+    } finally {
+      setAutoDescLoading(false)
+    }
+  }
+
+  /* ─── Products missing description ─── */
+  const missingDescProducts = products.filter((p: Product) => !p.description && !p.features)
+  const missingByShop = shops.map((s: any) => ({
+    ...s,
+    missingCount: missingDescProducts.filter((p: Product) => p.shop_id === s.id).length,
+  })).filter((s: any) => s.missingCount > 0)
 
   const filtered = shopFilter === 'all' ? products : products.filter((p: Product) => p.shop_id === shopFilter)
 
@@ -439,6 +477,52 @@ export default function Products() {
         <h1 className="text-2xl font-bold text-gray-900">🛍️ পণ্য ব্যবস্থাপনা</h1>
         <p className="text-sm text-gray-500">মোট {products.length}টি পণ্য</p>
       </div>
+
+      {/* ── AI Auto-describe banner ── */}
+      {!isLoading && missingByShop.length > 0 && !autoDescDone && (
+        <div className="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-4">
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-violet-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-violet-900 text-sm">
+                {missingDescProducts.length}টি পণ্যের বিবরণ ও বৈশিষ্ট্য নেই
+              </p>
+              <p className="text-xs text-violet-700 mt-0.5">
+                AI দিয়ে স্বয়ংক্রিয়ভাবে পণ্যের বিবরণ, বৈশিষ্ট্য তৈরি করতে চান?
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {missingByShop.map((s: any) => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleAutoDescribe(s.id)}
+                    disabled={autoDescLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
+                  >
+                    {autoDescLoading ? (
+                      <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />তৈরি হচ্ছে...</>
+                    ) : (
+                      <><Sparkles className="h-3 w-3" />✨ {s.shop_name} ({s.missingCount}টি পণ্য)</>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Success state ── */}
+      {autoDescDone && (
+        <div className="rounded-2xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+          <p className="text-sm font-semibold text-green-800">
+            ✅ {autoDescCount}টি পণ্যের AI বিবরণ তৈরি হয়েছে! পণ্য সম্পাদনায় দেখুন।
+          </p>
+        </div>
+      )}
 
       {shops.length === 0 ? (
         <Card>
