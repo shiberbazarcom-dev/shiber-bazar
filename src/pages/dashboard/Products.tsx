@@ -482,38 +482,36 @@ export default function Products() {
         <p className="text-sm text-gray-500">মোট {products.length}টি পণ্য</p>
       </div>
 
-      {/* ── AI Auto-describe banner ── */}
+      {/* AI Auto-describe banner */}
       {!isLoading && missingByShop.length > 0 && !autoDescDone && (
         <div className="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-3 sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600" />
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-violet-600" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-violet-900 text-sm">
-                {missingDescProducts.length}টি পণ্যের বিবরণ ও বৈশিষ্ট্য নেই
+                {missingDescProducts.length}টি পণ্যের বিবরণ নেই
               </p>
               <p className="text-xs text-violet-600 mt-0.5 hidden sm:block">
-                Google Gemini AI দিয়ে স্বয়ংক্রিয়ভাবে তৈরি করুন
+                Gemini AI দিয়ে স্বয়ংক্রিয়ভাবে তৈরি করুন
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+            <div className="flex-shrink-0">
               {missingByShop.map((s: any) => (
                 <button
                   key={s.id}
                   onClick={() => handleAutoDescribe(s.id)}
                   disabled={autoDescLoading}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-60"
                   style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
                 >
-                  {autoDescLoading ? (
-                    <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /><span className="hidden sm:inline">তৈরি হচ্ছে...</span><span className="sm:hidden">...</span></>
-                  ) : (
-                    <><Sparkles className="h-3 w-3" /><span>{s.shop_name} - AI বিবরণ তৈরি করুন</span></>
-                  )}
+                  {autoDescLoading
+                    ? <span>তৈরি হচ্ছে...</span>
+                    : <span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />{s.shop_name} - AI বিবরণ</span>
+                  }
                 </button>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
