@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
-import { useConversations, useRealtimeConversations } from '../../hooks/useChat'
+import { useConversations, useRealtimeConversations, syncMessages } from '../../hooks/useChat'
 import ConversationList from '../../components/chat/ConversationList'
 import ChatWindow from '../../components/chat/ChatWindow'
 
@@ -11,8 +12,10 @@ export default function Chat() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const qc = useQueryClient()
   const [selected, setSelected] = useState(null)
   const [showList, setShowList] = useState(true)
+  const lastMsgAtRef = useRef({}) // track last_message_at per conversation to detect new messages
 
   const { data: conversations = [] } = useConversations()
   useRealtimeConversations()
@@ -30,6 +33,21 @@ export default function Chat() {
       if (found) setSelected(found)
     }
   }, [conversationId, conversations]) // eslint-disable-line
+
+  // --- CRITICAL SYNC FIX ---
+  // Conversations realtime is reliable; messages realtime can be missed.
+  // When the active conversation gets a new last_message_at, immediately sync its messages.
+  // This bridges the gap between sidebar updating and chat window updating.
+  useEffect(() => {
+    const activeId = conversationId || selected?.id
+    if (!activeId) return
+    const conv = conversations.find(c => c.id === activeId)
+    if (!conv?.last_message_at) return
+    if (conv.last_message_at !== lastMsgAtRef.current[activeId]) {
+      lastMsgAtRef.current[activeId] = conv.last_message_at
+      syncMessages(qc, activeId)
+    }
+  }, [conversations]) // eslint-disable-line
 
   function handleSelect(conv) {
     setSelected(conv)

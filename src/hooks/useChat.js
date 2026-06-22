@@ -108,8 +108,8 @@ export function useMessages(conversationId) {
     enabled: !!conversationId && !!user,
     staleTime: 0,
     gcTime: 1000 * 60,
-    // Polling fallback: if realtime misses an event, polling catches it within 4s
-    refetchInterval: 4000,
+    // Polling fallback: if realtime misses an event, polling catches it within 2s
+    refetchInterval: 2000,
     refetchIntervalInBackground: false,
   })
 }
@@ -309,6 +309,9 @@ export function useRealtimeConversations() {
           // refetchQueries = immediate fetch (not background like invalidateQueries)
           qc.refetchQueries({ queryKey: ['conversations', user.id] })
           qc.invalidateQueries({ queryKey: ['unread-message-count', user.id] })
+          // Invalidate all active messages queries as a safety net:
+          // conversations table updates reliably; messages realtime can be delayed.
+          qc.invalidateQueries({ queryKey: ['messages'] })
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
