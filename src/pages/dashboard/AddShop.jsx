@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCreateShop } from '../../hooks/useShops'
+import { useCreateShop, useMyShops } from '../../hooks/useShops'
 import { useCategories } from '../../hooks/useCategories'
 import { useAuth } from '../../context/AuthContext'
 import { Input, Textarea, Select } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { isPro } from '../../lib/planUtils'
 import toast from 'react-hot-toast'
+
+const FREE_SHOP_LIMIT = 1
+const PRO_SHOP_LIMIT  = 3
 
 const DAYS = ['শনি','রবি','সোম','মঙ্গল','বুধ','বৃহস্পতি','শুক্র']
 
@@ -14,7 +18,15 @@ export default function AddShop() {
   const navigate = useNavigate()
   const createShop = useCreateShop()
   const { data: categories = [] } = useCategories()
+  const { data: myShops = [] } = useMyShops()
   const [step, setStep] = useState(1)
+
+  // Determine plan from any existing shop (all shops of same owner share same plan)
+  const anyShop = myShops[0]
+  const userIsPro = isPro(anyShop)
+  const userIsBusiness = anyShop?.plan === 'business'
+  const shopLimit = userIsBusiness ? 10 : userIsPro ? PRO_SHOP_LIMIT : FREE_SHOP_LIMIT
+  const shopLimitReached = myShops.length >= shopLimit
 
   const [form, setForm] = useState({
     shop_name: '', description: '', category_id: '', subcategory_id: '',
@@ -30,6 +42,25 @@ export default function AddShop() {
       <p className="text-5xl mb-4">🔐</p>
       <p className="text-xl text-slate-600 mb-4">লগইন করুন</p>
       <Link to="/login"><Button>লগইন করুন</Button></Link>
+    </div>
+  )
+
+  if (shopLimitReached) return (
+    <div className="max-w-md mx-auto py-20 text-center px-4">
+      <p className="text-5xl mb-4">🔒</p>
+      <h2 className="text-lg font-bold text-gray-800 mb-2">দোকানের limit শেষ</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        আপনার current plan-এ সর্বোচ্চ <strong>{shopLimit}টি</strong> দোকান রাখা যাবে।
+        আরো দোকান যোগ করতে upgrade করুন।
+      </p>
+      <div className="flex gap-3 justify-center">
+        <Link to="/dashboard/shops" className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
+          আমার দোকান
+        </Link>
+        <Link to="/pricing" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700">
+          Plan Upgrade করুন
+        </Link>
+      </div>
     </div>
   )
 

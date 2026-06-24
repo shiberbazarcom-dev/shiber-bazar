@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useMyShops } from '../../hooks/useShops'
 import { supabase } from '../../lib/supabase'
+import { isPro, getBroadcastCountThisMonth } from '../../lib/planUtils'
 import toast from 'react-hot-toast'
+
+const FREE_BROADCAST_LIMIT = 2
 
 /* ── fetch unique customers who have ordered from this shop ── */
 async function fetchShopCustomers(shopId) {
@@ -91,6 +95,14 @@ function ComposeBox({ shop, onSent }) {
     queryFn:  () => fetchShopCustomers(shop.id),
   })
 
+  const { data: broadcastCount = 0 } = useQuery({
+    queryKey: ['broadcast-count-month', shop.id],
+    queryFn:  () => getBroadcastCountThisMonth(shop.id),
+    enabled: !isPro(shop),
+  })
+
+  const isLimitReached = !isPro(shop) && broadcastCount >= FREE_BROADCAST_LIMIT
+
   const mutation = useMutation({
     mutationFn: () => sendBroadcast({
       shopId:   shop.id,
@@ -173,6 +185,20 @@ function ComposeBox({ shop, onSent }) {
         </div>
       </div>
 
+      {isLimitReached && (
+        <div className="px-5 py-4 bg-orange-50 border-b border-orange-100 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <span className="text-orange-500 text-lg flex-shrink-0">🔒</span>
+            <p className="text-xs text-orange-800 leading-relaxed">
+              এই মাসের ফ্রি broadcast limit ({FREE_BROADCAST_LIMIT}টি) শেষ। আরো পাঠাতে Pro plan-এ upgrade করুন।
+            </p>
+          </div>
+          <Link to="/pricing" className="flex-shrink-0 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 whitespace-nowrap">
+            Upgrade
+          </Link>
+        </div>
+      )}
+
       {customers.length === 0 && !loadingCustomers && (
         <div className="px-5 py-4 bg-amber-50 border-b border-amber-100 flex items-start gap-3">
           <span className="text-amber-500 text-lg flex-shrink-0">⚠️</span>
@@ -218,9 +244,9 @@ function ComposeBox({ shop, onSent }) {
         </button>
         <button
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !canSend}
+          disabled={mutation.isPending || !canSend || isLimitReached}
           className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-60 transition-colors">
-          {mutation.isPending ? '⏳ পাঠানো হচ্ছে...' : '📤 পাঠান'}
+          {mutation.isPending ? '⏳ পাঠানো হচ্ছে...' : isLimitReached ? '🔒 Limit শেষ' : '📤 পাঠান'}
         </button>
       </div>
     </div>

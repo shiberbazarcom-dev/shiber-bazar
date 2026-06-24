@@ -1,15 +1,29 @@
 import { useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useMyProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, uploadProductImage } from '../../hooks/useProducts'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { isPro, getAiDescCountThisMonth, logAiUsage } from '../../lib/planUtils'
 import toast from 'react-hot-toast'
+
+const FREE_AI_DESC_LIMIT = 10
 
 const GREEN = '#2563EB'
 
-function AiDescBtn({ productName, price, onResult }) {
+function AiDescBtn({ productName, price, onResult, shop }) {
   const [loading, setLoading] = useState(false)
   const run = async () => {
     if (!productName?.trim()) return toast.error('আগে পণ্যের নাম দিন')
+
+    // Check limit for free plan
+    if (shop?.id && !isPro(shop)) {
+      const used = await getAiDescCountThisMonth(shop.id)
+      if (used >= FREE_AI_DESC_LIMIT) {
+        toast.error(`এই মাসের AI description limit (${FREE_AI_DESC_LIMIT}টি) শেষ। Pro-তে upgrade করুন।`)
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/ai', {
@@ -21,6 +35,11 @@ function AiDescBtn({ productName, price, onResult }) {
       if (data.description) {
         onResult(data.description)
         toast.success(`✨ AI লিখেছে! (${data.provider === 'deepseek' ? 'DeepSeek' : 'Gemini'})`)
+        // Log usage for free plan tracking
+        if (shop?.id) {
+          const { data: { user } } = await supabase.auth.getUser()
+          logAiUsage({ shopId: shop.id, userId: user?.id, type: 'product_description' })
+        }
       }
     } catch { toast.error('AI কাজ করেনি') }
     setLoading(false)
@@ -56,7 +75,7 @@ function useMyShops() {
       if (!user) return []
       const { data } = await supabase
         .from('shops')
-        .select('id, shop_name')
+        .select('id, shop_name, plan')
         .eq('owner_id', user.id)
         .order('shop_name')
       return data || []
@@ -238,6 +257,7 @@ export default function Products() {
                     productName={form.name}
                     price={form.price}
                     onResult={(desc) => set('description', desc)}
+                    shop={myShops.find(s => s.id === form.shop_id)}
                   />
                 </div>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)}

@@ -498,13 +498,45 @@ export default async function handler(req, res) {
 
     const { data: shop } = await supabase
       .from('shops')
-      .select('id, shop_name, owner_id, auto_reply_enabled, ai_persona, categories(name)')
+      .select('id, shop_name, owner_id, auto_reply_enabled, ai_persona, plan, categories(name)')
       .eq('id', conv.shop_id)
       .single()
 
     if (!shop) { console.log('[auto-reply] SKIP: shop not found'); return res.status(200).json({ skipped: 'shop not found' }) }
-    console.log(`[auto-reply] shop=${shop.shop_name} auto_reply_enabled=${shop.auto_reply_enabled}`)
+    console.log(`[auto-reply] shop=${shop.shop_name} auto_reply_enabled=${shop.auto_reply_enabled} plan=${shop.plan}`)
     if (!shop.auto_reply_enabled) { console.log('[auto-reply] SKIP: auto_reply_enabled=false'); return res.status(200).json({ skipped: 'disabled' }) }
+
+    // ── Free plan AI chat limit: 100/month ───────────────────────────────────
+    const isFreePlan = !shop.plan || shop.plan === 'free'
+    if (isFreePlan) {
+      const monthStart = new Date()
+      monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+
+      // Get all conversation ids for this shop
+      const { data: shopConvs } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('shop_id', shop.id)
+
+      if (shopConvs?.length) {
+        const convIds = shopConvs.map(c => c.id)
+        const { count: aiCount } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('conversation_id', convIds)
+          .eq('is_ai', true)
+          .gte('created_at', monthStart.toISOString())
+
+        if ((aiCount || 0) >= 100) {
+          console.log(`[auto-reply] SKIP: free plan AI limit reached (${aiCount})`)
+          const limitMsg = 'এই মাসের AI reply limit শেষ হয়েছে। দোকানদার শীঘ্রই সাড়া দেবেন।'
+          await supabase.from('messages').insert({ conversation_id, sender_id: shop.owner_id, content: limitMsg, is_ai: true })
+          await supabase.from('conversations').update({ last_message: limitMsg, last_message_at: new Date().toISOString() }).eq('id', conversation_id)
+          return res.status(200).json({ skipped: 'ai_limit_reached' })
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const { data: products } = await supabase
       .from('products')
