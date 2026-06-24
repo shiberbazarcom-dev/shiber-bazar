@@ -20,12 +20,41 @@ Deno.serve(async (req) => {
     /* ── 1. Fetch conversation + shop ── */
     const { data: conv, error: convErr } = await supabase
       .from('conversations')
-      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona)')
+      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona, plan, plan_expires_at)')
       .eq('id', conversation_id)
       .single()
 
     if (convErr || !conv) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
     if (!conv.shops?.auto_reply_enabled) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
+
+    /* ── 1b. Check plan & AI reply limit for free shops ── */
+    const shop: any = conv.shops
+    const planExpired = shop.plan_expires_at && new Date(shop.plan_expires_at) <= new Date()
+    const isPaidPlan = shop.plan && shop.plan !== 'free' && !planExpired
+
+    const FREE_AI_LIMIT = 50
+    if (!isPaidPlan) {
+      // Get all conversation IDs for this shop
+      const { data: shopConvs } = await supabase
+        .from('conversations').select('id').eq('shop_id', conv.shop_id)
+      const convIds = (shopConvs || []).map((c: any) => c.id)
+
+      const { count: aiCount } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_ai', true)
+        .in('conversation_id', convIds.length ? convIds : [''])
+
+      if ((aiCount ?? 0) >= FREE_AI_LIMIT) {
+        await supabase.from('messages').insert({
+          conversation_id,
+          sender_id: conv.owner_id,
+          content: '🔒 এই দোকানের বিনামূল্যে AI সীমা (৫০টি) শেষ হয়েছে। দোকানদারের সাথে সরাসরি যোগাযোগ করুন।',
+          is_ai: true,
+        })
+        return new Response(JSON.stringify({ skipped: true, reason: 'ai_limit_reached' }), { headers: corsHeaders })
+      }
+    }
 
     /* ── 2. Fetch recent messages ── */
     const { data: messages = [] } = await supabase
