@@ -177,9 +177,14 @@ export default function LandingPageBuilder() {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('shops').select('id, shop_name, owner_id').eq('owner_id', user.id).eq('is_active', true)
+    supabase.from('shops').select('id, shop_name, owner_id, plan, plan_expires_at').eq('owner_id', user.id).eq('is_active', true)
       .then(({ data }) => { if (data) setShops(data) })
   }, [user?.id])
+
+  const currentShop = shops.find(s => s.id === selectedShopId) || shops[0]
+  const planActive = currentShop?.plan && currentShop.plan !== 'free' &&
+    (!currentShop.plan_expires_at || new Date(currentShop.plan_expires_at) > new Date())
+  const isPro = planActive
   const { data: products = [] } = useShopProducts(selectedShopId)
 
   const [pages, setPages] = useState([])
@@ -508,6 +513,39 @@ export default function LandingPageBuilder() {
   }
 
   /* ── List view ── */
+  if (!loading && !isPro) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 max-w-sm w-full text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Pro Feature</h2>
+          <p className="text-sm text-gray-500 mb-1">ল্যান্ডিং পেজ builder শুধুমাত্র</p>
+          <p className="text-sm font-semibold text-blue-600 mb-6">Pro ও Business plan-এ পাওয়া যায়</p>
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-2">
+            {['Facebook প্রমোশনের জন্য custom page', '৬টি professional template', 'AI দিয়ে content তৈরি', 'WhatsApp order form সহ'].map(f => (
+              <div key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] flex items-center justify-center flex-shrink-0">✓</span>
+                {f}
+              </div>
+            ))}
+          </div>
+          <a href="/pricing"
+            className="block w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
+            Plan দেখুন ও Upgrade করুন
+          </a>
+          <p className="text-xs text-gray-400 mt-3">
+            ইতিমধ্যে upgrade করেছেন?{' '}
+            <button onClick={() => window.location.reload()} className="text-blue-500 hover:underline">Refresh করুন</button>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* header */}
