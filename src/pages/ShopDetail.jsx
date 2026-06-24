@@ -395,7 +395,7 @@ export default function ShopDetail() {
                 className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md bg-white"
                 onError={e => { e.target.src = logoUrl }} />
             </div>
-            {shop.verification_status === 'verified' && (
+            {shop.is_verified && (
               <span className="mb-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-700 px-3 py-1.5 rounded-full shadow-sm border border-blue-200"
                 style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)' }}>
                 <VerifiedSeal className="w-4 h-4 text-blue-600" />
@@ -408,14 +408,14 @@ export default function ShopDetail() {
           <div className="mt-2.5">
             <h2 className="font-bold text-xl text-gray-900 leading-tight flex items-center gap-1.5 flex-wrap">
               {shop.shop_name}
-              {shop.verification_status === 'verified' && (
+              {shop.is_verified && (
                 <span className="relative inline-flex flex-shrink-0" title="যাচাইকৃত দোকান">
                   <span className="absolute inset-0 rounded-full bg-blue-400/50 animate-ping" style={{ animationDuration: '2.5s' }} />
                   <VerifiedSeal className="w-5 h-5 text-blue-500 relative" />
                 </span>
               )}
               {(() => {
-                const tierShop = { ...shop, is_verified: shop.verification_status === 'verified' }
+                const tierShop = shop
                 const tier = getShopTier(tierShop)
                 if (!tier) return null
                 return (
