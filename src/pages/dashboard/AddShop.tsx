@@ -140,18 +140,18 @@ export default function AddShop() {
   })
 
   // Check existing shop count + plan
-  const { data: myShopsData = [] } = useQuery({
+  const { data: myShopsData } = useQuery({
     queryKey: ['my-shop-count', user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from('shops').select('id, plan, plan_expires_at')
         .eq('owner_id', user!.id)
-      return data ?? []
+      return (data ?? []) as any[]
     },
     enabled: !!user,
   })
-  const myShopCount = myShopsData.length
-  const anyShop = myShopsData[0] as any
+  const myShopCount = myShopsData?.length ?? 0
+  const anyShop = myShopsData?.[0]
   const planActive = anyShop?.plan && anyShop.plan !== 'free' &&
     (!anyShop.plan_expires_at || new Date(anyShop.plan_expires_at) > new Date())
   const currentPlan = planActive ? (anyShop?.plan || 'free') : 'free'
@@ -355,8 +355,8 @@ export default function AddShop() {
     }
   }
 
-  // Block if limit reached
-  if (myShopCount >= shopLimit) {
+  // Block if limit reached (only after data loads)
+  if (myShopsData !== undefined && myShopCount >= shopLimit) {
     return (
       <div className="max-w-lg mx-auto py-10 text-center px-4">
         <div className="text-6xl mb-4">🏪</div>
