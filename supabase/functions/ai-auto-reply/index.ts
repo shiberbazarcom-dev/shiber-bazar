@@ -12,6 +12,21 @@ Deno.serve(async (req) => {
     const { conversation_id } = await req.json()
     if (!conversation_id) return new Response(JSON.stringify({ error: 'conversation_id required' }), { status: 400, headers: corsHeaders })
 
+    /* ── 0. Verify caller is an authenticated Supabase user ── */
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
+    const callerClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    )
+    const { data: { user: callerUser }, error: authErr } = await callerClient.auth.getUser()
+    if (authErr || !callerUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -20,12 +35,17 @@ Deno.serve(async (req) => {
     /* ── 1. Fetch conversation + shop ── */
     const { data: conv, error: convErr } = await supabase
       .from('conversations')
-      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona, plan, plan_expires_at)')
+      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona, plan, plan_expires_at, ai_reply_count)')
       .eq('id', conversation_id)
       .single()
 
     if (convErr || !conv) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
     if (!conv.shops?.auto_reply_enabled) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
+
+    /* ── 1c. Caller must be the customer of this conversation ── */
+    if (callerUser.id !== conv.customer_id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
+    }
 
     /* ── 1b. Check plan & AI reply limit for free shops ── */
     const shop: any = conv.shops
@@ -34,24 +54,20 @@ Deno.serve(async (req) => {
 
     const FREE_AI_LIMIT = 50
     if (!isPaidPlan) {
-      // Get all conversation IDs for this shop
-      const { data: shopConvs } = await supabase
-        .from('conversations').select('id').eq('shop_id', conv.shop_id)
-      const convIds = (shopConvs || []).map((c: any) => c.id)
+      // Use persistent counter from shops table (not deletable by users)
+      const usedCount: number = (shop as any).ai_reply_count ?? 0
 
-      const { count: aiCount } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_ai', true)
-        .in('conversation_id', convIds.length ? convIds : [''])
-
-      if ((aiCount ?? 0) >= FREE_AI_LIMIT) {
-        await supabase.from('messages').insert({
-          conversation_id,
-          sender_id: conv.owner_id,
-          content: '🔒 এই দোকানের বিনামূল্যে AI সীমা (৫০টি) শেষ হয়েছে। দোকানদারের সাথে সরাসরি যোগাযোগ করুন।',
-          is_ai: true,
-        })
+      if (usedCount >= FREE_AI_LIMIT) {
+        // Only insert locked message once (when exactly at limit, not every time after)
+        if (usedCount === FREE_AI_LIMIT) {
+          await supabase.from('messages').insert({
+            conversation_id,
+            sender_id: conv.owner_id,
+            content: '🔒 এই দোকানের বিনামূল্যে AI সীমা (৫০টি) শেষ হয়েছে। Pro plan-এ upgrade করলে unlimited AI reply পাবেন।',
+            is_ai: true,
+          })
+          await supabase.from('shops').update({ ai_reply_count: FREE_AI_LIMIT + 1 }).eq('id', conv.shop_id)
+        }
         return new Response(JSON.stringify({ skipped: true, reason: 'ai_limit_reached' }), { headers: corsHeaders })
       }
     }
@@ -152,6 +168,12 @@ ${productList}
       .from('conversations')
       .update({ last_message: replyText, last_message_at: new Date().toISOString() })
       .eq('id', conversation_id)
+
+    // Increment persistent counter (only for free plan, tamper-proof)
+    if (!isPaidPlan) {
+      const currentCount: number = (shop as any).ai_reply_count ?? 0
+      await supabase.from('shops').update({ ai_reply_count: currentCount + 1 }).eq('id', conv.shop_id)
+    }
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders })
 
