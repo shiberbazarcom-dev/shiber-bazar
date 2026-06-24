@@ -581,7 +581,10 @@ export default async function handler(req, res) {
     const shopCategory = shop.categories?.name || ''
     const addressingStyle = detectAddressingStyle(msgs, conv.owner_id)
     const ctx = extractOrderContext(msgs, conv.owner_id)
-    const intent = detectIntent(content)
+    const isAwaitingConfirmCheck = /confirm\s*লিখুন|confirm করুন|অর্ডার.*confirm/i.test(lastAiReply)
+    const rawIntent = detectIntent(content)
+    // "ok/জি/হ্যাঁ" should only be treated as confirm when AI was actually asking for it
+    const intent = rawIntent === 'confirm' && !isAwaitingConfirmCheck ? 'general' : rawIntent
 
     console.log(`[auto-reply] intent=${intent} hasConfirmedBefore=${ctx.hasConfirmedBefore} isNewOrderSession=${ctx.isNewOrderSession}`)
 
