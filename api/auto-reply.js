@@ -46,6 +46,8 @@ function detectIntent(content) {
 
   if (/কত\s*(দাম|টাকা|মূল্য|price)|দাম\s*(কত|জানতে|বলুন|কি)|মূল্য\s*(কত|জানতে|তালিকা)|price\s*(list|কত)|কত\s*(করে|পড়বে)|rate\s*কত/.test(t)) return 'price_inquiry'
 
+  if (/কী?\s*আছে|কি\s*আছে|কি\s*কি\s*আছে|কী\s*কী\s*আছে|সব\s*পণ্য|পণ্য\s*(দেখ|লিস্ট|তালিকা|দেখান)|product\s*list|কি\s*পাওয়া\s*যায়|কি\s*পাই|কি\s*নিতে\s*পারি|কী\s*নিতে\s*পারি/.test(t)) return 'product_list'
+
   if (/^(confirm|confirmed|হ্যাঁ|yes|ok|ঠিক আছে|order করুন|অর্ডার করুন|jee|জি|দিন|করুন)\s*$/i.test(t)) return 'confirm'
 
   if (/অভিযোগ|সমস্যা|নষ্ট|ভুল|রাগ|ক্ষতি|ফেরত|refund|complaint|problem|wrong|damaged/.test(t)) return 'complaint'
@@ -254,6 +256,16 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
     : intent === 'delivery_question'
     ? `## DELIVERY QUESTION — ডেলিভারি সম্পর্কে প্রশ্ন
 - যদি জানো তাহলে বলো, না জানলে handoff: true দাও`
+    : intent === 'product_list'
+    ? `## PRODUCT LIST REQUEST — Customer সব পণ্য দেখতে চাইছে
+- সরাসরি পণ্য তালিকা দেখাও, অন্য কোনো প্রশ্ন করবে না
+- Format:
+"আমাদের কাছে আছে:
+• [পণ্য ১] — ৳[মূল্য]
+• [পণ্য ২] — ৳[মূল্য]
+...
+কোনটা নেবেন?"
+- order: null রাখো, order flow শুরু করবে না`
     : variedStarters
 
   return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী।
