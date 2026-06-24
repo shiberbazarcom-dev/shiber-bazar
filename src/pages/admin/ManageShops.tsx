@@ -321,14 +321,40 @@ function useToggleFeatured() {
   })
 }
 
+function useUpdateShopPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, plan, plan_expires_at }: { id: string; plan: string; plan_expires_at: string | null }) => {
+      const { error } = await supabase.from('shops').update({ plan, plan_expires_at }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-shops'] }),
+  })
+}
+
+function useToggleVerified() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, is_verified }: { id: string; is_verified: boolean }) => {
+      const { error } = await supabase.from('shops').update({ is_verified }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-shops'] }),
+  })
+}
+
 export default function ManageShops() {
   const [statusFilter, setStatusFilter] = useState<ShopStatus>('all')
   const [detailShop, setDetailShop] = useState<Shop | null>(null)
+  const [planModal, setPlanModal] = useState<any | null>(null)
+  const [planSaving, setPlanSaving] = useState(false)
 
   const { data: shops = [], isLoading } = useShops(statusFilter)
-  const updateStatus  = useUpdateShopStatus()
-  const deleteShop    = useDeleteShop()
+  const updateStatus   = useUpdateShopStatus()
+  const deleteShop     = useDeleteShop()
   const toggleFeatured = useToggleFeatured()
+  const updatePlan     = useUpdateShopPlan()
+  const toggleVerified = useToggleVerified()
 
   const handleStatus = async (id: string, status: string) => {
     try {
@@ -405,6 +431,40 @@ export default function ManageShops() {
           {row.original.is_featured ? '⭐ Featured' : 'Normal'}
         </button>
       ),
+    },
+    {
+      id: 'plan',
+      header: 'Plan',
+      cell: ({ row }) => {
+        const shop = row.original as any
+        const plan = shop.plan || 'free'
+        const expires = shop.plan_expires_at ? new Date(shop.plan_expires_at) : null
+        const isExpired = expires ? expires < new Date() : false
+        const effectivePlan = (plan !== 'free' && !isExpired) ? plan : 'free'
+        return (
+          <button
+            onClick={() => setPlanModal({
+              id: shop.id,
+              name: shop.shop_name,
+              plan: effectivePlan,
+              plan_expires_at: expires && !isExpired ? expires.toISOString().slice(0, 10) : '',
+              is_verified: shop.is_verified || false,
+            })}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+              effectivePlan === 'business' ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' :
+              effectivePlan === 'pro'      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                                             'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {effectivePlan === 'pro' ? '⭐ Pro' : effectivePlan === 'business' ? '💼 Biz' : 'Free'}
+            {expires && !isExpired && effectivePlan !== 'free' && (
+              <span className="ml-1 opacity-60 font-normal">
+                {expires.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+              </span>
+            )}
+          </button>
+        )
+      },
     },
     {
       accessorKey: 'created_at',
@@ -597,6 +657,109 @@ export default function ManageShops() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Plan Edit Modal */}
+      {planModal && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPlanModal(null)} />
+          <div className="relative bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-3xl shadow-2xl p-6 space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-900">📋 Plan পরিবর্তন</h3>
+              <p className="text-xs text-gray-400 mt-0.5 truncate">{planModal.name}</p>
+            </div>
+
+            {/* Plan select */}
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-2 block">Plan নির্বাচন করুন</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['free', 'pro', 'business'] as const).map(p => (
+                  <button key={p} onClick={() => {
+                    const defaultExpiry = p === 'free' ? '' : (() => {
+                      const d = new Date(); d.setMonth(d.getMonth() + 1)
+                      return d.toISOString().slice(0, 10)
+                    })()
+                    setPlanModal((f: any) => ({ ...f, plan: p, plan_expires_at: f.plan_expires_at || defaultExpiry }))
+                  }}
+                    className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                      planModal.plan === p
+                        ? p === 'business' ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : p === 'pro'      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        :                    'border-gray-400 bg-gray-50 text-gray-700'
+                        : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}>
+                    {p === 'free' ? 'Free' : p === 'pro' ? '⭐ Pro' : '💼 Business'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Expiry date */}
+            {planModal.plan !== 'free' && (
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  মেয়াদ শেষের তারিখ
+                  <span className="ml-1 font-normal text-gray-400">(এর পরে auto Free হবে)</span>
+                </label>
+                <input type="date"
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={planModal.plan_expires_at || ''}
+                  onChange={e => setPlanModal((f: any) => ({ ...f, plan_expires_at: e.target.value }))}
+                  className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400" />
+                {planModal.plan_expires_at && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {(() => {
+                      const days = Math.ceil((new Date(planModal.plan_expires_at).getTime() - Date.now()) / 86400000)
+                      return days > 0 ? `আজ থেকে ${days} দিন পর expire হবে` : 'আজই expire হবে'
+                    })()}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Verified toggle */}
+            <div className="flex items-center justify-between py-2 border-t border-gray-100">
+              <div>
+                <p className="text-xs font-semibold text-gray-700">Verified Badge</p>
+                <p className="text-xs text-gray-400">দোকানে ✓ Verified দেখাবে</p>
+              </div>
+              <button
+                onClick={() => setPlanModal((f: any) => ({ ...f, is_verified: !f.is_verified }))}
+                className={`w-12 h-6 rounded-full transition-colors relative ${planModal.is_verified ? 'bg-green-500' : 'bg-gray-200'}`}>
+                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${planModal.is_verified ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setPlanModal(null)}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                বাতিল
+              </button>
+              <button
+                disabled={planSaving || (planModal.plan !== 'free' && !planModal.plan_expires_at)}
+                onClick={async () => {
+                  setPlanSaving(true)
+                  try {
+                    await updatePlan.mutateAsync({
+                      id: planModal.id,
+                      plan: planModal.plan,
+                      plan_expires_at: planModal.plan_expires_at
+                        ? new Date(planModal.plan_expires_at + 'T23:59:59').toISOString()
+                        : null,
+                    })
+                    await toggleVerified.mutateAsync({ id: planModal.id, is_verified: planModal.is_verified })
+                    toast.success(`✅ ${planModal.name} → ${planModal.plan}`)
+                    setPlanModal(null)
+                  } catch { toast.error('সমস্যা হয়েছে') }
+                  setPlanSaving(false)
+                }}
+                className="flex-1 h-10 rounded-xl text-sm font-bold text-white disabled:opacity-60"
+                style={{ background: planModal.plan === 'business' ? '#7c3aed' : planModal.plan === 'pro' ? '#2563EB' : '#6b7280' }}>
+                {planSaving ? 'সংরক্ষণ...' : '✓ সংরক্ষণ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
