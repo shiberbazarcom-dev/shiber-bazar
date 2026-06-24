@@ -107,10 +107,11 @@ export function useMessages(conversationId) {
     },
     enabled: !!conversationId && !!user,
     staleTime: 0,
-    gcTime: 1000 * 60,
+    gcTime: 0,
     // Polling fallback: if realtime misses an event, polling catches it within 2s
     refetchInterval: 2000,
     refetchIntervalInBackground: false,
+    retry: 3,
   })
 }
 

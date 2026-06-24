@@ -12,6 +12,7 @@ import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { useRealtimeNotifications } from './hooks/useNotifications'
+import { useUpdateLastSeen } from './hooks/useChat'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import AnnouncementBar from './components/ui/AnnouncementBar'
@@ -29,6 +30,7 @@ const ProductDetails   = lazy(() => import('./pages/ProductDetails'))
 const CartPage         = lazy(() => import('./pages/CartPage'))
 const ContactPage      = lazy(() => import('./pages/ContactPage'))
 const PolicyPage       = lazy(() => import('./pages/PolicyPage'))
+const PricingPage      = lazy(() => import('./pages/PricingPage'))
 const Login            = lazy(() => import('./pages/auth/Login'))
 const Register         = lazy(() => import('./pages/auth/Register'))
 const AuthCallback     = lazy(() => import('./pages/auth/AuthCallback'))
@@ -141,6 +143,7 @@ function WhatsAppButton() {
 
 /* Public layout wrapper */
 function PublicLayout({ children, noFooter = false, showWhatsApp = false }) {
+  useUpdateLastSeen()
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
       <AnnouncementBar />
@@ -184,6 +187,7 @@ export default function App() {
             <Route path="/product/:id"    element={<PublicLayout noFooter><ProductDetails /></PublicLayout>} />
             <Route path="/contact"        element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/policy"         element={<PublicLayout><PolicyPage /></PublicLayout>} />
+            <Route path="/pricing"        element={<PublicLayout><PricingPage /></PublicLayout>} />
             <Route path="/cart"           element={<PublicLayout><CartPage /></PublicLayout>} />
 
             {/* ── চাকরির বোর্ড ── */}

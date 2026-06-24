@@ -53,6 +53,9 @@ export default function Chat() {
     setSelected(conv)
     setShowList(false)
     navigate(`/dashboard/chat/${conv.id}`, { replace: true })
+    // Immediately sync messages when selecting a conversation —
+    // gcTime:0 means no cache, so this guarantees fresh data on select
+    syncMessages(qc, conv.id)
   }
 
   function getOtherName(conv) {
