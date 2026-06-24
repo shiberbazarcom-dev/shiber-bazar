@@ -39,16 +39,16 @@ function LockScreen({ title, description, features, requiredPlan = 'pro' }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
           </svg>
         </div>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">{title}</h2>
-        <p className="text-sm text-gray-500 mb-1">{description}</p>
-        <p className={`text-sm font-semibold mb-6 ${isPro ? 'text-blue-600' : 'text-purple-600'}`}>
-          {isPro ? 'Pro ও Business plan-এ পাওয়া যায়' : 'Business plan-এ পাওয়া যায়'}
+        <h2 className="text-lg font-bold text-gray-900 mb-2">{title}</h2>
+        {description && <p className="text-sm text-gray-500 mb-3 leading-relaxed">{description}</p>}
+        <p className={`text-xs font-semibold mb-4 inline-block px-3 py-1 rounded-full ${isPro ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+          {isPro ? '⭐ Pro ও Business plan-এ পাওয়া যায়' : '💼 Business plan-এ পাওয়া যায়'}
         </p>
         {features?.length > 0 && (
-          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-2">
+          <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-2.5">
             {features.map(f => (
-              <div key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center flex-shrink-0 ${isPro ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>✓</span>
+              <div key={f} className="flex items-start gap-2 text-sm text-gray-700 leading-snug">
+                <span className="flex-shrink-0 mt-0.5">{f.match(/^[^\s]/) ? '' : ''}</span>
                 {f}
               </div>
             ))}

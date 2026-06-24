@@ -288,7 +288,7 @@ export default function App() {
               } />
               <Route path="landing-pages" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
-                  <ProGate title="ল্যান্ডিং পেজ — Pro Feature" description="Facebook প্রমোশনের জন্য custom page বানান" features={['৬টি professional template','AI দিয়ে content তৈরি','WhatsApp order form','Custom CTA button']}>
+                  <ProGate title="ল্যান্ডিং পেজ — Pro Feature" description="আপনার পণ্যের জন্য আলাদা সুন্দর পেজ বানান, Facebook-এ শেয়ার করুন — সরাসরি WhatsApp-এ অর্ডার আসবে।" features={['🎨 ৬টি রেডিমেড ডিজাইন টেমপ্লেট — এক ক্লিকে সুন্দর পেজ', '🤖 AI দিয়ে হেডলাইন, বিবরণ ও অফার কপি লিখুন', '📲 পেজে WhatsApp অর্ডার বাটন — কাস্টমার সরাসরি মেসেজ করবে', '🔥 ব্যাজ, ছাড়ের মূল্য, ফিচার লিস্ট দিয়ে পণ্য আকর্ষণীয় করুন', '❓ FAQ সেকশন — কাস্টমারের প্রশ্নের আগেই উত্তর দিন', '🔗 Unique লিংক — Facebook, WhatsApp, SMS যেখানে খুশি শেয়ার করুন']}>
                     <LandingPageBuilder />
                   </ProGate>
                 </ProtectedRoute>
