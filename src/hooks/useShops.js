@@ -351,8 +351,10 @@ export function useUpdateFeaturedMeta() {
 export function useUpdateShopPlan() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, plan }) => {
-      const { error } = await supabase.from('shops').update({ plan }).eq('id', id)
+    mutationFn: async ({ id, plan, plan_expires_at }) => {
+      const updates = { plan }
+      updates.plan_expires_at = plan === 'free' ? null : (plan_expires_at || null)
+      const { error } = await supabase.from('shops').update(updates).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {

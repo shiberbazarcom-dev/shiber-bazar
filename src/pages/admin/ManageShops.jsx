@@ -29,6 +29,8 @@ export default function ManageShops() {
   const updatePlan  = useUpdateShopPlan()
   const toggleVerif = useToggleVerified()
   const [featEdit, setFeatEdit] = useState(null) // { id, priority, until }
+  const [planEdit, setPlanEdit] = useState(null)  // { id, name, plan, plan_expires_at }
+  const [planSaving, setPlanSaving] = useState(false)
 
   const filtered = shops.filter(s => {
     const matchCat      = !catFilter || s.category_id === catFilter
@@ -247,21 +249,27 @@ export default function ManageShops() {
                         )}
                       </td>
                       <td className="table-cell text-center hidden lg:table-cell">
-                        <select
-                          value={shop.plan || 'free'}
-                          onChange={async e => {
-                            await updatePlan.mutateAsync({ id: shop.id, plan: e.target.value })
-                            toast.success(`প্ল্যান → ${e.target.value}`)
-                          }}
-                          className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white cursor-pointer focus:outline-none focus:border-blue-400"
-                          style={{
-                            color: shop.plan === 'pro' ? '#1d4ed8' : shop.plan === 'business' ? '#7c3aed' : '#6b7280',
-                            fontWeight: shop.plan && shop.plan !== 'free' ? 600 : 400,
-                          }}>
-                          <option value="free">Free</option>
-                          <option value="pro">Pro</option>
-                          <option value="business">Business</option>
-                        </select>
+                        <button
+                          onClick={() => setPlanEdit({
+                            id: shop.id,
+                            name: shop.shop_name,
+                            plan: shop.plan || 'free',
+                            plan_expires_at: shop.plan_expires_at
+                              ? shop.plan_expires_at.slice(0, 10)
+                              : '',
+                          })}
+                          className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
+                            shop.plan === 'business' ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' :
+                            shop.plan === 'pro'      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                                                       'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}>
+                          {shop.plan === 'pro' ? '⭐ Pro' : shop.plan === 'business' ? '💼 Business' : 'Free'}
+                          {shop.plan_expires_at && shop.plan !== 'free' && (
+                            <span className="ml-1 opacity-60">
+                              {new Date(shop.plan_expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                        </button>
                       </td>
                       <td className="table-cell text-center hidden lg:table-cell">
                         <button
@@ -331,6 +339,95 @@ export default function ManageShops() {
                 className="flex-1 h-10 rounded-xl text-sm font-bold text-white"
                 style={{ background: '#2563EB' }}>
                 {featMeta.isPending ? 'সংরক্ষণ...' : '✓ সংরক্ষণ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plan Edit Modal */}
+      {planEdit && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPlanEdit(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-900 text-base">📋 Plan পরিবর্তন</h3>
+              <p className="text-xs text-gray-400 mt-0.5 truncate">{planEdit.name}</p>
+            </div>
+
+            {/* Plan select */}
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-2 block">Plan নির্বাচন করুন</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['free', 'pro', 'business'].map(p => (
+                  <button key={p} onClick={() => {
+                    const defaultExpiry = p === 'free' ? '' : (() => {
+                      const d = new Date(); d.setMonth(d.getMonth() + 1)
+                      return d.toISOString().slice(0, 10)
+                    })()
+                    setPlanEdit(f => ({ ...f, plan: p, plan_expires_at: f.plan_expires_at || defaultExpiry }))
+                  }}
+                    className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                      planEdit.plan === p
+                        ? p === 'business' ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : p === 'pro'      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        :                    'border-gray-400 bg-gray-50 text-gray-700'
+                        : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}>
+                    {p === 'free' ? 'Free' : p === 'pro' ? '⭐ Pro' : '💼 Business'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Expiry date — only for paid plans */}
+            {planEdit.plan !== 'free' && (
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  মেয়াদ শেষের তারিখ
+                  <span className="ml-1 font-normal text-gray-400">(এর পরে auto Free হবে)</span>
+                </label>
+                <input type="date"
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={planEdit.plan_expires_at || ''}
+                  onChange={e => setPlanEdit(f => ({ ...f, plan_expires_at: e.target.value }))}
+                  className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400" />
+                {planEdit.plan_expires_at && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {(() => {
+                      const days = Math.ceil((new Date(planEdit.plan_expires_at) - new Date()) / 86400000)
+                      return days > 0 ? `আজ থেকে ${days} দিন পর expire হবে` : 'আজই expire হবে'
+                    })()}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setPlanEdit(null)}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                বাতিল
+              </button>
+              <button
+                disabled={planSaving || (planEdit.plan !== 'free' && !planEdit.plan_expires_at)}
+                onClick={async () => {
+                  setPlanSaving(true)
+                  try {
+                    await updatePlan.mutateAsync({
+                      id: planEdit.id,
+                      plan: planEdit.plan,
+                      plan_expires_at: planEdit.plan_expires_at
+                        ? new Date(planEdit.plan_expires_at + 'T23:59:59').toISOString()
+                        : null,
+                    })
+                    toast.success(`✅ ${planEdit.name} → ${planEdit.plan === 'free' ? 'Free' : planEdit.plan === 'pro' ? 'Pro' : 'Business'}`)
+                    setPlanEdit(null)
+                  } catch { toast.error('সমস্যা হয়েছে') }
+                  setPlanSaving(false)
+                }}
+                className="flex-1 h-10 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-colors"
+                style={{ background: planEdit.plan === 'business' ? '#7c3aed' : planEdit.plan === 'pro' ? '#2563EB' : '#6b7280' }}>
+                {planSaving ? 'সংরক্ষণ...' : '✓ সংরক্ষণ'}
               </button>
             </div>
           </div>

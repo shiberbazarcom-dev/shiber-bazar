@@ -498,7 +498,7 @@ export default async function handler(req, res) {
 
     const { data: shop } = await supabase
       .from('shops')
-      .select('id, shop_name, owner_id, auto_reply_enabled, ai_persona, plan, categories(name)')
+      .select('id, shop_name, owner_id, auto_reply_enabled, ai_persona, plan, plan_expires_at, categories(name)')
       .eq('id', conv.shop_id)
       .single()
 
@@ -507,7 +507,9 @@ export default async function handler(req, res) {
     if (!shop.auto_reply_enabled) { console.log('[auto-reply] SKIP: auto_reply_enabled=false'); return res.status(200).json({ skipped: 'disabled' }) }
 
     // ── Free plan AI chat limit: 100/month ───────────────────────────────────
-    const isFreePlan = !shop.plan || shop.plan === 'free'
+    const planActive = shop.plan && shop.plan !== 'free' &&
+      (!shop.plan_expires_at || new Date(shop.plan_expires_at) > new Date())
+    const isFreePlan = !planActive
     if (isFreePlan) {
       const monthStart = new Date()
       monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)

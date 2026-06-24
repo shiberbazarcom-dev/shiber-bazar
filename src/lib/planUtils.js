@@ -1,8 +1,25 @@
 import { supabase } from './supabase'
 
-/* ─── Plan helpers ─────────────────────────────── */
-export function isPro(shop)      { return shop?.plan === 'pro' || shop?.plan === 'business' }
-export function isBusiness(shop) { return shop?.plan === 'business' }
+/* ─── Plan helpers (expiry-aware) ──────────────── */
+function isPlanActive(shop) {
+  if (!shop?.plan || shop.plan === 'free') return false
+  if (!shop.plan_expires_at) return true  // no expiry = lifetime
+  return new Date(shop.plan_expires_at) > new Date()
+}
+
+export function isPro(shop)      { return isPlanActive(shop) && (shop?.plan === 'pro' || shop?.plan === 'business') }
+export function isBusiness(shop) { return isPlanActive(shop) && shop?.plan === 'business' }
+
+export function planLabel(shop) {
+  if (!isPlanActive(shop)) return 'free'
+  return shop?.plan || 'free'
+}
+
+export function planExpiresInDays(shop) {
+  if (!shop?.plan_expires_at) return null
+  const diff = new Date(shop.plan_expires_at) - new Date()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
 
 /* ─── Monthly window ──────────────────────────── */
 function monthStart() {
