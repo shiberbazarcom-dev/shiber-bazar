@@ -80,7 +80,9 @@ async function uploadImage(file: File, userId: string, type: string): Promise<st
   return publicUrl
 }
 
-const MAX_SHOPS = 3
+const FREE_SHOP_LIMIT = 1
+const PRO_SHOP_LIMIT = 3
+const BUSINESS_SHOP_LIMIT = 10
 
 export default function AddShop() {
   const { user } = useAuthHook()
@@ -137,17 +139,23 @@ export default function AddShop() {
     enabled: !!categoryId,
   })
 
-  // Check existing shop count
-  const { data: myShopCount = 0 } = useQuery({
+  // Check existing shop count + plan
+  const { data: myShopsData = [] } = useQuery({
     queryKey: ['my-shop-count', user?.id],
     queryFn: async () => {
-      const { count } = await supabase
-        .from('shops').select('*', { count: 'exact', head: true })
+      const { data } = await supabase
+        .from('shops').select('id, plan, plan_expires_at')
         .eq('owner_id', user!.id)
-      return count ?? 0
+      return data ?? []
     },
     enabled: !!user,
   })
+  const myShopCount = myShopsData.length
+  const anyShop = myShopsData[0] as any
+  const planActive = anyShop?.plan && anyShop.plan !== 'free' &&
+    (!anyShop.plan_expires_at || new Date(anyShop.plan_expires_at) > new Date())
+  const currentPlan = planActive ? (anyShop?.plan || 'free') : 'free'
+  const shopLimit = currentPlan === 'business' ? BUSINESS_SHOP_LIMIT : currentPlan === 'pro' ? PRO_SHOP_LIMIT : FREE_SHOP_LIMIT
 
   function clearError(key: string) {
     if (errors[key]) setErrors(e => { const n = {...e}; delete n[key]; return n })
@@ -348,17 +356,30 @@ export default function AddShop() {
   }
 
   // Block if limit reached
-  if (myShopCount >= MAX_SHOPS) {
+  if (myShopCount >= shopLimit) {
     return (
       <div className="max-w-lg mx-auto py-10 text-center px-4">
         <div className="text-6xl mb-4">🏪</div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">সীমা পূর্ণ হয়েছে</h2>
-        <p className="text-gray-500 mb-1">আপনি সর্বোচ্চ <strong>{MAX_SHOPS}টি</strong> দোকান তৈরি করতে পারবেন।</p>
+        <p className="text-gray-500 mb-1">
+          {currentPlan === 'free'
+            ? <>Free plan-এ সর্বোচ্চ <strong>১টি</strong> দোকান তৈরি করা যায়।</>
+            : <>আপনার plan-এ সর্বোচ্চ <strong>{shopLimit}টি</strong> দোকান তৈরি করা যায়।</>
+          }
+        </p>
         <p className="text-sm text-gray-400 mb-6">বর্তমানে আপনার {myShopCount}টি দোকান আছে।</p>
-        <button onClick={() => navigate('/dashboard/shops')}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700">
-          ← আমার দোকান দেখুন
-        </button>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate('/dashboard/shops')}
+            className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-50">
+            ← আমার দোকান
+          </button>
+          {currentPlan === 'free' && (
+            <button onClick={() => navigate('/pricing')}
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700">
+              Pro-তে আপগ্রেড করুন
+            </button>
+          )}
+        </div>
       </div>
     )
   }
