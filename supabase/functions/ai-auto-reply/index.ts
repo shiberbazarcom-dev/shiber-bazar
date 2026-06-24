@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
     if (convErr || !conv) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
     if (!conv.shops?.auto_reply_enabled) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
 
-    /* ── 1c. Caller must be the customer of this conversation ── */
-    if (callerUser.id !== conv.customer_id) {
+    /* ── 1c. Caller must be part of this conversation (customer or owner) ── */
+    if (callerUser.id !== conv.customer_id && callerUser.id !== conv.owner_id) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
     }
 
