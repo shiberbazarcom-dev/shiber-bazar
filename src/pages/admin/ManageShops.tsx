@@ -678,7 +678,7 @@ export default function ManageShops() {
                       const d = new Date(); d.setMonth(d.getMonth() + 1)
                       return d.toISOString().slice(0, 10)
                     })()
-                    setPlanModal((f: any) => ({ ...f, plan: p, plan_expires_at: f.plan_expires_at || defaultExpiry }))
+                    setPlanModal((f: any) => ({ ...f, plan: p, plan_expires_at: p === 'free' ? '' : (f.plan_expires_at || defaultExpiry) }))
                   }}
                     className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
                       planModal.plan === p
@@ -742,7 +742,7 @@ export default function ManageShops() {
                     await updatePlan.mutateAsync({
                       id: planModal.id,
                       plan: planModal.plan,
-                      plan_expires_at: planModal.plan_expires_at
+                      plan_expires_at: planModal.plan !== 'free' && planModal.plan_expires_at
                         ? new Date(planModal.plan_expires_at + 'T23:59:59').toISOString()
                         : null,
                     })
