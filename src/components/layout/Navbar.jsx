@@ -309,19 +309,19 @@ export default function Navbar() {
                 অর্ডার ট্র্যাক
               </NavLink>
 
-              <NavLink to="/hatkhula-union" className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
-                ইউনিয়ন
-              </NavLink>
-
 <NavLink to="/pricing" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
-                মূল্য
+                প্যাকেজ
               </NavLink>
 
 <NavLink to="/contact" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 যোগাযোগ
+              </NavLink>
+
+              <NavLink to="/hatkhula-union" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
+                ইউনিয়ন
               </NavLink>
             </nav>
 
@@ -423,7 +423,7 @@ export default function Navbar() {
                 { to: '/services',       label: 'সেবাসমূহ' },
                 { to: '/shops',          label: 'সব দোকান' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
-                { to: '/pricing',     label: 'মূল্য' },
+                { to: '/pricing',     label: 'প্যাকেজ' },
                 { to: '/contact',     label: 'যোগাযোগ' },
                 { to: '/hatkhula-union', label: 'ইউনিয়ন', color: 'emerald' },
               ].map(item => (
