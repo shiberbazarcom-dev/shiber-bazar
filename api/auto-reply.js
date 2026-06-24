@@ -401,9 +401,9 @@ Customer "confirm / হ্যাঁ / জি / ok / ঠিক আছে / order 
 
 ⚠️ CRITICAL RULE — কোন format ব্যবহার করবে:
 - conversation-এ মোট পণ্যের সংখ্যা গণনা করো
-- **ঠিক ১টি পণ্য** → `order` object ব্যবহার করো, `items: null`
-- **২টি বা বেশি পণ্য** → `items` array ব্যবহার করো, `order: null` — প্রতিটি পণ্য আলাদা object হিসেবে দাও
-- ২+ পণ্যে কখনো `order` object ব্যবহার করবে না — করলে দ্বিতীয় পণ্য হারিয়ে যাবে
+- **ঠিক ১টি পণ্য** → \`order\` object ব্যবহার করো, \`items: null\`
+- **২টি বা বেশি পণ্য** → \`items\` array ব্যবহার করো, \`order: null\` — প্রতিটি পণ্য আলাদা object হিসেবে দাও
+- ২+ পণ্যে কখনো \`order\` object ব্যবহার করবে না — করলে দ্বিতীয় পণ্য হারিয়ে যাবে
 
 **সব field required:**
 - প্রতিটি item-এ: product_name, quantity, unit_price, total_amount
@@ -449,7 +449,7 @@ Multiple products (২+ পণ্য — items array, order: null — সব প
 {"reply":"ধন্যবাদ, অর্ডার নিশ্চিত হচ্ছে...","order":null,"items":[{"product_name":"জিংক ট্যাবলেট","quantity":2,"unit_price":35,"total_amount":70},{"product_name":"বেটনোভেট ক্রিম","quantity":2,"unit_price":60,"total_amount":120}],"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","handoff":false,"quick_replies":[]}
 
 ⚠️ unit_price এবং total_amount অবশ্যই দিতে হবে — conversation-এ যে দাম দেখানো হয়েছে সেটাই দাও।
-⚠️ ২+ পণ্যে `order` object ব্যবহার করলে দ্বিতীয় পণ্য হারিয়ে যাবে — সবসময় `items` array ব্যবহার করো।
+⚠️ ২+ পণ্যে \`order\` object ব্যবহার করলে দ্বিতীয় পণ্য হারিয়ে যাবে — সবসময় \`items\` array ব্যবহার করো।
 
 Handoff:
 {"reply":"এই বিষয়ে দোকানদার ভালো বলতে পারবেন, এখনই জানাচ্ছি।","order":null,"items":null,"handoff":true,"quick_replies":[]}`

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import SEO from '../components/SEO'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 const WHATSAPP_NUMBER = '8801310012276'
 
@@ -93,17 +96,20 @@ function featVal(val) {
   return { dot: 'ok', text: val }
 }
 
-function PlanCard({ plan, onUpgrade }) {
+function PlanCard({ plan, onUpgrade, isCurrent }) {
   const isPro = plan.id === 'pro'
   const isBiz = plan.id === 'business'
 
   return (
     <div className={`bg-white rounded-2xl flex flex-col overflow-hidden ${
-      isPro ? 'ring-2 ring-blue-500 shadow-xl' : 'border border-gray-200 shadow-sm'
+      isCurrent ? 'ring-2 ring-green-500 shadow-xl' :
+      isPro     ? 'ring-2 ring-blue-500 shadow-xl'  : 'border border-gray-200 shadow-sm'
     }`}>
-      {isPro
-        ? <div className="bg-blue-600 text-white text-xs font-semibold text-center py-1.5 tracking-wide">{plan.badge}</div>
-        : <div className="h-[26px]" />
+      {isCurrent
+        ? <div className="bg-green-500 text-white text-xs font-semibold text-center py-1.5 tracking-wide">✓ আপনার বর্তমান প্ল্যান</div>
+        : isPro
+          ? <div className="bg-blue-600 text-white text-xs font-semibold text-center py-1.5 tracking-wide">{plan.badge}</div>
+          : <div className="h-[26px]" />
       }
 
       <div className="px-5 pt-5 pb-4">
@@ -116,7 +122,11 @@ function PlanCard({ plan, onUpgrade }) {
         </div>
         <p className="text-xs text-gray-400 mb-4">{plan.sub}</p>
 
-        {plan.ctaModal ? (
+        {isCurrent ? (
+          <div className="w-full text-sm font-semibold px-4 py-2.5 rounded-xl bg-green-50 text-green-700 text-center border border-green-200">
+            ✓ বর্তমান প্ল্যান
+          </div>
+        ) : plan.ctaModal ? (
           <button onClick={() => onUpgrade(plan)}
             className={`w-full text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 ${
               isPro ? 'bg-blue-600 text-white hover:bg-blue-700'
@@ -232,6 +242,26 @@ function UpgradeModal({ plan, onClose }) {
 
 export default function PricingPage() {
   const [upgradeModal, setUpgradeModal] = useState(null)
+  const { user } = useAuth()
+
+  const { data: planData } = useQuery({
+    queryKey: ['my-plan', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('shops')
+        .select('plan, plan_expires_at')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      return data
+    },
+  })
+
+  const planActive = planData?.plan && planData.plan !== 'free' &&
+    (!planData.plan_expires_at || new Date(planData.plan_expires_at) > new Date())
+  const currentPlan = planActive ? (planData?.plan || 'free') : 'free'
 
   return (
     <div className="min-h-screen pb-28 md:pb-16" style={{ background: '#f5f5f5' }}>
@@ -252,7 +282,7 @@ export default function PricingPage() {
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {plans.map(plan => (
-            <PlanCard key={plan.id} plan={plan} onUpgrade={setUpgradeModal} />
+            <PlanCard key={plan.id} plan={plan} onUpgrade={setUpgradeModal} isCurrent={user && currentPlan === plan.id} />
           ))}
         </div>
 
