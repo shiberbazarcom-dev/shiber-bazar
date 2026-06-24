@@ -348,6 +348,34 @@ export function useUpdateFeaturedMeta() {
   })
 }
 
+export function useUpdateShopPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, plan }) => {
+      const { error } = await supabase.from('shops').update({ plan }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-shops'] })
+      qc.invalidateQueries({ queryKey: ['my-shops'] })
+    },
+  })
+}
+
+export function useToggleVerified() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, verified }) => {
+      const { error } = await supabase.from('shops').update({ is_verified: verified }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-shops'] })
+      qc.invalidateQueries({ queryKey: ['shops'] })
+    },
+  })
+}
+
 export function useDeleteShop() {
   const qc = useQueryClient()
   return useMutation({

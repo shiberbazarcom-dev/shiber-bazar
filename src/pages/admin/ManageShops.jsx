@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAdminShops, useApproveShop, useToggleFeatured, useDeleteShop, useUpdateFeaturedMeta } from '../../hooks/useShops'
+import { useAdminShops, useApproveShop, useToggleFeatured, useDeleteShop, useUpdateFeaturedMeta, useUpdateShopPlan, useToggleVerified } from '../../hooks/useShops'
 import { useCategories } from '../../hooks/useCategories'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -26,6 +26,8 @@ export default function ManageShops() {
   const featured    = useToggleFeatured()
   const featMeta    = useUpdateFeaturedMeta()
   const del         = useDeleteShop()
+  const updatePlan  = useUpdateShopPlan()
+  const toggleVerif = useToggleVerified()
   const [featEdit, setFeatEdit] = useState(null) // { id, priority, until }
 
   const filtered = shops.filter(s => {
@@ -184,6 +186,8 @@ export default function ManageShops() {
                   <th className="table-cell text-center hidden lg:table-cell">রেটিং</th>
                   <th className="table-cell text-center">স্ট্যাটাস</th>
                   <th className="table-cell text-center hidden md:table-cell">বিশেষ</th>
+                  <th className="table-cell text-center hidden lg:table-cell">প্ল্যান</th>
+                  <th className="table-cell text-center hidden lg:table-cell">Verified</th>
                   <th className="table-cell text-center">কার্যক্রম</th>
                 </tr>
               </thead>
@@ -241,6 +245,37 @@ export default function ManageShops() {
                             অগ্রাধিকার সেট
                           </button>
                         )}
+                      </td>
+                      <td className="table-cell text-center hidden lg:table-cell">
+                        <select
+                          value={shop.plan || 'free'}
+                          onChange={async e => {
+                            await updatePlan.mutateAsync({ id: shop.id, plan: e.target.value })
+                            toast.success(`প্ল্যান → ${e.target.value}`)
+                          }}
+                          className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white cursor-pointer focus:outline-none focus:border-blue-400"
+                          style={{
+                            color: shop.plan === 'pro' ? '#1d4ed8' : shop.plan === 'business' ? '#7c3aed' : '#6b7280',
+                            fontWeight: shop.plan && shop.plan !== 'free' ? 600 : 400,
+                          }}>
+                          <option value="free">Free</option>
+                          <option value="pro">Pro</option>
+                          <option value="business">Business</option>
+                        </select>
+                      </td>
+                      <td className="table-cell text-center hidden lg:table-cell">
+                        <button
+                          onClick={async () => {
+                            await toggleVerif.mutateAsync({ id: shop.id, verified: !shop.is_verified })
+                            toast.success(shop.is_verified ? 'Verified সরানো হয়েছে' : '✓ Verified করা হয়েছে')
+                          }}
+                          className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
+                            shop.is_verified
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}>
+                          {shop.is_verified ? '✓ Verified' : '— না'}
+                        </button>
                       </td>
                       <td className="table-cell text-center">
                         <div className="flex items-center justify-center gap-1.5">
