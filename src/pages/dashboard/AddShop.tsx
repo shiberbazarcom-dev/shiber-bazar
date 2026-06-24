@@ -392,7 +392,7 @@ export default function AddShop() {
         </button>
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">➕ নতুন দোকান যোগ করুন</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{myShopCount}/{MAX_SHOPS}টি দোকান ব্যবহার হয়েছে</p>
+          <p className="text-xs text-gray-400 mt-0.5">{myShopCount}/{shopLimit}টি দোকান ব্যবহার হয়েছে</p>
         </div>
       </div>
 
