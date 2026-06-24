@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
 /* ── Sidebar link with optional badge ── */
-function SidebarLink({ to, icon, label, end, badge, onClose }) {
+function SidebarLink({ to, icon, label, end, badge, onClose, locked }) {
   return (
     <NavLink
       to={to}
@@ -19,12 +19,19 @@ function SidebarLink({ to, icon, label, end, badge, onClose }) {
         'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
         isActive
           ? 'bg-blue-600 text-white shadow-sm'
-          : 'text-gray-600 hover:bg-gray-100'
+          : locked
+            ? 'text-gray-400 hover:bg-gray-50'
+            : 'text-gray-600 hover:bg-gray-100'
       )}
     >
-      <span className="text-lg w-6 text-center flex-shrink-0">{icon}</span>
+      <span className={cn('text-lg w-6 text-center flex-shrink-0', locked && 'opacity-50')}>{icon}</span>
       <span className="flex-1">{label}</span>
-      {badge > 0 && (
+      {locked && (
+        <span className="ml-auto flex-shrink-0 text-[10px] font-semibold bg-amber-50 text-amber-500 border border-amber-200 rounded-full px-1.5 py-0.5 leading-tight">
+          Pro
+        </span>
+      )}
+      {!locked && badge > 0 && (
         <span className="ml-auto flex-shrink-0 bg-red-500 text-white text-[10px] font-bold
           rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-tight animate-pulse">
           {badge > 99 ? '99+' : badge}
@@ -277,6 +284,22 @@ export default function DashboardLayout({ type = 'user' }) {
 
   const isShopOwner = ['shop_owner', 'market_manager', 'super_admin'].includes(role)
 
+  /* ── Plan query (shop owner only) ── */
+  const { data: planData } = useQuery({
+    queryKey: ['my-plan-sidebar', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('shops').select('plan, plan_expires_at')
+        .eq('owner_id', user.id).limit(1).maybeSingle()
+      return data
+    },
+    enabled: !!user && isShopOwner && type !== 'admin',
+  })
+  const planActive = planData?.plan && planData.plan !== 'free' &&
+    (!planData.plan_expires_at || new Date(planData.plan_expires_at) > new Date())
+  const currentPlan = planActive ? (planData?.plan || 'free') : 'free'
+  const isPro = currentPlan === 'pro' || currentPlan === 'business'
+
   /* ── Badge counts ── */
   const { data: adminStats }     = useOrderStats()        // admin pending count
   const { data: shopOwnerStats } = useShopOrderStats()    // shop owner forwarded count
@@ -481,19 +504,19 @@ export default function DashboardLayout({ type = 'user' }) {
   ]
 
   const ownerLinks = [
-    { to: '/dashboard',              icon: '📊', label: 'ওভারভিউ',        end: true },
-    { to: '/dashboard/shops',        icon: '🏪', label: 'আমার দোকান' },
-    { to: '/dashboard/add-shop',     icon: '➕', label: 'নতুন দোকান' },
-    { to: '/dashboard/products',     icon: '🛍️', label: 'পণ্য আপলোড' },
-    { to: '/dashboard/orders',       icon: '📦', label: 'অর্ডার' },
-    { to: '/dashboard/analytics',     icon: '📈', label: 'অ্যানালিটিক্স' },
-    { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা' },
-    { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ' },
+    { to: '/dashboard',               icon: '📊', label: 'ওভারভিউ',       end: true },
+    { to: '/dashboard/shops',         icon: '🏪', label: 'আমার দোকান' },
+    { to: '/dashboard/add-shop',      icon: '➕', label: 'নতুন দোকান' },
+    { to: '/dashboard/products',      icon: '🛍️', label: 'পণ্য আপলোড' },
+    { to: '/dashboard/orders',        icon: '📦', label: 'অর্ডার' },
+    { to: '/dashboard/analytics',     icon: '📈', label: 'অ্যানালিটিক্স',  pro: true },
+    { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা',   pro: true },
+    { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ',  pro: true },
     { to: '/dashboard/chat',          icon: '💬', label: 'বার্তা' },
-    { to: '/dashboard/broadcast',    icon: '📢', label: 'ব্রডকাস্ট' },
-    { to: '/dashboard/qr-code',      icon: '🔲', label: 'QR কোড' },
-    { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
-    { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
+    { to: '/dashboard/broadcast',     icon: '📢', label: 'ব্রডকাস্ট' },
+    { to: '/dashboard/qr-code',       icon: '🔲', label: 'QR কোড' },
+    { to: '/dashboard/my-services',   icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/profile',       icon: '👤', label: 'প্রোফাইল' },
   ]
 
   const adminLinks = [
@@ -564,11 +587,29 @@ export default function DashboardLayout({ type = 'user' }) {
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.full_name?.[0] || 'U'}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="font-semibold text-gray-800 text-sm truncate">{profile?.full_name}</p>
             <p className="text-xs text-gray-500 truncate">{roleBadge}</p>
           </div>
         </div>
+        {/* Plan badge — shop owner only */}
+        {isShopOwner && type !== 'admin' && (
+          <div className="mt-3">
+            {currentPlan === 'business' ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full">
+                💼 Business Plan
+              </span>
+            ) : currentPlan === 'pro' ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
+                ⭐ Pro Plan
+              </span>
+            ) : (
+              <a href="/pricing" className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                Free Plan · Upgrade করুন →
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Nav */}
@@ -581,6 +622,7 @@ export default function DashboardLayout({ type = 'user' }) {
               key={link.to}
               {...link}
               badge={getBadge(link.to)}
+              locked={link.pro && !isPro}
               onClose={() => setSidebarOpen(false)}
             />
           )
