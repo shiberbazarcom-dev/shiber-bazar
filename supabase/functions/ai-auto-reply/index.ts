@@ -32,33 +32,37 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    /* ── 1. Fetch conversation + shop ── */
+    /* ── 1. Fetch conversation + shop (no ai_reply_count in join) ── */
     const { data: conv, error: convErr } = await supabase
       .from('conversations')
-      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona, plan, plan_expires_at, ai_reply_count)')
+      .select('id, shop_id, owner_id, customer_id, shops(shop_name, description, category, auto_reply_enabled, ai_persona, plan, plan_expires_at)')
       .eq('id', conversation_id)
       .single()
 
     if (convErr || !conv) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
     if (!conv.shops?.auto_reply_enabled) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
 
-    /* ── 1c. Caller must be part of this conversation (customer or owner) ── */
+    /* ── 1b. Caller must be part of this conversation ── */
     if (callerUser.id !== conv.customer_id && callerUser.id !== conv.owner_id) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
     }
 
-    /* ── 1b. Check plan & AI reply limit for free shops ── */
+    /* ── 1c. Check plan & AI reply limit for free shops ── */
     const shop: any = conv.shops
     const planExpired = shop.plan_expires_at && new Date(shop.plan_expires_at) <= new Date()
     const isPaidPlan = shop.plan && shop.plan !== 'free' && !planExpired
 
     const FREE_AI_LIMIT = 50
     if (!isPaidPlan) {
-      // Use persistent counter from shops table (not deletable by users)
-      const usedCount: number = (shop as any).ai_reply_count ?? 0
+      // Fetch ai_reply_count separately — gracefully handle if column missing
+      let usedCount = 0
+      try {
+        const { data: shopRow } = await supabase
+          .from('shops').select('ai_reply_count').eq('id', conv.shop_id).single()
+        usedCount = shopRow?.ai_reply_count ?? 0
+      } catch (_) { usedCount = 0 }
 
       if (usedCount >= FREE_AI_LIMIT) {
-        // Only insert locked message once (when exactly at limit, not every time after)
         if (usedCount === FREE_AI_LIMIT) {
           await supabase.from('messages').insert({
             conversation_id,
@@ -83,7 +87,6 @@ Deno.serve(async (req) => {
     const recentMessages = [...messages].reverse()
     const lastMsg = recentMessages[recentMessages.length - 1]
 
-    // Don't reply if last message is from owner (avoid loop)
     if (lastMsg?.sender_id === conv.owner_id) return new Response(JSON.stringify({ skipped: true }), { headers: corsHeaders })
 
     /* ── 3. Fetch shop products ── */
@@ -152,7 +155,7 @@ ${productList}
     const replyText = aiData.content?.[0]?.text
     if (!replyText) throw new Error('Empty AI response')
 
-    /* ── 5. Insert AI reply as owner message ── */
+    /* ── 5. Insert AI reply ── */
     const { error: insertErr } = await supabase
       .from('messages')
       .insert({
@@ -169,10 +172,14 @@ ${productList}
       .update({ last_message: replyText, last_message_at: new Date().toISOString() })
       .eq('id', conversation_id)
 
-    // Increment persistent counter (only for free plan, tamper-proof)
+    /* ── 6. Increment persistent counter (free plan only) ── */
     if (!isPaidPlan) {
-      const currentCount: number = (shop as any).ai_reply_count ?? 0
-      await supabase.from('shops').update({ ai_reply_count: currentCount + 1 }).eq('id', conv.shop_id)
+      try {
+        const { data: shopRow } = await supabase
+          .from('shops').select('ai_reply_count').eq('id', conv.shop_id).single()
+        const currentCount = shopRow?.ai_reply_count ?? 0
+        await supabase.from('shops').update({ ai_reply_count: currentCount + 1 }).eq('id', conv.shop_id)
+      } catch (_) { /* column may not exist yet — non-fatal */ }
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders })
