@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import SEO from '../components/SEO'
+
+const WHATSAPP_NUMBER = '8801310012276'
 
 const plans = [
   {
@@ -34,7 +37,7 @@ const plans = [
     period: '/ মাস',
     sub: 'ব্যবসা বাড়াতে',
     cta: 'প্রো শুরু করুন',
-    ctaTo: '/register',
+    ctaModal: true,
     ctaStyle: 'bg-blue-600 text-white hover:bg-blue-700',
     badge: 'সবচেয়ে জনপ্রিয়',
     features: [
@@ -60,7 +63,7 @@ const plans = [
     period: '/ মাস',
     sub: 'বড় ব্যবসার জন্য',
     cta: 'বিজনেস শুরু করুন',
-    ctaTo: '/register',
+    ctaModal: true,
     ctaStyle: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
     features: [
       { text: '১০টি দোকান', ok: true },
@@ -113,6 +116,81 @@ function Cross() {
   )
 }
 
+function UpgradeModal({ plan, onClose }) {
+  const msg = encodeURIComponent(
+    `আসসালামু আলাইকুম! আমি শিবের বাজারে *${plan?.name}* Plan নিতে চাই (${plan?.price}${plan?.period})। আমার সাথে যোগাযোগ করুন।`
+  )
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Sheet — slides up on mobile, centered on desktop */}
+      <div className="relative w-full sm:max-w-sm bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden animate-slideUp">
+
+        {/* Green header */}
+        <div className="bg-gradient-to-r from-[#25D366] to-[#128C7E] px-6 pt-8 pb-6 text-white text-center">
+          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.122 1.533 5.855L.057 23.882a.5.5 0 0 0 .61.61l6.086-1.458A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.89 0-3.663-.522-5.176-1.431l-.372-.22-3.853.923.941-3.786-.242-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{plan?.name} Plan</h2>
+          <p className="text-white/80 text-sm">WhatsApp-এ যোগাযোগ করুন</p>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {/* Price chip */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl font-bold text-gray-900">{plan?.price}</span>
+            <span className="text-sm text-gray-400">{plan?.period}</span>
+            <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full ml-1">/ প্রতি মাস</span>
+          </div>
+
+          {/* Steps */}
+          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+            {[
+              { n: '১', text: 'নিচের বাটনে click করুন' },
+              { n: '২', text: 'WhatsApp-এ message পাঠান' },
+              { n: '৩', text: 'bKash/Nagad-এ payment করুন' },
+              { n: '৪', text: '২৪ ঘণ্টার মধ্যে plan active হবে' },
+            ].map(s => (
+              <div key={s.n} className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s.n}</span>
+                <span className="text-sm text-gray-700">{s.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* WhatsApp CTA */}
+          <a href={waLink} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all active:scale-95"
+            style={{ background: 'linear-gradient(135deg,#25D366,#128C7E)' }}>
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white flex-shrink-0">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.122 1.533 5.855L.057 23.882a.5.5 0 0 0 .61.61l6.086-1.458A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.89 0-3.663-.522-5.176-1.431l-.372-.22-3.853.923.941-3.786-.242-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+            WhatsApp-এ যোগাযোগ করুন
+          </a>
+
+          <p className="text-center text-xs text-gray-400">
+            অথবা সরাসরি call করুন:{' '}
+            <a href="tel:+8801310012276" className="text-blue-600 font-semibold">01310-012276</a>
+          </p>
+
+          <button onClick={onClose}
+            className="w-full py-2.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            পরে করব
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CellValue({ val, highlight }) {
   const base = `px-4 py-3 text-center text-sm flex items-center justify-center ${highlight ? 'bg-blue-50/60' : ''}`
   if (val === true) return (
@@ -133,6 +211,8 @@ function CellValue({ val, highlight }) {
 }
 
 export default function PricingPage() {
+  const [upgradeModal, setUpgradeModal] = useState(null) // plan object
+
   return (
     <div className="min-h-screen pb-28 md:pb-16" style={{ background: '#f5f5f5' }}>
       <SEO title="মূল্য তালিকা — শিবের বাজার" description="শিবের বাজারের ফ্রি, প্রো ও বিজনেস প্ল্যানের বিস্তারিত মূল্য তালিকা।" />
@@ -167,10 +247,18 @@ export default function PricingPage() {
                 </div>
                 <p className="text-xs text-gray-400 mb-6">{plan.sub}</p>
 
-                <Link to={plan.ctaTo}
-                  className={`block text-center text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors mb-6 ${plan.ctaStyle}`}>
-                  {plan.cta}
-                </Link>
+                {plan.ctaModal ? (
+                  <button
+                    onClick={() => setUpgradeModal(plan)}
+                    className={`w-full text-center text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors mb-6 ${plan.ctaStyle}`}>
+                    {plan.cta}
+                  </button>
+                ) : (
+                  <Link to={plan.ctaTo}
+                    className={`block text-center text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors mb-6 ${plan.ctaStyle}`}>
+                    {plan.cta}
+                  </Link>
+                )}
 
                 <ul className="space-y-2.5 flex-1">
                   {plan.features.map((f, i) => (
@@ -305,6 +393,10 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {upgradeModal && (
+        <UpgradeModal plan={upgradeModal} onClose={() => setUpgradeModal(null)} />
+      )}
     </div>
   )
 }
