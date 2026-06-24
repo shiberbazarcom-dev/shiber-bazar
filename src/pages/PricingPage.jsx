@@ -113,6 +113,25 @@ function Cross() {
   )
 }
 
+function CellValue({ val, highlight }) {
+  const base = `px-4 py-3 text-center text-sm flex items-center justify-center ${highlight ? 'bg-blue-50/60' : ''}`
+  if (val === true) return (
+    <div className={base}>
+      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+  )
+  if (val === false) return (
+    <div className={base}>
+      <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </div>
+  )
+  return <div className={`${base} font-medium text-gray-700`}>{val}</div>
+}
+
 export default function PricingPage() {
   return (
     <div className="min-h-screen pb-28 md:pb-16" style={{ background: '#f5f5f5' }}>
@@ -164,6 +183,104 @@ export default function PricingPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Comparison table */}
+        <div className="mt-12">
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-2">সব features তুলনা করুন</h2>
+          <p className="text-sm text-gray-400 text-center mb-8">কোন plan-এ কী আছে — বিস্তারিত</p>
+
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            {/* Sticky header */}
+            <div className="grid grid-cols-4 border-b border-gray-100 bg-gray-50">
+              <div className="p-4" />
+              <div className="p-4 text-center">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">ফ্রি</p>
+                <p className="text-lg font-bold text-gray-900">৳০</p>
+              </div>
+              <div className="p-4 text-center bg-blue-50">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">প্রো</p>
+                <p className="text-lg font-bold text-blue-700">৳৪৯৯</p>
+              </div>
+              <div className="p-4 text-center">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">বিজনেস</p>
+                <p className="text-lg font-bold text-gray-900">৳৯৯৯</p>
+              </div>
+            </div>
+
+            {[
+              {
+                section: 'দোকান ও পণ্য',
+                rows: [
+                  { label: 'দোকানের সংখ্যা',           free: '১টি',        pro: '৩টি',        biz: '১০টি' },
+                  { label: 'পণ্যের সংখ্যা',             free: 'Unlimited',  pro: 'Unlimited',  biz: 'Unlimited' },
+                  { label: 'Bulk product import (Excel)', free: false,       pro: false,        biz: true },
+                  { label: 'Verified badge',             free: false,        pro: true,         biz: true },
+                  { label: 'Featured listing',           free: false,        pro: true,         biz: true },
+                  { label: 'Custom shop URL',            free: false,        pro: false,        biz: true },
+                ],
+              },
+              {
+                section: 'AI সুবিধা',
+                rows: [
+                  { label: 'AI chat reply',              free: 'মাসে ১০০টি', pro: 'Unlimited',  biz: 'Unlimited' },
+                  { label: 'AI product description',     free: 'মাসে ১০টি', pro: 'Unlimited',  biz: 'Unlimited' },
+                  { label: 'AI landing page content',    free: 'মাসে ৫টি',  pro: 'Unlimited',  biz: 'Unlimited' },
+                  { label: 'AI conversation analytics',  free: false,        pro: false,        biz: true },
+                ],
+              },
+              {
+                section: 'অর্ডার ও নোটিফিকেশন',
+                rows: [
+                  { label: 'WhatsApp order notification', free: true,        pro: true,         biz: true },
+                  { label: 'SMS order notification',     free: false,        pro: false,        biz: true },
+                  { label: 'Invoice PDF',                free: false,        pro: true,         biz: true },
+                  { label: 'Order tracking',             free: true,         pro: true,         biz: true },
+                ],
+              },
+              {
+                section: 'মার্কেটিং ও Analytics',
+                rows: [
+                  { label: 'Broadcast',                  free: 'মাসে ২টি',  pro: 'Unlimited',  biz: 'Unlimited' },
+                  { label: 'Analytics',                  free: 'Basic',     pro: 'Advanced',   biz: 'Advanced' },
+                  { label: 'Landing page builder',       free: true,        pro: true,         biz: true },
+                  { label: 'QR কোড',                    free: true,        pro: true,         biz: true },
+                ],
+              },
+              {
+                section: 'অ্যাকাউন্টিং',
+                rows: [
+                  { label: 'হিসাবের খাতা',              free: 'Basic',     pro: 'Full',       biz: 'Full' },
+                  { label: 'Excel export',               free: false,       pro: true,         biz: true },
+                  { label: 'Monthly report',             free: false,       pro: true,         biz: true },
+                ],
+              },
+              {
+                section: 'সাপোর্ট',
+                rows: [
+                  { label: 'Customer support',           free: 'Community', pro: 'Email',      biz: 'Priority' },
+                ],
+              },
+            ].map(group => (
+              <div key={group.section}>
+                {/* Section header */}
+                <div className="grid grid-cols-4 bg-gray-50 border-t border-gray-100">
+                  <div className="col-span-4 px-4 py-2.5">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{group.section}</span>
+                  </div>
+                </div>
+                {/* Rows */}
+                {group.rows.map((row, i) => (
+                  <div key={i} className="grid grid-cols-4 border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <div className="px-4 py-3 text-sm text-gray-700">{row.label}</div>
+                    <CellValue val={row.free} />
+                    <CellValue val={row.pro} highlight />
+                    <CellValue val={row.biz} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Contact note */}
