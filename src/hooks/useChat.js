@@ -100,10 +100,10 @@ export function useMessages(conversationId) {
         .from('messages')
         .select('*, sender:sender_id ( id, full_name ), quick_replies')
         .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(100)
       if (error) throw error
-      return data || []
+      return (data || []).reverse()
     },
     enabled: !!conversationId && !!user,
     staleTime: 0,
@@ -121,9 +121,9 @@ export async function syncMessages(qc, conversationId) {
     .from('messages')
     .select('*, sender:sender_id ( id, full_name ), quick_replies')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(100)
-  if (data) qc.setQueryData(['messages', conversationId], data)
+  if (data) qc.setQueryData(['messages', conversationId], data.reverse())
 }
 
 /* ── Send a message ── */
