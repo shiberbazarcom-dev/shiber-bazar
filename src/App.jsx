@@ -58,6 +58,8 @@ const ServiceDirectoryAdmin = lazy(() => import('./pages/admin/ServiceDirectory'
 /* ── Customer Account ── */
 const AccountPage      = lazy(() => import('./pages/account/AccountPage'))
 
+import { ProGate } from './components/ProGate'
+
 /* ── Shop Owner / User Dashboard ── */
 const DashboardOverview = lazy(() => import('./pages/dashboard/Overview'))
 const MyShops           = lazy(() => import('./pages/dashboard/MyShops'))
@@ -259,10 +261,12 @@ export default function App() {
                 </ProtectedRoute>
               } />
               {/* Services — any logged-in user */}
-              {/* Analytics — shop owner only */}
+              {/* Analytics — Pro only */}
               <Route path="analytics" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
-                  <ShopAnalytics />
+                  <ProGate title="Analytics — Pro Feature" description="দোকানের বিস্তারিত পরিসংখ্যান দেখুন" features={['দৈনিক অর্ডার চার্ট','সেরা পণ্য তালিকা','বিক্রয় বিশ্লেষণ','অর্ডার status breakdown']}>
+                    <ShopAnalytics />
+                  </ProGate>
                 </ProtectedRoute>
               } />
               {/* Chat — any logged-in user */}
@@ -277,12 +281,16 @@ export default function App() {
               <Route path="my-services" element={<MyServices />} />
               <Route path="hisaber-khata" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
-                  <HisaberKhata />
+                  <ProGate title="হিসাবের খাতা — Pro Feature" description="গ্রাহকের বাকি ও লেনদেনের হিসাব রাখুন" features={['গ্রাহকভিত্তিক বাকির হিসাব','লেনদেন entry ও ইতিহাস','মোট পাওনা overview','Excel export (Business)']}>
+                    <HisaberKhata />
+                  </ProGate>
                 </ProtectedRoute>
               } />
               <Route path="landing-pages" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
-                  <LandingPageBuilder />
+                  <ProGate title="ল্যান্ডিং পেজ — Pro Feature" description="Facebook প্রমোশনের জন্য custom page বানান" features={['৬টি professional template','AI দিয়ে content তৈরি','WhatsApp order form','Custom CTA button']}>
+                    <LandingPageBuilder />
+                  </ProGate>
                 </ProtectedRoute>
               } />
             </Route>
