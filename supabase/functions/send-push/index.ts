@@ -53,30 +53,23 @@ async function buildVapidJwt(audience: string, subject: string, privateKeyB64: s
   return `${signingInput}.${sigB64}`
 }
 
-/* ── Send push to one subscription endpoint ── */
+/* ── Send ping push (no body — avoids RFC 8291 encryption complexity) ── */
 async function sendWebPush(
   endpoint: string,
   vapidPublicKey: string,
   vapidPrivateKey: string,
-  payload?: object,
 ): Promise<Response> {
   const url      = new URL(endpoint)
   const audience = `${url.protocol}//${url.host}`
   const jwt      = await buildVapidJwt(audience, 'mailto:admin@shiberbazar.com', vapidPrivateKey)
 
-  const headers: Record<string, string> = {
-    'TTL': '86400',
-    'Authorization': `vapid t=${jwt},k=${vapidPublicKey}`,
-  }
-
-  let body: BodyInit | undefined
-  if (payload) {
-    body = JSON.stringify(payload)
-    headers['Content-Type'] = 'application/json'
-    headers['Content-Encoding'] = 'aesgcm'
-  }
-
-  return fetch(endpoint, { method: 'POST', headers, body })
+  return fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'TTL': '86400',
+      'Authorization': `vapid t=${jwt},k=${vapidPublicKey}`,
+    },
+  })
 }
 
 /* ── Push to all subscriptions of given user IDs ── */
@@ -96,7 +89,7 @@ async function pushToUsers(
 
   const results = await Promise.allSettled(
     subs.map(async (sub: { endpoint: string; user_id: string }) => {
-      const res = await sendWebPush(sub.endpoint, vapidPublic, vapidPrivate, payload)
+      const res = await sendWebPush(sub.endpoint, vapidPublic, vapidPrivate)
       if (res.status === 410) {
         await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
       }

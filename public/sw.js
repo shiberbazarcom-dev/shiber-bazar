@@ -65,9 +65,9 @@ self.addEventListener('push', e => {
     tag:   'shiber-bazar',
   }
   try {
-    if (e.data) {
-      const parsed = e.data.json()
-      data = { ...data, ...parsed }
+    if (e.data && e.data.text()) {
+      const parsed = JSON.parse(e.data.text())
+      if (parsed && typeof parsed === 'object') data = { ...data, ...parsed }
     }
   } catch {}
 
