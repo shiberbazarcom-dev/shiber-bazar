@@ -20,6 +20,15 @@ function money(n) {
   return 'BDT ' + Number(n || 0).toLocaleString('en-IN')
 }
 
+// Use total_amount if set, otherwise sum from order_items
+function orderTotal(o) {
+  const t = Number(o.total_amount || 0)
+  if (t > 0) return t
+  return (o.order_items || []).reduce(
+    (s, item) => s + Number(item.unit_price || 0) * Number(item.quantity || 1), 0
+  )
+}
+
 function shortDate(iso) {
   if (!iso) return '-'
   const d = new Date(iso)
@@ -43,7 +52,7 @@ export function downloadSalesReportPdf({ orders, shopName, month, year }) {
 
   const done     = orders.filter(o => ['delivered','shipped','processing','confirmed'].includes(o.status))
   const cancelled = orders.filter(o => ['cancelled','rejected'].includes(o.status))
-  const revenue  = done.reduce((s, o) => s + Number(o.total_amount || 0), 0)
+  const revenue  = done.reduce((s, o) => s + orderTotal(o), 0)
   const avg      = done.length ? revenue / done.length : 0
 
   // ── HEADER ──────────────────────────────────────────────────────────
@@ -119,7 +128,7 @@ export function downloadSalesReportPdf({ orders, shopName, month, year }) {
     clean(o.customer_name),
     clean(o.customer_phone),
     STATUS[o.status] || clean(o.status),
-    money(o.total_amount),
+    money(orderTotal(o)),
   ])
 
   autoTable(doc, {

@@ -121,10 +121,12 @@ export default function ShopOrders() {
       if (!shopIds.length) { toast.error('কোনো দোকান পাওয়া যায়নি'); return }
 
       // UTC-safe month range: fetch full month then filter client-side
+      // gt('created_at', '2000-01-01') forces a fresh request, bypassing any PostgREST cache
       const { data: rawOrders, error } = await supabase
         .from('orders')
         .select('*, shops(shop_name)')
         .in('shop_id', shopIds)
+        .gt('created_at', '2000-01-01')
         .order('created_at', { ascending: false })
 
       if (error) throw error
