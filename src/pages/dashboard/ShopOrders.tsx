@@ -342,14 +342,13 @@ export default function ShopOrders() {
               const pending = isPending(o)
               const nexts = cfg?.next ?? []
               return (
-                <div key={o.id} className="bg-white rounded-xl border shadow-sm p-4 space-y-2.5">
+                <div
+                  key={o.id}
+                  className="bg-white rounded-xl border shadow-sm p-4 space-y-2.5 cursor-pointer active:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedOrder(o)}
+                >
                   <div className="flex items-start justify-between gap-2">
-                    <button
-                      className="text-blue-600 font-bold text-sm hover:underline text-left"
-                      onClick={() => setSelectedOrder(o)}
-                    >
-                      {o.order_number}
-                    </button>
+                    <span className="text-blue-600 font-bold text-sm">{o.order_number}</span>
                     <Badge variant={cfg?.variant} className="text-xs shrink-0">{cfg?.label || o.status}</Badge>
                   </div>
                   {pending ? (
@@ -379,7 +378,7 @@ export default function ShopOrders() {
                   )}
                   <p className="text-xs text-gray-400 pt-0.5">{new Date(o.created_at).toLocaleDateString('bn-BD')}</p>
                   {!pending && nexts.length > 0 && (
-                    <div className="flex gap-2 pt-1 flex-wrap">
+                    <div className="flex gap-2 pt-1 flex-wrap" onClick={e => e.stopPropagation()}>
                       {nexts.slice(0, 2).map(ns => {
                         const isReject = ns === 'rejected' || ns === 'cancelled'
                         return (
