@@ -1,25 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  useNotifications, 
-  useUnreadNotificationCount, 
-  useMarkNotificationRead, 
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationRead,
   useMarkAllNotificationsRead,
-  useRealtimeNotifications 
 } from '../hooks/useNotifications'
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
-  
+
   const { data: notifications = [], isError: notifError } = useNotifications()
   const { data: unreadCount = 0 } = useUnreadNotificationCount()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
 
-  // ALL hooks must be called unconditionally — Rules of Hooks
-  // Subscribe to real-time updates (no-ops gracefully if table missing)
-  useRealtimeNotifications()
+  // useRealtimeNotifications is already called in App.jsx — not needed here
 
   // Close dropdown when clicking outside
   useEffect(() => {
