@@ -1,10 +1,14 @@
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
+// Vercel env vars: VAPID_PUBLIC_KEY or VITE_VAPID_PUBLIC_KEY (whichever is set)
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  || process.env.VITE_VAPID_PUBLIC_KEY
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VITE_VAPID_PRIVATE_KEY
+
 webpush.setVapidDetails(
   'mailto:admin@shiberbazar.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
+  VAPID_PUBLIC,
+  VAPID_PRIVATE,
 )
 
 /**
@@ -12,7 +16,7 @@ webpush.setVapidDetails(
  * payload: { title, body, url, tag }
  */
 export async function sendPushToUser(userId, payload) {
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return
 
   const supabase = createClient(
     process.env.SUPABASE_URL,
