@@ -114,55 +114,76 @@ function LpCard({ lp, onEdit, onDelete, onToggle }) {
   const tpl = TEMPLATES.find(t => t.id === lp.template_id) || TEMPLATES[0]
   const url = `/lp/${lp.slug}`
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <div className="flex items-start gap-3">
-        <div className="text-2xl">{tpl.preview}</div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-800 truncate">{lp.title || '(শিরোনাম নেই)'}</p>
-          <p className="text-xs text-gray-400 truncate">{lp.product_name || '—'}</p>
-          <p className="text-xs text-blue-500 truncate mt-0.5">{url}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* colored top bar */}
+      <div className="h-1.5 w-full" style={{ background: tpl.color }} />
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {/* template color dot */}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+            style={{ background: tpl.color + '18' }}>
+            {tpl.preview}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-bold text-gray-900 truncate">{lp.title || '(শিরোনাম নেই)'}</p>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                lp.is_published ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'
+              }`}>
+                {lp.is_published ? '🟢 লাইভ' : '⏳ ড্রাফট'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 truncate mt-0.5">{lp.product_name || '—'}</p>
+            <p className="text-[11px] text-blue-500 truncate mt-0.5 font-mono">{url}</p>
+          </div>
         </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-          lp.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-        }`}>
-          {lp.is_published ? 'লাইভ' : 'ড্রাফট'}
-        </span>
-      </div>
-      <div className="flex gap-2 mt-3">
-        <button onClick={() => onEdit(lp)}
-          className="flex-1 py-1.5 rounded-xl bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100">
-          ✏️ এডিট
-        </button>
-        <button onClick={() => onToggle(lp)}
-          className={`flex-1 py-1.5 rounded-xl text-xs font-bold ${
-            lp.is_published
-              ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
-              : 'bg-green-50 text-green-600 hover:bg-green-100'
-          }`}>
-          {lp.is_published ? '⏸ আনপাবলিশ' : '🚀 পাবলিশ'}
-        </button>
-        <a href={url} target="_blank" rel="noreferrer"
-          className="w-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-        <button onClick={() => onDelete(lp.id)}
-          className="w-9 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-100">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
 
-      {/* copy link */}
-      {lp.is_published && (
-        <button
-          onClick={() => { navigator.clipboard.writeText(window.location.origin + url); toast.success('লিঙ্ক কপি হয়েছে!') }}
-          className="w-full mt-2 py-1.5 rounded-xl bg-gray-50 text-gray-500 text-xs hover:bg-gray-100">
-          🔗 লিঙ্ক কপি করুন
-        </button>
-      )}
+        {/* action buttons */}
+        <div className="flex gap-2 mt-3.5">
+          <button onClick={() => onEdit(lp)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            এডিট
+          </button>
+          <button onClick={() => onToggle(lp)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors ${
+              lp.is_published
+                ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                : 'bg-green-50 text-green-600 hover:bg-green-100'
+            }`}>
+            {lp.is_published
+              ? <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 9v6m4-6v6" /></svg>আনপাবলিশ</>
+              : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3l14 9-14 9V3z" /></svg>পাবলিশ</>
+            }
+          </button>
+          <a href={url} target="_blank" rel="noreferrer"
+            className="w-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          <button onClick={() => onDelete(lp.id)}
+            className="w-9 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-100 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+
+        {/* copy link */}
+        {lp.is_published && (
+          <button
+            onClick={() => { navigator.clipboard.writeText(window.location.origin + url); toast.success('লিঙ্ক কপি হয়েছে!') }}
+            className="w-full mt-2.5 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-blue-200 text-blue-500 text-xs font-medium hover:bg-blue-50 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            লিঙ্ক কপি করুন
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -508,49 +529,69 @@ export default function LandingPageBuilder() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      {/* header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-bold text-lg text-gray-800">ল্যান্ডিং পেজ</h1>
-          <p className="text-xs text-gray-400">Facebook প্রমোশনের জন্য পেজ বানান</p>
-        </div>
-        <button onClick={openNew}
-          className="flex items-center gap-1.5 px-4 h-10 rounded-2xl text-white text-sm font-bold bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all shadow-sm">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          নতুন পেজ
-        </button>
-      </div>
+  const liveCount = pages.filter(p => p.is_published).length
+  const draftCount = pages.filter(p => !p.is_published).length
 
-      {/* stats strip */}
-      <div className="grid grid-cols-3 gap-3 px-4 pt-4">
-        {[
-          { label: 'মোট পেজ', value: pages.length },
-          { label: 'লাইভ', value: pages.filter(p => p.is_published).length },
-          { label: 'ড্রাফট', value: pages.filter(p => !p.is_published).length },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-3 text-center shadow-sm">
-            <p className="font-bold text-xl text-gray-800">{s.value}</p>
-            <p className="text-[11px] text-gray-400">{s.label}</p>
+  return (
+    <div className="min-h-screen bg-gray-50 pb-10">
+      {/* hero header */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }}>
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-2 left-8 w-32 h-32 rounded-full bg-white blur-3xl" />
+          <div className="absolute bottom-0 right-4 w-24 h-24 rounded-full bg-purple-300 blur-2xl" />
+        </div>
+        <div className="relative px-4 pt-5 pb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="inline-block text-xs font-bold bg-white/15 text-white/90 px-2.5 py-0.5 rounded-full mb-1.5">⭐ Pro Feature</span>
+              <h1 className="text-xl font-extrabold text-white tracking-tight">ল্যান্ডিং পেজ বিল্ডার</h1>
+              <p className="text-sm text-indigo-200 mt-0.5">Facebook অ্যাড থেকে সরাসরি কনভার্ট করুন</p>
+            </div>
+            <button onClick={openNew}
+              className="flex-shrink-0 flex items-center gap-1.5 px-4 h-10 rounded-2xl text-indigo-700 text-sm font-bold bg-white hover:bg-indigo-50 active:scale-95 transition-all shadow-lg">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              নতুন পেজ
+            </button>
           </div>
-        ))}
+
+          {/* stats inside header */}
+          <div className="grid grid-cols-3 gap-2.5 mt-4">
+            {[
+              { label: 'মোট পেজ', value: pages.length, icon: '📄' },
+              { label: 'লাইভ', value: liveCount, icon: '🟢' },
+              { label: 'ড্রাফট', value: draftCount, icon: '⏳' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
+                <div className="text-base mb-0.5">{s.icon}</div>
+                <p className="font-extrabold text-xl text-white leading-none">{s.value}</p>
+                <p className="text-[11px] text-indigo-200 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* list */}
       <div className="px-4 pt-4 space-y-3">
         {loading ? (
-          <div className="text-center py-16 text-gray-400">লোড হচ্ছে...</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="w-8 h-8 rounded-full border-[3px] border-indigo-200 border-t-indigo-500 animate-spin" />
+            <p className="text-sm text-gray-400">লোড হচ্ছে...</p>
+          </div>
         ) : pages.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">📄</div>
-            <p className="font-bold text-gray-600 mb-1">কোনো ল্যান্ডিং পেজ নেই</p>
-            <p className="text-sm text-gray-400 mb-6">প্রথম পেজটি তৈরি করুন এবং Facebook এ শেয়ার করুন</p>
+          <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+            <div className="w-20 h-20 rounded-3xl bg-indigo-50 flex items-center justify-center text-4xl mb-4 shadow-sm">📄</div>
+            <p className="font-bold text-gray-800 text-base mb-1">কোনো ল্যান্ডিং পেজ নেই</p>
+            <p className="text-sm text-gray-400 mb-6 max-w-xs">প্রথম পেজটি তৈরি করুন, Facebook এ শেয়ার করুন এবং বিক্রি বাড়ান</p>
             <button onClick={openNew}
-              className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-bold text-sm">
-              + প্রথম পেজ তৈরি করুন
+              className="flex items-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm shadow-lg active:scale-95 transition-all"
+              style={{ background: 'linear-gradient(135deg, #4338ca, #7c3aed)' }}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              প্রথম পেজ তৈরি করুন
             </button>
           </div>
         ) : (
