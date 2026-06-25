@@ -46,6 +46,8 @@ function detectIntent(content) {
 
   if (/কত\s*(দাম|টাকা|মূল্য|price)|দাম\s*(কত|জানতে|বলুন|কি)|মূল্য\s*(কত|জানতে|তালিকা)|price\s*(list|কত)|কত\s*(করে|পড়বে)|rate\s*কত/.test(t)) return 'price_inquiry'
 
+  if (/কী?\s*আছে|কি\s*আছে|কি\s*কি\s*আছে|কী\s*কী\s*আছে|সব\s*পণ্য|পণ্য\s*(দেখ|লিস্ট|তালিকা|দেখান)|product\s*list|কি\s*পাওয়া\s*যায়|কি\s*পাই|কি\s*নিতে\s*পারি|কী\s*নিতে\s*পারি/.test(t)) return 'product_list'
+
   if (/^(confirm|confirmed|হ্যাঁ|yes|ok|ঠিক আছে|order করুন|অর্ডার করুন|jee|জি|দিন|করুন)\s*$/i.test(t)) return 'confirm'
 
   if (/অভিযোগ|সমস্যা|নষ্ট|ভুল|রাগ|ক্ষতি|ফেরত|refund|complaint|problem|wrong|damaged/.test(t)) return 'complaint'
@@ -254,6 +256,16 @@ function buildPrompt({ shopName, shopCategory, productList, chatHistory, custome
     : intent === 'delivery_question'
     ? `## DELIVERY QUESTION — ডেলিভারি সম্পর্কে প্রশ্ন
 - যদি জানো তাহলে বলো, না জানলে handoff: true দাও`
+    : intent === 'product_list'
+    ? `## PRODUCT LIST REQUEST — Customer সব পণ্য দেখতে চাইছে
+- সরাসরি পণ্য তালিকা দেখাও, অন্য কোনো প্রশ্ন করবে না
+- Format:
+"আমাদের কাছে আছে:
+• [পণ্য ১] — ৳[মূল্য]
+• [পণ্য ২] — ৳[মূল্য]
+...
+কোনটা নেবেন?"
+- order: null রাখো, order flow শুরু করবে না`
     : variedStarters
 
   return `তুমি "${shopName}" দোকানের একজন বিক্রয়কর্মী।
@@ -401,9 +413,9 @@ Customer "confirm / হ্যাঁ / জি / ok / ঠিক আছে / order 
 
 ⚠️ CRITICAL RULE — কোন format ব্যবহার করবে:
 - conversation-এ মোট পণ্যের সংখ্যা গণনা করো
-- **ঠিক ১টি পণ্য** → `order` object ব্যবহার করো, `items: null`
-- **২টি বা বেশি পণ্য** → `items` array ব্যবহার করো, `order: null` — প্রতিটি পণ্য আলাদা object হিসেবে দাও
-- ২+ পণ্যে কখনো `order` object ব্যবহার করবে না — করলে দ্বিতীয় পণ্য হারিয়ে যাবে
+- **ঠিক ১টি পণ্য** → \`order\` object ব্যবহার করো, \`items: null\`
+- **২টি বা বেশি পণ্য** → \`items\` array ব্যবহার করো, \`order: null\` — প্রতিটি পণ্য আলাদা object হিসেবে দাও
+- ২+ পণ্যে কখনো \`order\` object ব্যবহার করবে না — করলে দ্বিতীয় পণ্য হারিয়ে যাবে
 
 **সব field required:**
 - প্রতিটি item-এ: product_name, quantity, unit_price, total_amount
@@ -449,7 +461,7 @@ Multiple products (২+ পণ্য — items array, order: null — সব প
 {"reply":"ধন্যবাদ, অর্ডার নিশ্চিত হচ্ছে...","order":null,"items":[{"product_name":"জিংক ট্যাবলেট","quantity":2,"unit_price":35,"total_amount":70},{"product_name":"বেটনোভেট ক্রিম","quantity":2,"unit_price":60,"total_amount":120}],"customer_name":"নাম","customer_phone":"01XXXXXXXXX","customer_address":"ঠিকানা","handoff":false,"quick_replies":[]}
 
 ⚠️ unit_price এবং total_amount অবশ্যই দিতে হবে — conversation-এ যে দাম দেখানো হয়েছে সেটাই দাও।
-⚠️ ২+ পণ্যে `order` object ব্যবহার করলে দ্বিতীয় পণ্য হারিয়ে যাবে — সবসময় `items` array ব্যবহার করো।
+⚠️ ২+ পণ্যে \`order\` object ব্যবহার করলে দ্বিতীয় পণ্য হারিয়ে যাবে — সবসময় \`items\` array ব্যবহার করো।
 
 Handoff:
 {"reply":"এই বিষয়ে দোকানদার ভালো বলতে পারবেন, এখনই জানাচ্ছি।","order":null,"items":null,"handoff":true,"quick_replies":[]}`
@@ -569,7 +581,10 @@ export default async function handler(req, res) {
     const shopCategory = shop.categories?.name || ''
     const addressingStyle = detectAddressingStyle(msgs, conv.owner_id)
     const ctx = extractOrderContext(msgs, conv.owner_id)
-    const intent = detectIntent(content)
+    const isAwaitingConfirmCheck = /confirm\s*লিখুন|confirm করুন|অর্ডার.*confirm/i.test(lastAiReply)
+    const rawIntent = detectIntent(content)
+    // "ok/জি/হ্যাঁ" should only be treated as confirm when AI was actually asking for it
+    const intent = rawIntent === 'confirm' && !isAwaitingConfirmCheck ? 'general' : rawIntent
 
     console.log(`[auto-reply] intent=${intent} hasConfirmedBefore=${ctx.hasConfirmedBefore} isNewOrderSession=${ctx.isNewOrderSession}`)
 

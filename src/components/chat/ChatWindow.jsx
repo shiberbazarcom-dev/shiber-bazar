@@ -117,12 +117,13 @@ function CopyButton({ text }) {
   )
 }
 
-function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwnerHuman, onQuickReply }) {
+function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwnerHuman, onQuickReply, isLastGroup }) {
   const isAiGroup = !isOwn && group.some(m => m.is_ai)
   // isOwnerHuman = messages from owner but NOT AI (real human reply after handoff)
   const isHumanOwner = !isOwn && !isAiGroup && isOwnerHuman
   const lastMsg = group[group.length - 1]
-  const quickReplies = !isOwn ? (lastMsg?.quick_replies || null) : null
+  // Only show quick replies on the very last AI message group
+  const quickReplies = !isOwn && isLastGroup ? (lastMsg?.quick_replies || null) : null
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 mb-3 animate-fadeIn`}>
@@ -470,8 +471,9 @@ export default function ChatWindow({ conversation, otherName }) {
             : <div className="flex items-center justify-center h-full text-gray-400 text-sm">কথোপকথন শুরু করুন!</div>
         )}
         <div className="space-y-2">
-          {grouped.map((item, idx) =>
-            item.type === 'date' ? (
+          {grouped.map((item, idx) => {
+            const lastGroupIdx = grouped.map((g, i) => g.type !== 'date' ? i : -1).filter(i => i >= 0).at(-1)
+            return item.type === 'date' ? (
               <div key={item.key} className="flex items-center gap-3 my-4">
                 <div className="flex-1 h-px bg-gray-300" />
                 <span className="text-xs text-gray-500 px-2 font-medium">{item.label}</span>
@@ -490,9 +492,10 @@ export default function ChatWindow({ conversation, otherName }) {
                   !item.group.some(m => m.is_ai)
                 }
                 onQuickReply={!isOwner ? (qr) => sendContent(qr) : null}
+                isLastGroup={idx === lastGroupIdx}
               />
             )
-          )}
+          })}
         </div>
 
         {/* Returning customer quick chips — shown at bottom of messages */}
