@@ -8,12 +8,12 @@ const corsHeaders = {
 const FREE_LIMIT = 2
 const PRO_LIMIT  = 50
 
-/* ── Remove.bg API ── */
-async function removeViaRemoveBg(base64Data: string, apiKey: string): Promise<ArrayBuffer> {
+/* ── Remove.bg: accepts image_url ── */
+async function removeViaRemoveBg(imageUrl: string, apiKey: string): Promise<ArrayBuffer> {
   const res = await fetch('https://api.remove.bg/v1.0/removebg', {
     method: 'POST',
     headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image_file_b64: base64Data, size: 'auto', type: 'product' }),
+    body: JSON.stringify({ image_url: imageUrl, size: 'auto', type: 'product' }),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -22,12 +22,12 @@ async function removeViaRemoveBg(base64Data: string, apiKey: string): Promise<Ar
   return res.arrayBuffer()
 }
 
-/* ── HuggingFace fallback (briaai/RMBG-1.4) ── */
-async function removeViaHuggingFace(base64Data: string, apiKey: string): Promise<ArrayBuffer> {
-  // Convert base64 to binary for HuggingFace
-  const binaryStr = atob(base64Data)
-  const bytes = new Uint8Array(binaryStr.length)
-  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+/* ── HuggingFace fallback: fetch image → send binary ── */
+async function removeViaHuggingFace(imageUrl: string, apiKey: string): Promise<ArrayBuffer> {
+  // First fetch the image
+  const imgFetch = await fetch(imageUrl)
+  if (!imgFetch.ok) throw new Error(`Could not fetch image: ${imgFetch.status}`)
+  const imgBuffer = await imgFetch.arrayBuffer()
 
   const res = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
     method: 'POST',
@@ -35,7 +35,7 @@ async function removeViaHuggingFace(base64Data: string, apiKey: string): Promise
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/octet-stream',
     },
-    body: bytes,
+    body: imgBuffer,
   })
   if (!res.ok) {
     const err = await res.text()
@@ -68,9 +68,9 @@ Deno.serve(async (req) => {
     )
 
     /* ── 1. Plan check ── */
-    const { shop_id, image_base64 } = await req.json()
-    if (!shop_id || !image_base64)
-      return new Response(JSON.stringify({ error: 'shop_id and image_base64 required' }), { status: 400, headers: corsHeaders })
+    const { shop_id, image_url } = await req.json()
+    if (!shop_id || !image_url)
+      return new Response(JSON.stringify({ error: 'shop_id and image_url required' }), { status: 400, headers: corsHeaders })
 
     const { data: shop } = await supabase
       .from('shops')
@@ -92,7 +92,6 @@ Deno.serve(async (req) => {
     }
 
     /* ── 2. Remove background — remove.bg first, HuggingFace fallback ── */
-    const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, '')
     const removeBgKey = Deno.env.get('REMOVE_BG_API_KEY')
     const hfKey       = Deno.env.get('HUGGINGFACE_API_KEY')
 
@@ -100,13 +99,13 @@ Deno.serve(async (req) => {
 
     try {
       if (!removeBgKey) throw new Error('no remove.bg key')
-      console.log('Trying remove.bg...')
-      resultBuffer = await removeViaRemoveBg(base64Data, removeBgKey)
+      console.log('Trying remove.bg with URL:', image_url)
+      resultBuffer = await removeViaRemoveBg(image_url, removeBgKey)
       console.log('remove.bg success')
-    } catch (primaryErr) {
-      console.warn('remove.bg failed, trying HuggingFace fallback:', primaryErr.message)
-      if (!hfKey) throw new Error('Both remove.bg and HuggingFace unavailable')
-      resultBuffer = await removeViaHuggingFace(base64Data, hfKey)
+    } catch (primaryErr: any) {
+      console.warn('remove.bg failed:', primaryErr.message, '— trying HuggingFace...')
+      if (!hfKey) throw new Error('remove.bg failed and no HuggingFace key available')
+      resultBuffer = await removeViaHuggingFace(image_url, hfKey)
       console.log('HuggingFace fallback success')
     }
 

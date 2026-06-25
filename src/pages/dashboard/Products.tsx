@@ -188,17 +188,14 @@ export default function Products() {
     }
   }
 
-  async function handleBgRemove(file: File, idx: number) {
+  async function handleBgRemove(imageUrl: string, idx: number) {
     if (!user || !editProduct?.shop_id) return
     setBgRemovingIdx(idx)
     setBgRemoveError('')
     try {
-      // Compress to 1024px JPEG before sending — smaller payload, faster API
-      // @ts-ignore
-      const base64 = await compressForBgRemove(file)
       const { data: { session } } = await supabase.auth.getSession()
       const res = await supabase.functions.invoke('remove-bg', {
-        body: { shop_id: editProduct.shop_id, image_base64: base64 },
+        body: { shop_id: editProduct.shop_id, image_url: imageUrl },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       })
       if (res.error || res.data?.error) {
@@ -481,12 +478,6 @@ export default function Products() {
                 type="file" accept="image/*" className="hidden"
                 onChange={e => handleSlotUpload(e, idx)}
               />
-              {/* hidden file input for bg-remove (reuses same file, passes to handler) */}
-              <input
-                ref={el => { bgFileRefs.current[idx] = el }}
-                type="file" accept="image/*" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleBgRemove(f, idx); e.target.value = '' }}
-              />
               <button
                 type="button"
                 className={`w-full aspect-square rounded-xl border-2 overflow-hidden flex items-center justify-center transition-all
@@ -527,16 +518,18 @@ export default function Products() {
                   <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full leading-tight">মূল</span>
                 </div>
               )}
-              {/* BG Remove button — only when image exists */}
+              {/* BG Remove button — click uses current slot image URL */}
               {src && (
                 <button
                   type="button"
                   disabled={bgRemovingIdx !== null || uploadingIdx !== null}
-                  onClick={() => bgFileRefs.current[idx]?.click()}
-                  title="নতুন ছবি দিয়ে background সরান"
-                  className="w-full py-0.5 rounded-lg text-[9px] font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 disabled:opacity-40 transition-colors flex items-center justify-center gap-0.5"
+                  onClick={() => handleBgRemove(src, idx)}
+                  title="এই ছবির background সরান"
+                  className="w-full py-1 rounded-lg text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 disabled:opacity-40 transition-colors flex items-center justify-center gap-1 border border-purple-200"
                 >
-                  {bgRemovingIdx === idx ? '...' : '🪄 BG সরান'}
+                  {bgRemovingIdx === idx
+                    ? <><span className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />সরানো হচ্ছে</>
+                    : <>🪄 BG সরান</>}
                 </button>
               )}
             </div>
