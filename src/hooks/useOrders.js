@@ -7,11 +7,17 @@ export function usePlaceOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (orderData) => {
-      const { data, error } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select()
-        .single()
+      // Use RPC so SECURITY DEFINER returns the inserted row (anon has no SELECT policy)
+      const { data, error } = await supabase.rpc('place_order_public', {
+        p_customer_name:    orderData.customer_name,
+        p_customer_phone:   orderData.customer_phone,
+        p_customer_address: orderData.customer_address,
+        p_product_name:     orderData.product_name,
+        p_quantity:         orderData.quantity,
+        p_total_amount:     orderData.total_amount,
+        p_shop_id:          orderData.shop_id ?? null,
+        p_notes:            orderData.notes ?? null,
+      })
       if (error) {
         console.error('[usePlaceOrder] Supabase error:', error)
         throw error
