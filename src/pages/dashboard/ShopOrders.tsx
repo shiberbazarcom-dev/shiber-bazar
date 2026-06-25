@@ -230,7 +230,7 @@ export default function ShopOrders() {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📦 অর্ডার ব্যবস্থাপনা</h1>
             {newOrderCount > 0 && (
@@ -238,14 +238,14 @@ export default function ShopOrders() {
             )}
           </div>
           {/* PDF Report */}
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm w-full sm:w-auto">
             <select
               value={`${reportYear}-${reportMonth}`}
               onChange={e => {
                 const [y, m] = e.target.value.split('-').map(Number)
                 setReportYear(y); setReportMonth(m)
               }}
-              className="text-xs text-gray-700 bg-transparent outline-none cursor-pointer"
+              className="flex-1 text-xs text-gray-700 bg-transparent outline-none cursor-pointer"
             >
               {Array.from({ length: 12 }, (_, i) => {
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -260,7 +260,7 @@ export default function ShopOrders() {
             <button
               onClick={handleDownloadPdf}
               disabled={pdfGenerating || isLoading}
-              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               <FileDown className="h-3.5 w-3.5" />
               {pdfGenerating ? 'তৈরি হচ্ছে...' : 'PDF Report'}

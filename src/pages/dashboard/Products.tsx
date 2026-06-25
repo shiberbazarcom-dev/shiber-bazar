@@ -483,7 +483,7 @@ export default function Products() {
           পণ্যের ছবি (সর্বোচ্চ ৫টি){' '}
           <span className="text-gray-400 font-normal">— প্রথমটি মূল ছবি</span>
         </Label>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
           {slotArray.map((src, idx) => (
             <div key={idx} className="relative flex flex-col gap-1">
               <input
