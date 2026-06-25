@@ -193,20 +193,24 @@ export default function Products() {
     setBgRemovingIdx(idx)
     setBgRemoveError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await supabase.functions.invoke('remove-bg', {
+      // supabase.functions.invoke auto-attaches the JWT — no manual header needed
+      const { data, error } = await supabase.functions.invoke('remove-bg', {
         body: { shop_id: editProduct.shop_id, image_url: imageUrl },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       })
-      if (res.error || res.data?.error) {
-        const msg = res.data?.error
-        if (msg === 'limit_reached') {
-          const lim = res.data?.limit
-          throw new Error(`সীমা শেষ! এই মাসে ${lim ?? '২'}টির বেশি ব্যবহার করা যাবে না। Pro plan-এ ৫০টি পাবেন।`)
+
+      console.log('remove-bg response:', { data, error })
+
+      if (error) throw new Error(error.message || 'সার্ভার সমস্যা')
+      if (data?.error) {
+        if (data.error === 'limit_reached') {
+          throw new Error(`সীমা শেষ! এই মাসে ${data.limit ?? '২'}টির বেশি ব্যবহার করা যাবে না। Pro plan-এ ৫০টি পাবেন।`)
         }
-        throw new Error(msg || 'সার্ভার সমস্যা')
+        throw new Error(data.error)
       }
-      const url: string = res.data.url
+
+      const url: string = data?.url
+      if (!url) throw new Error('Background remove হয়েছে কিন্তু URL পাওয়া যায়নি')
+
       setEditProduct((p: any) => {
         const imgs = [...(p.images ?? [])]
         imgs[idx] = url
