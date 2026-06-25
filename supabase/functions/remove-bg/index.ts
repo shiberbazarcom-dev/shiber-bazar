@@ -8,6 +8,42 @@ const corsHeaders = {
 const FREE_LIMIT = 2
 const PRO_LIMIT  = 50
 
+/* ── Remove.bg API ── */
+async function removeViaRemoveBg(base64Data: string, apiKey: string): Promise<ArrayBuffer> {
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST',
+    headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image_file_b64: base64Data, size: 'auto', type: 'product' }),
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`remove.bg ${res.status}: ${err}`)
+  }
+  return res.arrayBuffer()
+}
+
+/* ── HuggingFace fallback (briaai/RMBG-1.4) ── */
+async function removeViaHuggingFace(base64Data: string, apiKey: string): Promise<ArrayBuffer> {
+  // Convert base64 to binary for HuggingFace
+  const binaryStr = atob(base64Data)
+  const bytes = new Uint8Array(binaryStr.length)
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+
+  const res = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/octet-stream',
+    },
+    body: bytes,
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`HuggingFace ${res.status}: ${err}`)
+  }
+  return res.arrayBuffer()
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -52,40 +88,29 @@ Deno.serve(async (req) => {
     const used   = shop.bg_remove_count ?? 0
 
     if (used >= limit) {
-      return new Response(JSON.stringify({
-        error: 'limit_reached', used, limit, isPro,
-      }), { status: 429, headers: corsHeaders })
+      return new Response(JSON.stringify({ error: 'limit_reached', used, limit, isPro }), { status: 429, headers: corsHeaders })
     }
 
-    /* ── 2. Remove.bg API ── */
-    const removeBgKey = Deno.env.get('REMOVE_BG_API_KEY')
-    if (!removeBgKey) throw new Error('REMOVE_BG_API_KEY not set')
-
-    // Strip data URI prefix — remove.bg wants raw base64
+    /* ── 2. Remove background — remove.bg first, HuggingFace fallback ── */
     const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, '')
+    const removeBgKey = Deno.env.get('REMOVE_BG_API_KEY')
+    const hfKey       = Deno.env.get('HUGGINGFACE_API_KEY')
 
-    const removeBgRes = await fetch('https://api.remove.bg/v1.0/removebg', {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': removeBgKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        image_file_b64: base64Data,
-        size: 'auto',
-        type: 'product',
-      }),
-    })
+    let resultBuffer: ArrayBuffer
 
-    if (!removeBgRes.ok) {
-      const errText = await removeBgRes.text()
-      console.error('remove.bg error:', removeBgRes.status, errText)
-      throw new Error(`remove.bg API error: ${removeBgRes.status}`)
+    try {
+      if (!removeBgKey) throw new Error('no remove.bg key')
+      console.log('Trying remove.bg...')
+      resultBuffer = await removeViaRemoveBg(base64Data, removeBgKey)
+      console.log('remove.bg success')
+    } catch (primaryErr) {
+      console.warn('remove.bg failed, trying HuggingFace fallback:', primaryErr.message)
+      if (!hfKey) throw new Error('Both remove.bg and HuggingFace unavailable')
+      resultBuffer = await removeViaHuggingFace(base64Data, hfKey)
+      console.log('HuggingFace fallback success')
     }
 
-    const resultBuffer = await removeBgRes.arrayBuffer()
-
-    /* ── 3. Upload result PNG to Supabase Storage ── */
+    /* ── 3. Upload PNG to Supabase Storage ── */
     const storagePath = `${user.id}/bg-removed-${Date.now()}.png`
     const { error: uploadErr } = await supabase.storage
       .from('shop-images')
@@ -97,12 +122,7 @@ Deno.serve(async (req) => {
     /* ── 4. Increment counter ── */
     await supabase.from('shops').update({ bg_remove_count: used + 1 }).eq('id', shop_id)
 
-    return new Response(JSON.stringify({
-      success: true,
-      url: publicUrl,
-      used: used + 1,
-      limit,
-    }), { headers: corsHeaders })
+    return new Response(JSON.stringify({ success: true, url: publicUrl, used: used + 1, limit }), { headers: corsHeaders })
 
   } catch (e: any) {
     console.error('remove-bg error:', e.message)
