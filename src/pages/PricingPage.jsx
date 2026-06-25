@@ -24,10 +24,11 @@ const SECTIONS = [
   {
     label: 'AI সুবিধা',
     rows: [
-      { text: 'AI chat reply',         free: 'মাসে ১০০টি', pro: 'Unlimited',  biz: 'Unlimited' },
-      { text: 'AI description',        free: 'মাসে ১০টি',  pro: 'Unlimited',  biz: 'Unlimited' },
-      { text: 'Custom AI prompt',      free: false,         pro: true,         biz: true },
-      { text: 'AI conversation stats', free: false,         pro: false,        biz: true },
+      { text: 'AI chat reply',         free: 'মাসে ১০০টি', pro: 'Unlimited',   biz: 'Unlimited' },
+      { text: 'AI description',        free: 'মাসে ১০টি',  pro: 'Unlimited',   biz: 'Unlimited' },
+      { text: 'AI BG Remove (ছবি)',    free: 'মাসে ২টি',   pro: 'মাসে ৫০টি',  biz: 'মাসে ২০০টি' },
+      { text: 'Custom AI prompt',      free: false,         pro: true,          biz: true },
+      { text: 'AI conversation stats', free: false,         pro: false,         biz: true },
     ],
   },
   {

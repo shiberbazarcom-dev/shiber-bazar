@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const FREE_LIMIT = 2
 const PRO_LIMIT  = 50
+const BIZ_LIMIT  = 200
 
 /* ── Remove.bg: accepts image_url ── */
 async function removeViaRemoveBg(imageUrl: string, apiKey: string): Promise<ArrayBuffer> {
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
     const planExpired = shop.plan_expires_at && new Date(shop.plan_expires_at) <= new Date()
     const isPro  = shop.plan && shop.plan !== 'free' && !planExpired
     const isBiz  = shop.plan === 'business' && !planExpired
-    const limit  = isBiz ? 9999 : isPro ? PRO_LIMIT : FREE_LIMIT
+    const limit  = isBiz ? BIZ_LIMIT : isPro ? PRO_LIMIT : FREE_LIMIT
     const used   = shop.bg_remove_count ?? 0
 
     if (used >= limit) {
