@@ -123,7 +123,7 @@ export default function ShopOrders() {
       // UTC-safe month range: fetch full month then filter client-side
       const { data: rawOrders, error } = await supabase
         .from('orders')
-        .select('*, shops(shop_name), order_items(id, quantity, unit_price, order_id, products(product_name))')
+        .select('*, shops(shop_name)')
         .in('shop_id', shopIds)
         .order('created_at', { ascending: false })
 
@@ -134,6 +134,21 @@ export default function ShopOrders() {
         const d = new Date(o.created_at)
         return d.getMonth() === reportMonth && d.getFullYear() === reportYear
       })
+
+      // Fetch order_items separately
+      const orderIds = monthOrders.map((o: any) => o.id)
+      if (orderIds.length > 0) {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('id, order_id, quantity, unit_price, product_id, products(product_name)')
+          .in('order_id', orderIds)
+        const byOrder: Record<string, any[]> = {}
+        ;(items ?? []).forEach((item: any) => {
+          if (!byOrder[item.order_id]) byOrder[item.order_id] = []
+          byOrder[item.order_id].push(item)
+        })
+        monthOrders.forEach((o: any) => { o.order_items = byOrder[o.id] ?? [] })
+      }
 
       const shopName = (shops as any)?.[0]?.shop_name || 'My Shop'
       downloadSalesReportPdf({ orders: monthOrders, shopName, month: reportMonth, year: reportYear })
