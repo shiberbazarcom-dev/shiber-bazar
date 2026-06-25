@@ -111,33 +111,35 @@ export default function ShopOrders() {
   }
 
   async function handleDownloadPdf() {
+    if (!user) return
     setPdfGenerating(true)
     try {
-      // Filter already-loaded orders by selected month (client-side, no extra query)
-      const monthOrders = allOrders.filter(o => {
+      // Always fetch fresh data for the selected month directly from DB
+      const { data: shops } = await supabase
+        .from('shops').select('id, shop_name').eq('owner_id', (user as any).id)
+      const shopIds = (shops ?? []).map((s: any) => s.id)
+      if (!shopIds.length) { toast.error('কোনো দোকান পাওয়া যায়নি'); return }
+
+      // UTC-safe month range: fetch full month then filter client-side
+      const { data: rawOrders, error } = await supabase
+        .from('orders')
+        .select('*, shops(shop_name), order_items(id, quantity, unit_price, order_id, products(product_name))')
+        .in('shop_id', shopIds)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      // Filter by selected month in local time
+      const monthOrders = (rawOrders ?? []).filter((o: any) => {
         const d = new Date(o.created_at)
         return d.getMonth() === reportMonth && d.getFullYear() === reportYear
       })
-      // Fetch order_items for those orders (not included in the main query)
-      const ids = monthOrders.map(o => o.id)
-      let ordersWithItems: any[] = monthOrders
-      if (ids.length > 0) {
-        const { data: items } = await supabase
-          .from('order_items')
-          .select('*, products(product_name)')
-          .in('order_id', ids)
-        const itemsByOrder: Record<string, any[]> = {}
-        ;(items ?? []).forEach((item: any) => {
-          if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = []
-          itemsByOrder[item.order_id].push(item)
-        })
-        ordersWithItems = monthOrders.map(o => ({ ...o, order_items: itemsByOrder[o.id] ?? [] }))
-      }
-      const shopName = allOrders[0]?.shops?.shop_name || 'My Shop'
-      downloadSalesReportPdf({ orders: ordersWithItems, shopName, month: reportMonth, year: reportYear })
-      toast.success('PDF ডাউনলোড শুরু হয়েছে!')
+
+      const shopName = (shops as any)?.[0]?.shop_name || 'My Shop'
+      downloadSalesReportPdf({ orders: monthOrders, shopName, month: reportMonth, year: reportYear })
+      toast.success(`PDF ready — ${monthOrders.length}টি অর্ডার`)
     } catch (e: any) {
-      toast.error('PDF তৈরি করতে সমস্যা হয়েছে')
+      toast.error('PDF তৈরি করতে সমস্যা হয়েছে: ' + (e.message || ''))
     } finally {
       setPdfGenerating(false)
     }
