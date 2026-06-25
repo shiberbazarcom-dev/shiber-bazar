@@ -7,6 +7,7 @@ import { useOrderStats, useShopOrderStats } from '../../hooks/useOrders'
 import { useUnreadMessageCount, useUpdateLastSeen, useGlobalMessageListener } from '../../hooks/useChat'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
+import NotificationBell from '../NotificationBell'
 
 /* ── Sidebar link with optional badge ── */
 function SidebarLink({ to, icon, label, end, badge, onClose, locked }) {
@@ -90,6 +91,9 @@ function TopBar({ type, profile, signOut, setSidebarOpen, mobileBadge, links }) 
           📦 {mobileBadge} নতুন
         </NavLink>
       )}
+
+      {/* Notification bell — all users */}
+      <NotificationBell />
 
       {/* Desktop: user info + sign out */}
       <div className="hidden lg:flex items-center gap-3">
