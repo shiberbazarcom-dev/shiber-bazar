@@ -97,16 +97,16 @@ Deno.serve(async (req) => {
     const hfKey       = Deno.env.get('HUGGINGFACE_API_KEY')
 
     let resultBuffer: ArrayBuffer
-    let usedApi = 'huggingface'
+    let usedApi = 'removebg'
 
     try {
-      if (!hfKey) throw new Error('no HuggingFace key')
-      resultBuffer = await removeViaHuggingFace(image_url, hfKey)
-    } catch (primaryErr: any) {
-      console.warn('HuggingFace failed:', primaryErr.message, '— trying remove.bg...')
-      if (!removeBgKey) throw new Error('HuggingFace failed and no remove.bg key available')
+      if (!removeBgKey) throw new Error('no remove.bg key')
       resultBuffer = await removeViaRemoveBg(image_url, removeBgKey)
-      usedApi = 'removebg'
+    } catch (primaryErr: any) {
+      console.warn('remove.bg failed:', primaryErr.message, '— trying HuggingFace...')
+      if (!hfKey) throw new Error('remove.bg failed and no HuggingFace key available')
+      resultBuffer = await removeViaHuggingFace(image_url, hfKey)
+      usedApi = 'huggingface'
     }
 
     /* ── 3. Upload PNG to Supabase Storage ── */
