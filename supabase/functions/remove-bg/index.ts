@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    /* ── 0. Auth check ── */
+    /* ── 0. Auth ── */
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer '))
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
@@ -53,68 +53,43 @@ Deno.serve(async (req) => {
 
     if (used >= limit) {
       return new Response(JSON.stringify({
-        error: 'limit_reached',
-        used,
-        limit,
-        isPro,
+        error: 'limit_reached', used, limit, isPro,
       }), { status: 429, headers: corsHeaders })
     }
 
-    /* ── 2. Call Replicate cjwbw/rembg ── */
-    const replicateKey = Deno.env.get('REPLICATE_API_TOKEN')
-    if (!replicateKey) throw new Error('REPLICATE_API_TOKEN not set')
+    /* ── 2. Remove.bg API ── */
+    const removeBgKey = Deno.env.get('REMOVE_BG_API_KEY')
+    if (!removeBgKey) throw new Error('REMOVE_BG_API_KEY not set')
 
-    // Start prediction
-    const startRes = await fetch('https://api.replicate.com/v1/models/cjwbw/rembg/predictions', {
+    // Strip data URI prefix — remove.bg wants raw base64
+    const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, '')
+
+    const removeBgRes = await fetch('https://api.remove.bg/v1.0/removebg', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${replicateKey}`,
+        'X-Api-Key': removeBgKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input: { image: image_base64 }
+        image_file_b64: base64Data,
+        size: 'auto',
+        type: 'product',
       }),
     })
 
-    const startData = await startRes.json()
-    console.log('Replicate start:', JSON.stringify(startData))
-
-    if (!startRes.ok || startData.error) {
-      throw new Error(`Replicate start error: ${startData.error || startRes.status}`)
+    if (!removeBgRes.ok) {
+      const errText = await removeBgRes.text()
+      console.error('remove.bg error:', removeBgRes.status, errText)
+      throw new Error(`remove.bg API error: ${removeBgRes.status}`)
     }
 
-    const predictionId = startData.id
-    if (!predictionId) throw new Error('No prediction ID returned')
+    const resultBuffer = await removeBgRes.arrayBuffer()
 
-    // Poll for result (max 60s)
-    let output: string | null = null
-    for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 2000))
-      const pollRes  = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-        headers: { 'Authorization': `Token ${replicateKey}` }
-      })
-      const polled = await pollRes.json()
-      console.log(`Poll ${i}: status=${polled.status}`)
-
-      if (polled.status === 'succeeded') {
-        output = typeof polled.output === 'string' ? polled.output : polled.output?.[0]
-        break
-      }
-      if (polled.status === 'failed') {
-        throw new Error(`Replicate failed: ${polled.error || 'unknown'}`)
-      }
-    }
-
-    if (!output) throw new Error('Replicate timed out — no output')
-
-    /* ── 3. Download PNG + upload to Supabase Storage ── */
-    const imgRes  = await fetch(output)
-    const imgBlob = await imgRes.arrayBuffer()
-
+    /* ── 3. Upload result PNG to Supabase Storage ── */
     const storagePath = `${user.id}/bg-removed-${Date.now()}.png`
     const { error: uploadErr } = await supabase.storage
       .from('shop-images')
-      .upload(storagePath, imgBlob, { contentType: 'image/png', upsert: true })
+      .upload(storagePath, resultBuffer, { contentType: 'image/png', upsert: true })
     if (uploadErr) throw new Error(`Storage upload failed: ${uploadErr.message}`)
 
     const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(storagePath)
