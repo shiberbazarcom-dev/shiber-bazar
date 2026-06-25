@@ -511,10 +511,10 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/orders',        icon: '📦', label: 'অর্ডার' },
     { to: '/dashboard/analytics',     icon: '📈', label: 'অ্যানালিটিক্স',  pro: true },
     { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা',   pro: true },
-    { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ',  pro: true },
     { to: '/dashboard/chat',          icon: '💬', label: 'বার্তা' },
-    { to: '/dashboard/broadcast',     icon: '📢', label: 'ব্রডকাস্ট',   pro: true },
     { to: '/dashboard/qr-code',       icon: '🔲', label: 'QR কোড' },
+    { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ',  pro: true },
+    { to: '/dashboard/broadcast',     icon: '📢', label: 'ব্রডকাস্ট',   pro: true },
     { to: '/dashboard/my-services',   icon: '🛠️', label: 'আমার সেবা' },
     { to: '/dashboard/profile',       icon: '👤', label: 'প্রোফাইল' },
   ]
