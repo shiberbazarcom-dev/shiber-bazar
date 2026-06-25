@@ -113,25 +113,28 @@ export default function ShopOrders() {
   async function handleDownloadPdf() {
     setPdfGenerating(true)
     try {
-      const shopName = allOrders[0]?.shops?.shop_name || 'My Shop'
-      // fetch orders with items for the selected month
-      const { data: shops } = await supabase.from('shops').select('id, shop_name').eq('owner_id', user!.id)
-      const shopIds = (shops ?? []).map((s: any) => s.id)
-      const firstDay = new Date(reportYear, reportMonth, 1).toISOString()
-      const lastDay  = new Date(reportYear, reportMonth + 1, 0, 23, 59, 59).toISOString()
-      const { data: monthOrders } = await supabase
-        .from('orders')
-        .select('*, shops(shop_name), order_items(*, products(product_name))')
-        .in('shop_id', shopIds)
-        .gte('created_at', firstDay)
-        .lte('created_at', lastDay)
-        .order('created_at', { ascending: false })
-      downloadSalesReportPdf({
-        orders: monthOrders ?? [],
-        shopName: (shops?.[0] as any)?.shop_name || 'My Shop',
-        month: reportMonth,
-        year: reportYear,
+      // Filter already-loaded orders by selected month (client-side, no extra query)
+      const monthOrders = allOrders.filter(o => {
+        const d = new Date(o.created_at)
+        return d.getMonth() === reportMonth && d.getFullYear() === reportYear
       })
+      // Fetch order_items for those orders (not included in the main query)
+      const ids = monthOrders.map(o => o.id)
+      let ordersWithItems: any[] = monthOrders
+      if (ids.length > 0) {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('*, products(product_name)')
+          .in('order_id', ids)
+        const itemsByOrder: Record<string, any[]> = {}
+        ;(items ?? []).forEach((item: any) => {
+          if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = []
+          itemsByOrder[item.order_id].push(item)
+        })
+        ordersWithItems = monthOrders.map(o => ({ ...o, order_items: itemsByOrder[o.id] ?? [] }))
+      }
+      const shopName = allOrders[0]?.shops?.shop_name || 'My Shop'
+      downloadSalesReportPdf({ orders: ordersWithItems, shopName, month: reportMonth, year: reportYear })
       toast.success('PDF ডাউনলোড শুরু হয়েছে!')
     } catch (e: any) {
       toast.error('PDF তৈরি করতে সমস্যা হয়েছে')
@@ -246,7 +249,7 @@ export default function ShopOrders() {
             >
               {Array.from({ length: 12 }, (_, i) => {
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-                const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর']
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
                 return (
                   <option key={i} value={`${d.getFullYear()}-${d.getMonth()}`}>
                     {months[d.getMonth()]} {d.getFullYear()}

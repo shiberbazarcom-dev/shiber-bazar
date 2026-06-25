@@ -1,9 +1,9 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-const BENGALI_MONTHS = [
-  'জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন',
-  'জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর',
+const MONTHS = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
 ]
 
 function fmtTaka(n) {
@@ -55,7 +55,7 @@ export function downloadSalesReportPdf({ orders, shopName, month, year }) {
 
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.text(`${BENGALI_MONTHS[month]} ${year}  |  ${shopName}`, 14, 20)
+  doc.text(`${MONTHS[month]} ${year}  |  ${shopName}`, 14, 20)
 
   const now = new Date()
   doc.text(`Generated: ${fmtDate(now.toISOString())}`, W - 14, 20, { align: 'right' })
