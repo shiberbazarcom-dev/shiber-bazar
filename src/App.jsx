@@ -272,10 +272,12 @@ export default function App() {
               {/* Chat — any logged-in user */}
               <Route path="chat"                 element={<Chat />} />
               <Route path="chat/:conversationId" element={<Chat />} />
-              {/* Broadcast — shop owner only */}
+              {/* Broadcast — Pro only */}
               <Route path="broadcast" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
-                  <Broadcast />
+                  <ProGate title="ব্রডকাস্ট — Pro Feature" description="একসাথে সব কাস্টমারকে মেসেজ পাঠান এবং বিক্রি বাড়ান" features={['সব কাস্টমারকে এক ক্লিকে মেসেজ','প্রোডাক্ট অফার ও আপডেট পাঠান','Unlimited broadcast (Pro/Business)','কাস্টম মেসেজ টেমপ্লেট']}>
+                    <Broadcast />
+                  </ProGate>
                 </ProtectedRoute>
               } />
               <Route path="my-services" element={<MyServices />} />

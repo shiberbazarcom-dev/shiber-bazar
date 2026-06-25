@@ -33,7 +33,7 @@ const SECTIONS = [
   {
     label: 'মার্কেটিং',
     rows: [
-      { text: 'Broadcast message', free: 'মাসে ২টি', pro: 'Unlimited', biz: 'Unlimited' },
+      { text: 'Broadcast message', free: false, pro: 'Unlimited', biz: 'Unlimited' },
       { text: 'Analytics',         free: false,      pro: true,        biz: true },
       { text: 'ল্যান্ডিং পেজ',     free: false,      pro: true,        biz: true },
     ],
