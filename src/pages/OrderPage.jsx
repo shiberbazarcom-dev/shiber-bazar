@@ -77,7 +77,8 @@ export default function OrderPage() {
       const data = await placeOrder.mutateAsync({ ...orderFields, total_amount })
       setSuccess(data)
       clearCart()
-    } catch {
+    } catch (err) {
+      console.error('[OrderPage] place order error:', err)
       toast.error('অর্ডার দিতে সমস্যা হয়েছে, আবার চেষ্টা করুন')
     }
   }

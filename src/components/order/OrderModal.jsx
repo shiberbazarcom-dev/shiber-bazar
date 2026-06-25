@@ -161,7 +161,8 @@ export default function OrderModal({ open, onClose, shop, product = null }) {
         total_amount:     listTotal,
       })
       setSuccess(data)
-    } catch {
+    } catch (err) {
+      console.error('[OrderModal] place order error:', err)
       toast.error('অর্ডার দিতে সমস্যা হয়েছে, আবার চেষ্টা করুন')
     }
   }

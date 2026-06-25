@@ -12,7 +12,10 @@ export function usePlaceOrder() {
         .insert(orderData)
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        console.error('[usePlaceOrder] Supabase error:', error)
+        throw error
+      }
       return data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
