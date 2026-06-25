@@ -97,17 +97,16 @@ Deno.serve(async (req) => {
     const hfKey       = Deno.env.get('HUGGINGFACE_API_KEY')
 
     let resultBuffer: ArrayBuffer
+    let usedApi = 'huggingface'
 
     try {
       if (!hfKey) throw new Error('no HuggingFace key')
-      console.log('Trying HuggingFace...')
       resultBuffer = await removeViaHuggingFace(image_url, hfKey)
-      console.log('HuggingFace success')
     } catch (primaryErr: any) {
-      console.warn('HuggingFace failed:', primaryErr.message, '— trying remove.bg fallback...')
+      console.warn('HuggingFace failed:', primaryErr.message, '— trying remove.bg...')
       if (!removeBgKey) throw new Error('HuggingFace failed and no remove.bg key available')
       resultBuffer = await removeViaRemoveBg(image_url, removeBgKey)
-      console.log('remove.bg fallback success')
+      usedApi = 'removebg'
     }
 
     /* ── 3. Upload PNG to Supabase Storage ── */
@@ -122,7 +121,7 @@ Deno.serve(async (req) => {
     /* ── 4. Increment counter ── */
     await supabase.from('shops').update({ bg_remove_count: used + 1 }).eq('id', shop_id)
 
-    return new Response(JSON.stringify({ success: true, url: publicUrl, used: used + 1, limit }), { headers: corsHeaders })
+    return new Response(JSON.stringify({ success: true, url: publicUrl, used: used + 1, limit, api: usedApi }), { headers: corsHeaders })
 
   } catch (e: any) {
     console.error('remove-bg error:', e.message)

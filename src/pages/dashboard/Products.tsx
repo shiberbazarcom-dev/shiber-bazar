@@ -216,6 +216,9 @@ export default function Products() {
       const url: string = data?.url
       if (!url) throw new Error('Background remove হয়েছে কিন্তু URL পাওয়া যায়নি')
 
+      const apiName = data?.api === 'removebg' ? 'Remove.bg' : 'HuggingFace AI'
+      toast.success(`✅ Background সরানো হয়েছে (${apiName})`)
+
       setEditProduct((p: any) => {
         const imgs = [...(p.images ?? [])]
         imgs[idx] = url
