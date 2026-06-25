@@ -91,6 +91,18 @@ export default function ShopOrders() {
     refetchInterval: 15_000,
   })
 
+  const { data: shopPlan } = useQuery({
+    queryKey: ['shop-plan-orders', (user as any)?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('shops').select('plan, plan_expires_at').eq('owner_id', (user as any).id).limit(1).single()
+      return data
+    },
+    enabled: !!(user as any)?.id,
+  })
+  const planActive = shopPlan?.plan && shopPlan.plan !== 'free' &&
+    (!shopPlan.plan_expires_at || new Date(shopPlan.plan_expires_at) > new Date())
+  const isPro = planActive && (shopPlan?.plan === 'pro' || shopPlan?.plan === 'business')
+
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
@@ -257,34 +269,41 @@ export default function ShopOrders() {
             )}
           </div>
           {/* PDF Report */}
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm w-full sm:w-auto">
-            <select
-              value={`${reportYear}-${reportMonth}`}
-              onChange={e => {
-                const [y, m] = e.target.value.split('-').map(Number)
-                setReportYear(y); setReportMonth(m)
-              }}
-              className="flex-1 text-xs text-gray-700 bg-transparent outline-none cursor-pointer"
-            >
-              {Array.from({ length: 12 }, (_, i) => {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-                return (
-                  <option key={i} value={`${d.getFullYear()}-${d.getMonth()}`}>
-                    {months[d.getMonth()]} {d.getFullYear()}
-                  </option>
-                )
-              })}
-            </select>
-            <button
-              onClick={handleDownloadPdf}
-              disabled={pdfGenerating || isLoading}
-              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-            >
+          {isPro ? (
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm w-full sm:w-auto">
+              <select
+                value={`${reportYear}-${reportMonth}`}
+                onChange={e => {
+                  const [y, m] = e.target.value.split('-').map(Number)
+                  setReportYear(y); setReportMonth(m)
+                }}
+                className="flex-1 text-xs text-gray-700 bg-transparent outline-none cursor-pointer"
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+                  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+                  return (
+                    <option key={i} value={`${d.getFullYear()}-${d.getMonth()}`}>
+                      {months[d.getMonth()]} {d.getFullYear()}
+                    </option>
+                  )
+                })}
+              </select>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={pdfGenerating || isLoading}
+                className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                {pdfGenerating ? 'তৈরি হচ্ছে...' : 'PDF Report'}
+              </button>
+            </div>
+          ) : (
+            <a href="/pricing" className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm text-xs font-semibold text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors w-full sm:w-auto justify-center sm:justify-start">
               <FileDown className="h-3.5 w-3.5" />
-              {pdfGenerating ? 'তৈরি হচ্ছে...' : 'PDF Report'}
-            </button>
-          </div>
+              🔒 PDF Report — Pro
+            </a>
+          )}
         </div>
         {/* Filter tabs — horizontally scrollable on mobile */}
         <div className="overflow-x-auto -mx-1 px-1">
