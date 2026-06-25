@@ -3,6 +3,7 @@
 */
 import { createClient } from '@supabase/supabase-js'
 import { generateDeepSeek, parseJson } from './_generate.js'
+import { sendPushToUser } from './_webpush.js'
 
 /* ── Sanitize ai_persona before prompt injection (H3) ───────────────────────
    Strips prompt-injection patterns while preserving normal business text.
@@ -516,6 +517,14 @@ export default async function handler(req, res) {
 
     if (!shop) { console.log('[auto-reply] SKIP: shop not found'); return res.status(200).json({ skipped: 'shop not found' }) }
     console.log(`[auto-reply] shop=${shop.shop_name} auto_reply_enabled=${shop.auto_reply_enabled} plan=${shop.plan}`)
+
+    // ── Push: notify shop owner of new customer message (fire-and-forget) ──
+    sendPushToUser(shop.owner_id, {
+      title: `💬 ${shop.shop_name}`,
+      body:  content.slice(0, 100),
+      url:   '/dashboard/chat',
+      tag:   `chat-${conversation_id}`,
+    }).catch(() => null)
     if (!shop.auto_reply_enabled) { console.log('[auto-reply] SKIP: auto_reply_enabled=false'); return res.status(200).json({ skipped: 'disabled' }) }
 
     // ── Free plan AI chat limit: 100/month ───────────────────────────────────
@@ -767,6 +776,12 @@ export default async function handler(req, res) {
             message: `${order.customer_name} — ${order.product_name} × ${qty} — ৳${total}`,
             data: { conversation_id, order_id: created.id, order_number: created.order_number },
           })
+          sendPushToUser(shop.owner_id, {
+            title: `🛒 নতুন অর্ডার: ${created.order_number}`,
+            body:  `${order.customer_name} — ${order.product_name} × ${qty} — ৳${total}`,
+            url:   '/dashboard/orders',
+            tag:   `order-${created.order_number}`,
+          }).catch(() => null)
         }
       }
     }
@@ -829,6 +844,12 @@ export default async function handler(req, res) {
             message: `${name} — ${productSummary} — ৳${total}`,
             data: { conversation_id, order_id: created.id, order_number: created.order_number },
           })
+          sendPushToUser(shop.owner_id, {
+            title: `🛒 নতুন অর্ডার: ${created.order_number}`,
+            body:  `${name} — ${productSummary} — ৳${total}`,
+            url:   '/dashboard/orders',
+            tag:   `order-${created.order_number}`,
+          }).catch(() => null)
         }
       }
     }
