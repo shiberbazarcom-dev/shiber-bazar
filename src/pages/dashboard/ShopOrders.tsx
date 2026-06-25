@@ -352,17 +352,32 @@ export default function ShopOrders() {
                     </button>
                     <Badge variant={cfg?.variant} className="text-xs shrink-0">{cfg?.label || o.status}</Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {pending
-                        ? <span className="text-amber-600 text-xs flex items-center gap-1">🔒 অ্যাডমিন রিভিউতে</span>
-                        : o.customer_name}
-                    </span>
-                    <span className="font-semibold text-gray-800">
-                      {pending ? '—' : `৳${(o.total_amount ?? 0).toLocaleString()}`}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400">{new Date(o.created_at).toLocaleDateString('bn-BD')}</p>
+                  {pending ? (
+                    <span className="text-amber-600 text-xs flex items-center gap-1">🔒 অ্যাডমিন রিভিউতে</span>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-gray-800 text-sm">{o.customer_name}</span>
+                        <span className="font-bold text-blue-700 text-sm shrink-0">৳{(o.total_amount ?? 0).toLocaleString()}</span>
+                      </div>
+                      {o.customer_phone && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          📞 {o.customer_phone}
+                        </p>
+                      )}
+                      {o.customer_address && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 line-clamp-1">
+                          📍 {o.customer_address}
+                        </p>
+                      )}
+                      {(o as any).product_name && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 line-clamp-1">
+                          🛍️ {(o as any).product_name}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 pt-0.5">{new Date(o.created_at).toLocaleDateString('bn-BD')}</p>
                   {!pending && nexts.length > 0 && (
                     <div className="flex gap-2 pt-1 flex-wrap">
                       {nexts.slice(0, 2).map(ns => {
