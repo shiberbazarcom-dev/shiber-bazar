@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -145,18 +144,6 @@ export default function NotificationBell() {
             )}
           </div>
           
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
-              <Link
-                to="/dashboard/notifications"
-                onClick={() => setIsOpen(false)}
-                className="block text-center text-sm text-brand-600 hover:text-brand-700 font-medium"
-              >
-                সব বিজ্ঞপ্তি দেখুন
-              </Link>
-            </div>
-          )}
         </div>
       )}
     </div>
