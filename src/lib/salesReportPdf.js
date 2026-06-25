@@ -139,10 +139,10 @@ export function downloadSalesReportPdf({ orders, shopName, month, year }) {
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     columnStyles: {
-      0: { cellWidth: 7,  halign: 'center', textColor: [148,163,184] },
+      0: { cellWidth: 10, halign: 'center', textColor: [148,163,184], overflow: 'hidden' },
       1: { cellWidth: 28, fontStyle: 'bold', textColor: [37,99,235] },
-      2: { cellWidth: 23 },
-      3: { cellWidth: 35 },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 33 },
       4: { cellWidth: 27 },
       5: { cellWidth: 24, halign: 'center' },
       6: { halign: 'right', fontStyle: 'bold' },
