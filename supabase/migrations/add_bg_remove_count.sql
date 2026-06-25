@@ -1,0 +1,1 @@
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS bg_remove_count integer NOT NULL DEFAULT 0;

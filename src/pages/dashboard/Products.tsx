@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 // @ts-ignore
-import { compressImage } from '@/lib/compressImage'
+import { compressImage, compressForBgRemove } from '@/lib/compressImage'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -86,6 +86,9 @@ export default function Products() {
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
   const [saveError, setSaveError] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [bgRemovingIdx, setBgRemovingIdx] = useState<number | null>(null)
+  const [bgRemoveError, setBgRemoveError] = useState('')
+  const bgFileRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkShopId, setBulkShopId] = useState('')
@@ -182,6 +185,40 @@ export default function Products() {
     } finally {
       setUploadingIdx(null)
       e.target.value = ''
+    }
+  }
+
+  async function handleBgRemove(file: File, idx: number) {
+    if (!user || !editProduct?.shop_id) return
+    setBgRemovingIdx(idx)
+    setBgRemoveError('')
+    try {
+      // Compress to 1024px JPEG before sending — smaller payload, faster API
+      // @ts-ignore
+      const base64 = await compressForBgRemove(file)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await supabase.functions.invoke('remove-bg', {
+        body: { shop_id: editProduct.shop_id, image_base64: base64 },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      })
+      if (res.error || res.data?.error) {
+        const msg = res.data?.error
+        if (msg === 'limit_reached') {
+          const lim = res.data?.limit
+          throw new Error(`সীমা শেষ! এই মাসে ${lim ?? '২'}টির বেশি ব্যবহার করা যাবে না। Pro plan-এ ৫০টি পাবেন।`)
+        }
+        throw new Error(msg || 'সার্ভার সমস্যা')
+      }
+      const url: string = res.data.url
+      setEditProduct((p: any) => {
+        const imgs = [...(p.images ?? [])]
+        imgs[idx] = url
+        return { ...p, images: imgs, image_url: imgs[0] ?? '' }
+      })
+    } catch (err: any) {
+      setBgRemoveError(err.message)
+    } finally {
+      setBgRemovingIdx(null)
     }
   }
 
@@ -438,11 +475,17 @@ export default function Products() {
         </Label>
         <div className="grid grid-cols-5 gap-2">
           {slotArray.map((src, idx) => (
-            <div key={idx} className="relative">
+            <div key={idx} className="relative flex flex-col gap-1">
               <input
                 ref={el => { imgRefs.current[idx] = el }}
                 type="file" accept="image/*" className="hidden"
                 onChange={e => handleSlotUpload(e, idx)}
+              />
+              {/* hidden file input for bg-remove (reuses same file, passes to handler) */}
+              <input
+                ref={el => { bgFileRefs.current[idx] = el }}
+                type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleBgRemove(f, idx); e.target.value = '' }}
               />
               <button
                 type="button"
@@ -452,10 +495,15 @@ export default function Products() {
                     : 'border-dashed border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
                   }`}
                 onClick={() => imgRefs.current[idx]?.click()}
-                disabled={uploadingIdx !== null}
+                disabled={uploadingIdx !== null || bgRemovingIdx !== null}
               >
                 {uploadingIdx === idx ? (
                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                ) : bgRemovingIdx === idx ? (
+                  <div className="flex flex-col items-center gap-1 p-1">
+                    <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-[8px] text-purple-500 text-center leading-tight">সরানো হচ্ছে...</p>
+                  </div>
                 ) : src ? (
                   <img src={src} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -475,14 +523,29 @@ export default function Products() {
                 </button>
               )}
               {idx === 0 && src && (
-                <div className="absolute -bottom-1 left-0 right-0 flex justify-center">
+                <div className="absolute -bottom-5 left-0 right-0 flex justify-center">
                   <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full leading-tight">মূল</span>
                 </div>
+              )}
+              {/* BG Remove button — only when image exists */}
+              {src && (
+                <button
+                  type="button"
+                  disabled={bgRemovingIdx !== null || uploadingIdx !== null}
+                  onClick={() => bgFileRefs.current[idx]?.click()}
+                  title="নতুন ছবি দিয়ে background সরান"
+                  className="w-full py-0.5 rounded-lg text-[9px] font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 disabled:opacity-40 transition-colors flex items-center justify-center gap-0.5"
+                >
+                  {bgRemovingIdx === idx ? '...' : '🪄 BG সরান'}
+                </button>
               )}
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-2">ছবিতে ক্লিক করলে আপলোড হবে। লাল × বোতামে ক্লিক করে মুছুন।</p>
+        {bgRemoveError && (
+          <p className="text-xs text-red-500 mt-1 bg-red-50 rounded-lg px-2 py-1">{bgRemoveError}</p>
+        )}
+        <p className="text-xs text-gray-400 mt-2">ছবিতে ক্লিক করলে আপলোড হবে। 🪄 BG সরান — নতুন ছবি দিয়ে background remove হবে।</p>
       </div>
     )
   }

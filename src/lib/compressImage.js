@@ -84,6 +84,44 @@ export async function compressImage(
  * @param {number} maxMB — default 5 MB
  * @returns {{ ok: boolean, message?: string }}
  */
+/**
+ * Compress image specifically for background-removal API calls.
+ * Max 1024px, JPEG 85% quality → typically 80-150KB from any source.
+ * Returns a base64 data URI string (what Replicate expects).
+ */
+export async function compressForBgRemove(file) {
+  const MAX = 1024
+  const QUALITY = 0.85
+
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        const ratio = Math.min(MAX / width, MAX / height)
+        width  = Math.round(width  * ratio)
+        height = Math.round(height * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width  = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, width, height)
+      ctx.drawImage(img, 0, 0, width, height)
+      // Always JPEG for API — smallest size, transparency not needed at this stage
+      const dataUrl = canvas.toDataURL('image/jpeg', QUALITY)
+      resolve(dataUrl)
+    }
+
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')) }
+    img.src = url
+  })
+}
+
 export function validateFileSize(file, maxMB = 5) {
   const maxBytes = maxMB * 1024 * 1024
   if (file.size > maxBytes) {
