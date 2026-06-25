@@ -6,21 +6,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-/* ── VAPID JWT signing (Web Push Protocol) ── */
+/* ── Wrap raw 32-byte EC key into PKCS8 DER (required by WebCrypto) ── */
+function rawToPkcs8(rawKey: Uint8Array): Uint8Array {
+  const prefix = new Uint8Array([
+    0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06,
+    0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
+    0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01,
+    0x01, 0x04, 0x20,
+  ])
+  const pkcs8 = new Uint8Array(prefix.length + rawKey.length)
+  pkcs8.set(prefix)
+  pkcs8.set(rawKey, prefix.length)
+  return pkcs8
+}
+
+/* ── VAPID JWT signing ── */
 async function buildVapidJwt(audience: string, subject: string, privateKeyB64: string): Promise<string> {
-  const header = { alg: 'ES256', typ: 'JWT' }
-  const now = Math.floor(Date.now() / 1000)
+  const header  = { alg: 'ES256', typ: 'JWT' }
+  const now     = Math.floor(Date.now() / 1000)
   const payload = { aud: audience, exp: now + 12 * 3600, sub: subject }
 
-  const encode = (obj: object) =>
+  const b64url = (obj: object) =>
     btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-  const signingInput = `${encode(header)}.${encode(payload)}`
+  const signingInput = `${b64url(header)}.${b64url(payload)}`
 
-  // Import the VAPID private key (raw EC key, base64url encoded)
-  const raw = Uint8Array.from(atob(privateKeyB64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
+  const raw   = Uint8Array.from(atob(privateKeyB64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
+  const pkcs8 = rawToPkcs8(raw)
+
   const key = await crypto.subtle.importKey(
-    'raw', raw,
+    'pkcs8', pkcs8,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false, ['sign']
   )
@@ -37,43 +53,37 @@ async function buildVapidJwt(audience: string, subject: string, privateKeyB64: s
   return `${signingInput}.${sigB64}`
 }
 
-/* ── Send a single Web Push message ── */
+/* ── Send a ping push (no encrypted payload — keeps it simple & reliable) ── */
 async function sendWebPush(
-  subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: string,
+  endpoint: string,
   vapidPublicKey: string,
   vapidPrivateKey: string,
-) {
-  const url = new URL(subscription.endpoint)
+): Promise<Response> {
+  const url      = new URL(endpoint)
   const audience = `${url.protocol}//${url.host}`
+  const jwt      = await buildVapidJwt(audience, 'mailto:admin@shiberbazar.com', vapidPrivateKey)
 
-  const jwt = await buildVapidJwt(audience, 'mailto:admin@shiberbazar.com', vapidPrivateKey)
-
-  const response = await fetch(subscription.endpoint, {
+  return fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/octet-stream',
       'TTL': '86400',
       'Authorization': `vapid t=${jwt},k=${vapidPublicKey}`,
-      'Content-Encoding': 'aes128gcm',
     },
-    body: new TextEncoder().encode(payload),
+    // No body — browser push server delivers a "ping", sw.js shows fallback notification
   })
-
-  return response
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const body = await req.json()
-    // Support both direct call and Supabase webhook (record is in body.record)
+    const body  = await req.json()
+    // Supabase DB webhook wraps row in { type, record, ... }
     const order = body.record ?? body
 
     if (!order || !order.id) {
       return new Response(JSON.stringify({ error: 'No order data' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -84,70 +94,60 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Find shop owner(s) for this order
-    let shopOwnerIds: string[] = []
+    // Collect recipient user IDs
+    let recipientIds: string[] = []
 
+    // Shop owner (if order is already assigned to a shop)
     if (order.shop_id) {
       const { data: shop } = await supabase
-        .from('shops')
-        .select('owner_id')
-        .eq('id', order.shop_id)
-        .single()
-      if (shop?.owner_id) shopOwnerIds.push(shop.owner_id)
+        .from('shops').select('owner_id').eq('id', order.shop_id).single()
+      if (shop?.owner_id) recipientIds.push(shop.owner_id)
     }
 
-    // Also notify all admins for unassigned orders
+    // Admins always get notified for new (pending) orders
     if (!order.shop_id || order.status === 'pending') {
       const { data: admins } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('role', ['super_admin', 'market_manager'])
-      if (admins) shopOwnerIds.push(...admins.map((a: { id: string }) => a.id))
+        .from('profiles').select('id').in('role', ['super_admin', 'market_manager'])
+      if (admins) recipientIds.push(...admins.map((a: { id: string }) => a.id))
     }
 
-    // Deduplicate
-    shopOwnerIds = [...new Set(shopOwnerIds)]
+    recipientIds = [...new Set(recipientIds)]
 
-    if (shopOwnerIds.length === 0) {
+    if (recipientIds.length === 0) {
       return new Response(JSON.stringify({ sent: 0, reason: 'no recipients' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Fetch push subscriptions for these users
+    // Fetch push subscriptions
     const { data: subs } = await supabase
       .from('push_subscriptions')
-      .select('endpoint, p256dh, auth')
-      .in('user_id', shopOwnerIds)
+      .select('endpoint')
+      .in('user_id', recipientIds)
 
     if (!subs || subs.length === 0) {
       return new Response(JSON.stringify({ sent: 0, reason: 'no subscriptions' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const notifPayload = JSON.stringify({
-      title: '🛍️ শিবের বাজার — নতুন অর্ডার!',
-      body: `${order.customer_name || 'একজন গ্রাহক'} — ৳${order.total_amount ?? ''}`,
-      url: order.shop_id ? '/dashboard/orders' : '/admin/orders',
-    })
-
-    // Send push to all subscriptions
     const results = await Promise.allSettled(
-      subs.map(sub => sendWebPush(sub, notifPayload, vapidPublic, vapidPrivate))
+      subs.map(sub => sendWebPush(sub.endpoint, vapidPublic, vapidPrivate))
     )
 
-    const sent    = results.filter(r => r.status === 'fulfilled').length
-    const failed  = results.length - sent
+    const sent   = results.filter(r => r.status === 'fulfilled').length
+    const failed = results.length - sent
+
+    console.log(`send-push: sent=${sent} failed=${failed} order=${order.id}`)
 
     return new Response(JSON.stringify({ sent, failed }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (err) {
     console.error('send-push error:', err)
     return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })

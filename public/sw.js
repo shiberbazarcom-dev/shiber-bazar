@@ -58,14 +58,24 @@ self.addEventListener('fetch', e => {
 
 /* ── Push Notifications ── */
 self.addEventListener('push', e => {
-  let data = { title: 'শিবের বাজার', body: 'নতুন আপডেট আছে' }
-  try { data = e.data?.json() ?? data } catch {}
+  // Ping push (no payload) = new order notification
+  let data = {
+    title: '🛍️ শিবের বাজার',
+    body:  'নতুন অর্ডার এসেছে! এখনই দেখুন।',
+    url:   '/dashboard/orders',
+  }
+  try {
+    if (e.data) data = { ...data, ...e.data.json() }
+  } catch {}
+
   e.waitUntil(
     self.registration.showNotification(data.title, {
-      body:  data.body,
-      icon:  '/icons/icon-192.png',
-      badge: '/icons/icon-72.png',
-      data:  { url: data.url || '/' },
+      body:    data.body,
+      icon:    '/icons/icon-192.png',
+      badge:   '/icons/icon-72.png',
+      tag:     'new-order',        // replaces previous unread notification
+      renotify: true,
+      data:    { url: data.url },
     })
   )
 })
