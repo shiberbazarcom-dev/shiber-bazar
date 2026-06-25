@@ -193,14 +193,19 @@ export default function Products() {
     setBgRemovingIdx(idx)
     setBgRemoveError('')
     try {
-      // supabase.functions.invoke auto-attaches the JWT — no manual header needed
       const { data, error } = await supabase.functions.invoke('remove-bg', {
         body: { shop_id: editProduct.shop_id, image_url: imageUrl },
       })
 
-      console.log('remove-bg response:', { data, error })
-
-      if (error) throw new Error(error.message || 'সার্ভার সমস্যা')
+      // For non-2xx responses, supabase wraps it in error — extract actual body
+      if (error) {
+        let body: any = {}
+        try { body = await (error as any).context?.json?.() ?? {} } catch (_) {}
+        if (body?.error === 'limit_reached') {
+          throw new Error(`সীমা শেষ! এই মাসে ${body.limit ?? '২'}টির বেশি ব্যবহার করা যাবে না। Pro plan-এ ৫০টি পাবেন।`)
+        }
+        throw new Error(body?.error || error.message || 'সার্ভার সমস্যা')
+      }
       if (data?.error) {
         if (data.error === 'limit_reached') {
           throw new Error(`সীমা শেষ! এই মাসে ${data.limit ?? '২'}টির বেশি ব্যবহার করা যাবে না। Pro plan-এ ৫০টি পাবেন।`)
