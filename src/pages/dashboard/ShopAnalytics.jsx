@@ -85,14 +85,14 @@ export default function ShopAnalytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard icon="📦" label="মোট অর্ডার"   color="blue"   value={stats.totalOrders?.toLocaleString('bn-BD') ?? '০'} />
         <StatCard icon="💰" label="মোট রাজস্ব"   color="green"  value={`৳${(stats.totalRevenue || 0).toLocaleString('bn-BD')}`} />
         <StatCard icon="👁️" label="পণ্য দেখেছে" color="purple" value={stats.totalProductViews?.toLocaleString('bn-BD') ?? '০'} />
         <StatCard icon="✅" label="সক্রিয় পণ্য"  color="amber"  value={stats.activeProducts?.toLocaleString('bn-BD') ?? '০'} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <h2 className="text-base font-semibold text-gray-800 mb-4">💰 দৈনিক রাজস্ব</h2>
           {dailyData.length > 0 ? (
@@ -124,7 +124,7 @@ export default function ShopAnalytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-5">
           <h2 className="text-base font-semibold text-gray-800 mb-4">🔥 সর্বাধিক দেখা পণ্য</h2>
           {topProducts.length === 0 ? (

@@ -281,7 +281,7 @@ export default function MyShops() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {shops.map((shop: any) => {
             const st = SHOP_STATUS[shop.status] ?? { label: shop.status, variant: 'secondary', desc: '' }
             return (

@@ -227,7 +227,7 @@ export default function DashboardOverview() {
           </Link>
 
           {/* Quick links */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { to: '/dashboard/shops',    icon: '🏪', label: 'আমার দোকান' },
               { to: '/dashboard/products', icon: '🛍️', label: 'পণ্য আপলোড' },
@@ -235,9 +235,9 @@ export default function DashboardOverview() {
               { to: '/dashboard/qr-code',  icon: '🔲', label: 'QR কোড' },
             ].map(item => (
               <Link key={item.to} to={item.to}
-                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex items-center gap-3">
-                <span className="text-2xl">{item.icon}</span>
-                <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+                className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex items-center gap-2 sm:gap-3 min-h-[52px]">
+                <span className="text-xl sm:text-2xl">{item.icon}</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 leading-tight">{item.label}</span>
               </Link>
             ))}
           </div>

@@ -264,7 +264,7 @@ export default function HisaberKhata() {
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
         <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
           <p className="text-xs text-gray-400">মোট বাকি</p>
           <p className="text-lg font-bold text-red-500 mt-0.5">{fmt(totalDue)}</p>
