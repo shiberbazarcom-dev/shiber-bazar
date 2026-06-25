@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ShoppingCart, MoreHorizontal, MessageCircle, Eye, Store, Send } from 'lucide-react'
+import { ShoppingCart, MoreHorizontal, MessageCircle, Eye, Store, Send, CheckSquare, Square, CheckCheck, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 // @ts-ignore
 import { shopOwnerWhatsAppUrl, customerConfirmWhatsAppUrl } from '@/lib/whatsapp'
@@ -90,6 +90,24 @@ function useAssignOrder() {
   })
 }
 
+function useBulkConfirm() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'confirmed' })
+        .in('id', ids)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      qc.invalidateQueries({ queryKey: ['my-orders'] })
+      qc.invalidateQueries({ queryKey: ['shop-order-stats'] })
+    },
+  })
+}
+
 function buildWhatsApp(order: Order): string {
   const shop = (order.shops as any)
   const phone = shop?.whatsapp || shop?.phone || ''
@@ -108,11 +126,50 @@ export default function ManageOrders() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus>('all')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [assignShopId, setAssignShopId] = useState<string>('')
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
 
   const { data: orders = [], isLoading } = useOrders(statusFilter)
   const updateStatus = useUpdateOrderStatus()
   const assignOrder = useAssignOrder()
+  const bulkConfirm = useBulkConfirm()
   const { data: shopsList = [] } = useShopsForAssignment()
+
+  const toggleCheck = (id: string) => {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const pendingOrders = orders.filter(o => o.status === 'pending')
+  const allPendingChecked = pendingOrders.length > 0 && pendingOrders.every(o => checkedIds.has(o.id))
+
+  const toggleAllPending = () => {
+    if (allPendingChecked) {
+      setCheckedIds(prev => {
+        const next = new Set(prev)
+        pendingOrders.forEach(o => next.delete(o.id))
+        return next
+      })
+    } else {
+      setCheckedIds(prev => {
+        const next = new Set(prev)
+        pendingOrders.forEach(o => next.add(o.id))
+        return next
+      })
+    }
+  }
+
+  const handleBulkConfirm = async () => {
+    const ids = Array.from(checkedIds)
+    if (!ids.length) return
+    try {
+      await bulkConfirm.mutateAsync(ids)
+      toast.success(`${ids.length}টি অর্ডার কনফার্ম হয়েছে ✅`)
+      setCheckedIds(new Set())
+    } catch { toast.error('Bulk confirm ব্যর্থ হয়েছে') }
+  }
 
   const handleStatus = async (id: string, status: string) => {
     try {
@@ -132,6 +189,33 @@ export default function ManageOrders() {
   }
 
   const columns: ColumnDef<Order>[] = [
+    {
+      id: 'select',
+      header: () => (
+        <button
+          onClick={toggleAllPending}
+          className="p-0.5 rounded hover:bg-gray-200 transition-colors"
+          title="সব Pending সিলেক্ট করুন"
+        >
+          {allPendingChecked
+            ? <CheckSquare className="h-4 w-4 text-blue-600" />
+            : <Square className="h-4 w-4 text-gray-400" />}
+        </button>
+      ),
+      cell: ({ row }) => {
+        const o = row.original
+        const canSelect = o.status === 'pending' || o.status === 'confirmed'
+        if (!canSelect) return null
+        return (
+          <button onClick={() => toggleCheck(o.id)} className="p-0.5 rounded hover:bg-gray-100">
+            {checkedIds.has(o.id)
+              ? <CheckSquare className="h-4 w-4 text-blue-600" />
+              : <Square className="h-4 w-4 text-gray-300" />}
+          </button>
+        )
+      },
+      enableSorting: false,
+    },
     {
       accessorKey: 'order_number',
       header: 'Order #',
@@ -278,13 +362,25 @@ export default function ManageOrders() {
           <div className="text-center py-12 text-gray-400 text-sm">কোনো অর্ডার নেই</div>
         ) : orders.map((o: Order) => {
           const cfg = STATUS_CONFIG[o.status]
+          const canSelect = o.status === 'pending' || o.status === 'confirmed'
+          const isChecked = checkedIds.has(o.id)
           return (
-            <div key={o.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2">
+            <div key={o.id}
+              className={`bg-white rounded-xl border shadow-sm p-4 space-y-2 transition-colors ${isChecked ? 'border-blue-300 bg-blue-50/30' : 'border-gray-100'}`}>
               <div className="flex items-start justify-between gap-2">
-                <button className="text-blue-600 font-bold text-sm hover:underline text-left"
-                  onClick={() => { setSelectedOrder(o); setAssignShopId((o as any).shop_id || '') }}>
-                  {o.order_number}
-                </button>
+                <div className="flex items-center gap-2">
+                  {canSelect && (
+                    <button onClick={() => toggleCheck(o.id)}>
+                      {isChecked
+                        ? <CheckSquare className="h-4 w-4 text-blue-600" />
+                        : <Square className="h-4 w-4 text-gray-300" />}
+                    </button>
+                  )}
+                  <button className="text-blue-600 font-bold text-sm hover:underline text-left"
+                    onClick={() => { setSelectedOrder(o); setAssignShopId((o as any).shop_id || '') }}>
+                    {o.order_number}
+                  </button>
+                </div>
                 <Badge variant={cfg?.variant ?? 'secondary'} className="text-xs shrink-0">{cfg?.label ?? o.status}</Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -299,6 +395,25 @@ export default function ManageOrders() {
           )
         })}
       </div>
+
+      {/* Bulk action bar */}
+      {checkedIds.size > 0 && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 sticky top-2 z-10">
+          <span className="text-sm font-medium text-blue-800">{checkedIds.size}টি অর্ডার সিলেক্ট</span>
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 ml-auto"
+            disabled={bulkConfirm.isPending}
+            onClick={handleBulkConfirm}
+          >
+            <CheckCheck className="h-4 w-4" />
+            {bulkConfirm.isPending ? 'হচ্ছে...' : 'সব Confirm করুন'}
+          </Button>
+          <button onClick={() => setCheckedIds(new Set())} className="text-gray-400 hover:text-gray-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Desktop table */}
       <div className="hidden md:block">
