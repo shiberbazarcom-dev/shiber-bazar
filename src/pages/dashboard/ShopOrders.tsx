@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -10,9 +11,11 @@ import { Select } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataTable } from '@/components/admin/DataTable'
 import type { ColumnDef } from '@tanstack/react-table'
-import { ShoppingCart, Phone, MapPin, MessageSquare, CheckCircle, XCircle, Package, MessageCircle } from 'lucide-react'
+import { ShoppingCart, Phone, MapPin, MessageSquare, CheckCircle, XCircle, Package, MessageCircle, FileDown } from 'lucide-react'
 // @ts-ignore
 import { customerConfirmWhatsAppUrl, customerShippedWhatsAppUrl } from '@/lib/whatsapp'
+// @ts-ignore
+import { downloadSalesReportPdf } from '@/lib/salesReportPdf'
 
 // @ts-ignore
 const useAuthHook = useAuth
@@ -75,6 +78,11 @@ export default function ShopOrders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+
+  const now = new Date()
+  const [reportMonth, setReportMonth] = useState(now.getMonth())
+  const [reportYear, setReportYear] = useState(now.getFullYear())
 
   const { data: allOrders = [], isLoading } = useQuery({
     queryKey: ['my-orders', user?.id],
@@ -100,6 +108,36 @@ export default function ShopOrders() {
   async function changeStatus(orderId: string, newStatus: string) {
     setUpdatingId(orderId)
     await updateStatus.mutateAsync({ id: orderId, status: newStatus })
+  }
+
+  async function handleDownloadPdf() {
+    setPdfGenerating(true)
+    try {
+      const shopName = allOrders[0]?.shops?.shop_name || 'My Shop'
+      // fetch orders with items for the selected month
+      const { data: shops } = await supabase.from('shops').select('id, shop_name').eq('owner_id', user!.id)
+      const shopIds = (shops ?? []).map((s: any) => s.id)
+      const firstDay = new Date(reportYear, reportMonth, 1).toISOString()
+      const lastDay  = new Date(reportYear, reportMonth + 1, 0, 23, 59, 59).toISOString()
+      const { data: monthOrders } = await supabase
+        .from('orders')
+        .select('*, shops(shop_name), order_items(*, products(product_name))')
+        .in('shop_id', shopIds)
+        .gte('created_at', firstDay)
+        .lte('created_at', lastDay)
+        .order('created_at', { ascending: false })
+      downloadSalesReportPdf({
+        orders: monthOrders ?? [],
+        shopName: (shops?.[0] as any)?.shop_name || 'My Shop',
+        month: reportMonth,
+        year: reportYear,
+      })
+      toast.success('PDF ডাউনলোড শুরু হয়েছে!')
+    } catch (e: any) {
+      toast.error('PDF তৈরি করতে সমস্যা হয়েছে')
+    } finally {
+      setPdfGenerating(false)
+    }
   }
 
   // Shop owners never see pending orders' details — pending = admin review only
@@ -189,11 +227,42 @@ export default function ShopOrders() {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📦 অর্ডার ব্যবস্থাপনা</h1>
-          {newOrderCount > 0 && (
-            <p className="text-sm text-amber-600 mt-0.5">{newOrderCount}টি নতুন অর্ডার প্রস্তুত করার অপেক্ষায়!</p>
-          )}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📦 অর্ডার ব্যবস্থাপনা</h1>
+            {newOrderCount > 0 && (
+              <p className="text-sm text-amber-600 mt-0.5">{newOrderCount}টি নতুন অর্ডার প্রস্তুত করার অপেক্ষায়!</p>
+            )}
+          </div>
+          {/* PDF Report */}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+            <select
+              value={`${reportYear}-${reportMonth}`}
+              onChange={e => {
+                const [y, m] = e.target.value.split('-').map(Number)
+                setReportYear(y); setReportMonth(m)
+              }}
+              className="text-xs text-gray-700 bg-transparent outline-none cursor-pointer"
+            >
+              {Array.from({ length: 12 }, (_, i) => {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+                const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর']
+                return (
+                  <option key={i} value={`${d.getFullYear()}-${d.getMonth()}`}>
+                    {months[d.getMonth()]} {d.getFullYear()}
+                  </option>
+                )
+              })}
+            </select>
+            <button
+              onClick={handleDownloadPdf}
+              disabled={pdfGenerating || isLoading}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              {pdfGenerating ? 'তৈরি হচ্ছে...' : 'PDF Report'}
+            </button>
+          </div>
         </div>
         {/* Filter tabs — horizontally scrollable on mobile */}
         <div className="overflow-x-auto -mx-1 px-1">
