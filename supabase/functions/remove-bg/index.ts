@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    /* ── 1. Get shop_id + plan check ── */
+    /* ── 1. Plan check ── */
     const { shop_id, image_base64 } = await req.json()
     if (!shop_id || !image_base64)
       return new Response(JSON.stringify({ error: 'shop_id and image_base64 required' }), { status: 400, headers: corsHeaders })
@@ -46,64 +46,70 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
 
     const planExpired = shop.plan_expires_at && new Date(shop.plan_expires_at) <= new Date()
-    const isPro       = shop.plan && shop.plan !== 'free' && !planExpired
-    const isBiz       = shop.plan === 'business' && !planExpired
-    const limit       = isBiz ? Infinity : isPro ? PRO_LIMIT : FREE_LIMIT
-    const used        = shop.bg_remove_count ?? 0
+    const isPro  = shop.plan && shop.plan !== 'free' && !planExpired
+    const isBiz  = shop.plan === 'business' && !planExpired
+    const limit  = isBiz ? 9999 : isPro ? PRO_LIMIT : FREE_LIMIT
+    const used   = shop.bg_remove_count ?? 0
 
     if (used >= limit) {
       return new Response(JSON.stringify({
         error: 'limit_reached',
         used,
-        limit: limit === Infinity ? null : limit,
+        limit,
         isPro,
       }), { status: 429, headers: corsHeaders })
     }
 
-    /* ── 2. Call Replicate REMBG ── */
+    /* ── 2. Call Replicate cjwbw/rembg ── */
     const replicateKey = Deno.env.get('REPLICATE_API_TOKEN')
     if (!replicateKey) throw new Error('REPLICATE_API_TOKEN not set')
 
     // Start prediction
-    const startRes = await fetch('https://api.replicate.com/v1/models/851-labs/background-removal/predictions', {
+    const startRes = await fetch('https://api.replicate.com/v1/models/cjwbw/rembg/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${replicateKey}`,
+        'Authorization': `Token ${replicateKey}`,
         'Content-Type': 'application/json',
-        'Prefer': 'wait', // wait up to 60s for result
       },
       body: JSON.stringify({
         input: { image: image_base64 }
       }),
     })
 
-    if (!startRes.ok) {
-      const err = await startRes.text()
-      throw new Error(`Replicate error: ${err}`)
+    const startData = await startRes.json()
+    console.log('Replicate start:', JSON.stringify(startData))
+
+    if (!startRes.ok || startData.error) {
+      throw new Error(`Replicate start error: ${startData.error || startRes.status}`)
     }
 
-    const prediction = await startRes.json()
+    const predictionId = startData.id
+    if (!predictionId) throw new Error('No prediction ID returned')
 
-    // If not done yet, poll (Prefer: wait should handle it but fallback)
-    let output = prediction.output
-    if (!output && prediction.id) {
-      for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 2000))
-        const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-          headers: { 'Authorization': `Bearer ${replicateKey}` }
-        })
-        const polled = await pollRes.json()
-        if (polled.status === 'succeeded') { output = polled.output; break }
-        if (polled.status === 'failed') throw new Error('Replicate prediction failed')
+    // Poll for result (max 60s)
+    let output: string | null = null
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 2000))
+      const pollRes  = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+        headers: { 'Authorization': `Token ${replicateKey}` }
+      })
+      const polled = await pollRes.json()
+      console.log(`Poll ${i}: status=${polled.status}`)
+
+      if (polled.status === 'succeeded') {
+        output = typeof polled.output === 'string' ? polled.output : polled.output?.[0]
+        break
+      }
+      if (polled.status === 'failed') {
+        throw new Error(`Replicate failed: ${polled.error || 'unknown'}`)
       }
     }
 
-    if (!output) throw new Error('No output from Replicate')
+    if (!output) throw new Error('Replicate timed out — no output')
 
-    /* ── 3. Download result PNG + upload to Supabase Storage ── */
-    const outputUrl = typeof output === 'string' ? output : output[0]
-    const imgRes    = await fetch(outputUrl)
-    const imgBlob   = await imgRes.arrayBuffer()
+    /* ── 3. Download PNG + upload to Supabase Storage ── */
+    const imgRes  = await fetch(output)
+    const imgBlob = await imgRes.arrayBuffer()
 
     const storagePath = `${user.id}/bg-removed-${Date.now()}.png`
     const { error: uploadErr } = await supabase.storage
@@ -120,11 +126,11 @@ Deno.serve(async (req) => {
       success: true,
       url: publicUrl,
       used: used + 1,
-      limit: limit === Infinity ? null : limit,
+      limit,
     }), { headers: corsHeaders })
 
   } catch (e: any) {
-    console.error('remove-bg error:', e)
+    console.error('remove-bg error:', e.message)
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders })
   }
 })
