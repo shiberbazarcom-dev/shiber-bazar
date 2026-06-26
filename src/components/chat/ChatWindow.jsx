@@ -196,7 +196,7 @@ function MessageGroup({ group, isOwn, senderName, senderInitial, shopLogo, isOwn
   )
 }
 
-export default function ChatWindow({ conversation, otherName }) {
+export default function ChatWindow({ conversation, otherName, hideHeader }) {
   const { user, isOwner } = useAuth()
   const [text, setText] = useState('')
   const [otherTyping, setOtherTyping] = useState(false)
@@ -364,7 +364,7 @@ export default function ChatWindow({ conversation, otherName }) {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-b border-gray-100 flex items-center gap-2 sm:gap-3 flex-shrink-0">
+      {!hideHeader && <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-b border-gray-100 flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
           {otherName?.[0] || '?'}
         </div>
@@ -393,7 +393,7 @@ export default function ChatWindow({ conversation, otherName }) {
             )}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* AI Persona Settings */}
       {isOwner && showAiSettings && (

@@ -62,7 +62,7 @@ export default function ShopChatOverlay({ conversation, shopName, shopLogo, onCl
       <div className="fixed inset-0 z-[200] flex flex-col bg-white">
         <Header mobile />
         <div className="flex-1 overflow-hidden flex flex-col">
-          <ChatWindow conversation={conversation} otherName={name} />
+          <ChatWindow conversation={conversation} otherName={name} hideHeader />
         </div>
       </div>
     )
@@ -73,7 +73,7 @@ export default function ShopChatOverlay({ conversation, shopName, shopLogo, onCl
       <Header mobile={false} />
       {!minimized && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <ChatWindow conversation={conversation} otherName={name} />
+          <ChatWindow conversation={conversation} otherName={name} hideHeader />
         </div>
       )}
     </div>
