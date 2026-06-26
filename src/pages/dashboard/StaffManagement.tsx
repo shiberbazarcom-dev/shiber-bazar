@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProGate } from '@/components/ProGate'
 import toast from 'react-hot-toast'
-import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check } from 'lucide-react'
+import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check, Activity, Monitor, Smartphone } from 'lucide-react'
 
 // @ts-ignore
 const useAuthHook = useAuth as () => { user: any; [k: string]: any }
@@ -60,6 +60,21 @@ function useShopStaff(shopId: string | null) {
 
 type AddMethod = 'pin' | 'invite' | 'phone'
 
+const ACTION_LABELS: Record<string, string> = {
+  login:              '🔐 লগইন',
+  logout:             '🚪 লগআউট',
+  order_status_update:'📦 অর্ডার স্ট্যাটাস পরিবর্তন',
+  product_add:        '➕ পণ্য যোগ',
+  product_edit:       '✏️ পণ্য এডিট',
+  product_delete:     '🗑️ পণ্য মুছেছেন',
+  product_activate:   '✅ পণ্য চালু',
+  product_deactivate: '⏸️ পণ্য বন্ধ',
+}
+
+function isMobile(ua: string) {
+  return /android|iphone|ipad|mobile/i.test(ua)
+}
+
 function StaffManagementInner() {
   const { user } = useAuthHook()
   const qc = useQueryClient()
@@ -68,6 +83,22 @@ function StaffManagementInner() {
   const shopId = selectedShopId || shops[0]?.id || null
   const { data: staffList = [], isLoading } = useShopStaff(shopId)
   const [addOpen, setAddOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'staff' | 'logs'>('staff')
+
+  const { data: logs = [], isLoading: logsLoading } = useQuery({
+    queryKey: ['staff-logs', shopId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('staff_activity_logs')
+        .select('*')
+        .eq('shop_id', shopId)
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!shopId && activeTab === 'logs',
+  })
 
   // Set default shop when loaded
   if (!selectedShopId && shops.length > 0 && !shopId) setSelectedShopId(shops[0].id)
@@ -122,56 +153,117 @@ function StaffManagementInner() {
         </select>
       )}
 
-      {/* Staff list */}
-      {isLoading && <div className="text-center py-10 text-gray-400">লোড হচ্ছে...</div>}
-      {!isLoading && staffList.length === 0 && (
-        <div className="text-center py-12 text-gray-400 bg-white rounded-xl border">
-          <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">এখনো কোনো Staff নেই</p>
-          <p className="text-xs mt-1">নিচের বাটনে ক্লিক করে staff যোগ করুন</p>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+        <button onClick={() => setActiveTab('staff')} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'staff' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}>
+          <Users className="h-3.5 w-3.5 inline mr-1.5" />স্টাফ তালিকা
+        </button>
+        <button onClick={() => setActiveTab('logs')} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'logs' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}>
+          <Activity className="h-3.5 w-3.5 inline mr-1.5" />লগ / কার্যক্রম
+        </button>
+      </div>
+
+      {/* Staff list tab */}
+      {activeTab === 'staff' && <>
+        {isLoading && <div className="text-center py-10 text-gray-400">লোড হচ্ছে...</div>}
+        {!isLoading && staffList.length === 0 && (
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border">
+            <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">এখনো কোনো Staff নেই</p>
+          </div>
+        )}
+        <div className="space-y-3">
+          {staffList.filter(s => s.is_active).map(staff => {
+            const isManager = staff.role === 'manager'
+            const hasPending = !!staff.invite_token
+            return (
+              <div key={staff.id} className="bg-white rounded-xl border shadow-sm p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${isManager ? 'bg-purple-500' : 'bg-blue-500'}`}>
+                    {staff.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-gray-800 text-sm">{staff.name}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isManager ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {isManager ? 'ম্যানেজার' : 'স্টাফ'}
+                      </span>
+                      {hasPending && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⏳ Pending</span>}
+                    </div>
+                    {staff.phone && <p className="text-xs text-gray-400 mt-0.5">📞 {staff.phone}</p>}
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {staff.last_login_at
+                        ? `সর্বশেষ লগইন: ${new Date(staff.last_login_at).toLocaleDateString('bn-BD')}`
+                        : hasPending ? 'এখনো join করেননি' : 'লগইন ইতিহাস নেই'}
+                    </p>
+                    {hasPending && <InviteLinkCopy token={staff.invite_token!} />}
+                  </div>
+                </div>
+                <button
+                  onClick={() => { if (confirm(`${staff.name} কে সরিয়ে দেবেন?`)) removeStaff.mutate(staff.id) }}
+                  className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0"
+                >
+                  <UserX className="h-4 w-4" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </>}
+
+      {/* Logs tab */}
+      {activeTab === 'logs' && (
+        <div className="space-y-2">
+          {logsLoading && <div className="text-center py-10 text-gray-400">লোড হচ্ছে...</div>}
+          {!logsLoading && logs.length === 0 && (
+            <div className="text-center py-12 text-gray-400 bg-white rounded-xl border">
+              <Activity className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">এখনো কোনো কার্যক্রম নেই</p>
+            </div>
+          )}
+          {logs.map((log: any) => (
+            <div key={log.id} className="bg-white rounded-xl border p-3.5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${log.staff_role === 'manager' ? 'bg-purple-500' : 'bg-blue-500'}`}>
+                    {log.staff_name?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-800 text-sm">{log.staff_name}</span>
+                    <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${log.staff_role === 'manager' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {log.staff_role === 'manager' ? 'ম্যানেজার' : 'স্টাফ'}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-400 shrink-0">
+                  {new Date(log.created_at).toLocaleString('bn-BD')}
+                </span>
+              </div>
+              <p className="text-sm text-gray-700 ml-9">{ACTION_LABELS[log.action] || log.action}</p>
+              {log.details && Object.keys(log.details).length > 0 && (
+                <p className="text-xs text-gray-400 ml-9">
+                  {log.details.new_status ? `নতুন স্ট্যাটাস: ${log.details.new_status}` : ''}
+                  {log.details.product_name ? `পণ্য: ${log.details.product_name}` : ''}
+                  {log.details.method ? `পদ্ধতি: ${log.details.method}` : ''}
+                </p>
+              )}
+              <div className="flex items-center gap-3 ml-9 flex-wrap">
+                {log.ip_address && (
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    🌐 {log.ip_address}
+                  </span>
+                )}
+                {log.user_agent && (
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    {isMobile(log.user_agent) ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                    {isMobile(log.user_agent) ? 'মোবাইল' : 'কম্পিউটার'}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
-
-      <div className="space-y-3">
-        {staffList.filter(s => s.is_active).map(staff => {
-          const isManager = staff.role === 'manager'
-          const hasPending = !!staff.invite_token
-          return (
-            <div key={staff.id} className="bg-white rounded-xl border shadow-sm p-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Avatar */}
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${isManager ? 'bg-purple-500' : 'bg-blue-500'}`}>
-                  {staff.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-800 text-sm">{staff.name}</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isManager ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {isManager ? 'ম্যানেজার' : 'স্টাফ'}
-                    </span>
-                    {hasPending && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⏳ Pending</span>}
-                  </div>
-                  {staff.phone && <p className="text-xs text-gray-400 mt-0.5">📞 {staff.phone}</p>}
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {staff.last_login_at
-                      ? `সর্বশেষ লগইন: ${new Date(staff.last_login_at).toLocaleDateString('bn-BD')}`
-                      : hasPending ? 'এখনো join করেননি' : 'লগইন ইতিহাস নেই'
-                    }
-                  </p>
-                  {hasPending && <InviteLinkCopy token={staff.invite_token!} />}
-                </div>
-              </div>
-              <button
-                onClick={() => { if (confirm(`${staff.name} কে সরিয়ে দেবেন?`)) removeStaff.mutate(staff.id) }}
-                className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0"
-                title="সরিয়ে দিন"
-              >
-                <UserX className="h-4 w-4" />
-              </button>
-            </div>
-          )
-        })}
-      </div>
 
       {/* Add Staff Modal */}
       {addOpen && shopId && (

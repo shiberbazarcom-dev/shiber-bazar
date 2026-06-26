@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useStaffAuth } from '../../context/StaffAuthContext'
+import { logStaffActivity } from '../../lib/staffLog'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import toast from 'react-hot-toast'
@@ -34,9 +35,10 @@ export default function StaffProducts() {
       const { error } = await supabase.from('products').update(updates).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['staff-products'] })
       toast.success('প্রোডাক্ট আপডেট হয়েছে')
+      logStaffActivity(staffSession, 'product_edit', { product_id: vars.id })
       setEditProduct(null)
     },
     onError: () => toast.error('আপডেট হয়নি'),
@@ -51,28 +53,32 @@ export default function StaffProducts() {
       })
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['staff-products'] })
       toast.success('প্রোডাক্ট যোগ হয়েছে')
+      logStaffActivity(staffSession, 'product_add', { product_name: vars.name })
       setAddOpen(false)
     },
     onError: () => toast.error('যোগ করা যায়নি'),
   })
 
   const deleteProduct = useMutation({
-    mutationFn: async (id) => {
+    mutationFn: async ({ id, name }) => {
       const { error } = await supabase.from('products').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['staff-products'] })
       toast.success('প্রোডাক্ট মুছে ফেলা হয়েছে')
+      logStaffActivity(staffSession, 'product_delete', { product_name: vars.name })
     },
     onError: () => toast.error('মুছে ফেলা যায়নি'),
   })
 
   function toggleActive(product) {
+    const action = product.is_active ? 'product_deactivate' : 'product_activate'
     updateProduct.mutate({ id: product.id, is_active: !product.is_active })
+    logStaffActivity(staffSession, action, { product_name: product.name })
   }
 
   if (isLoading) return <div className="text-center py-16 text-gray-400">লোড হচ্ছে...</div>
@@ -121,7 +127,7 @@ export default function StaffProducts() {
                 </button>
                 {isManager && (
                   <button
-                    onClick={() => { if (confirm(`"${p.name}" মুছে ফেলবেন?`)) deleteProduct.mutate(p.id) }}
+                    onClick={() => { if (confirm(`"${p.name}" মুছে ফেলবেন?`)) deleteProduct.mutate({ id: p.id, name: p.name }) }}
                     className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
                   >
                     <Trash2 className="h-3 w-3" /> মুছুন

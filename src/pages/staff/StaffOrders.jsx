@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useStaffAuth } from '../../context/StaffAuthContext'
+import { logStaffActivity } from '../../lib/staffLog'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import toast from 'react-hot-toast'
@@ -62,9 +63,10 @@ export default function StaffOrders() {
       }).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['staff-orders'] })
       toast.success('স্ট্যাটাস আপডেট হয়েছে')
+      logStaffActivity(staffSession, 'order_status_update', { order_id: vars.id, new_status: vars.status })
       setSelectedOrder(null)
     },
     onError: () => toast.error('আপডেট হয়নি'),

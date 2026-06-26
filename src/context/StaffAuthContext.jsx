@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { logStaffActivity } from '../lib/staffLog'
 
 const StaffAuthContext = createContext(null)
 const STORAGE_KEY = 'sb_staff_session'
@@ -89,6 +90,7 @@ export function StaffAuthProvider({ children }) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData))
     setStaffSession(sessionData)
+    logStaffActivity(sessionData, 'login', { method: 'pin' })
     return sessionData
   }, [])
 
@@ -131,10 +133,13 @@ export function StaffAuthProvider({ children }) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData))
     setStaffSession(sessionData)
+    logStaffActivity(sessionData, 'login', { method: 'invite' })
     return sessionData
   }, [])
 
   const logout = useCallback(() => {
+    const session = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    if (session) logStaffActivity(session, 'logout')
     localStorage.removeItem(STORAGE_KEY)
     setStaffSession(null)
   }, [])
