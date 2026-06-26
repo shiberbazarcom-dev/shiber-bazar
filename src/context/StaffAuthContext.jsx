@@ -55,11 +55,11 @@ export function StaffAuthProvider({ children }) {
   }
 
   const loginWithPin = useCallback(async (shopCode, pin) => {
-    // 1. Find shop by slug or id
+    // 1. Find shop by slug (case-insensitive)
     const { data: shop, error: shopErr } = await supabase
       .from('shops')
       .select('id, shop_name, slug')
-      .or(`slug.ilike.${shopCode.trim()},id.eq.${shopCode.trim()}`)
+      .ilike('slug', shopCode.trim())
       .eq('status', 'approved')
       .maybeSingle()
 
