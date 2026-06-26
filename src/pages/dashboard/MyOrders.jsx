@@ -54,7 +54,7 @@ function OrderCard({ order }) {
   const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:border-blue-100 transition-colors">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
       {/* Card header */}
       <button
         onClick={() => setOpen(o => !o)}
