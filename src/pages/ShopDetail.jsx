@@ -184,7 +184,7 @@ export default function ShopDetail() {
     if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
     try {
       const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
-      setChatConv(conv)
+      setChatConv({ shop_id: shop.id, customer_id: user.id, owner_id: shop.owner_id, ...conv })
     } catch { toast.error('বার্তা শুরু করা যায়নি') }
   }
 
