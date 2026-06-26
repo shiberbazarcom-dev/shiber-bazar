@@ -103,10 +103,11 @@ const JobsPage             = lazy(() => import('./pages/JobsPage'))
 const JobDetail            = lazy(() => import('./pages/JobDetail'))
 
 /* ── Staff pages ── */
-const StaffLogin    = lazy(() => import('./pages/StaffLogin'))
-const StaffLayout   = lazy(() => import('./components/StaffLayout'))
-const StaffOrders   = lazy(() => import('./pages/staff/StaffOrders'))
-const StaffProducts = lazy(() => import('./pages/staff/StaffProducts'))
+const StaffLogin     = lazy(() => import('./pages/StaffLogin'))
+const StaffLayout    = lazy(() => import('./components/StaffLayout'))
+const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard'))
+const StaffOrders    = lazy(() => import('./pages/staff/StaffOrders'))
+const StaffProducts  = lazy(() => import('./pages/staff/StaffProducts'))
 const StaffTeam     = lazy(() => import('./pages/staff/StaffTeam'))
 
 /* ── Owner: Staff Management ── */
@@ -357,10 +358,10 @@ export default function App() {
             ══════════════════════════════════ */}
             <Route path="/staff-login" element={<StaffLogin />} />
             <Route path="/staff" element={<StaffLayout />}>
+              <Route index element={<StaffDashboard />} />
               <Route path="orders"   element={<StaffOrders />} />
               <Route path="products" element={<StaffProducts />} />
               <Route path="team"     element={<StaffTeam />} />
-              <Route index element={<Navigate to="/staff/orders" replace />} />
             </Route>
 
             {/* Fallback */}

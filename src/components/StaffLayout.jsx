@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate, Navigate } from 'react-router-dom'
 import { useStaffAuth } from '../context/StaffAuthContext'
-import { ShoppingBag, Package, LogOut, Users } from 'lucide-react'
+import { ShoppingBag, Package, LogOut, Users, LayoutDashboard } from 'lucide-react'
 
 export default function StaffLayout() {
   const { staffSession, loading, logout } = useStaffAuth()
@@ -28,6 +28,7 @@ export default function StaffLayout() {
   }
 
   const navItems = [
+    { to: '/staff',          label: 'হোম',      icon: LayoutDashboard, end: true },
     { to: '/staff/orders',   label: 'অর্ডার',   icon: ShoppingBag },
     { to: '/staff/products', label: 'প্রোডাক্ট', icon: Package },
     ...(isManager ? [{ to: '/staff/team', label: 'টিম', icon: Users }] : []),
@@ -53,10 +54,11 @@ export default function StaffLayout() {
 
           {/* Center: nav */}
           <nav className="flex items-center gap-0.5">
-            {navItems.map(({ to, label, icon: Icon }) => (
+            {navItems.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
+                end={end}
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
                   ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`
