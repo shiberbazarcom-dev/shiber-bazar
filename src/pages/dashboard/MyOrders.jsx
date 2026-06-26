@@ -26,6 +26,29 @@ function StatusBadge({ status }) {
   )
 }
 
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  function handleCopy(e) {
+    e.stopPropagation()
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-all"
+      style={copied
+        ? { background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }
+        : { background: '#f8fafc', color: '#6b7280', borderColor: '#e5e7eb' }
+      }
+    >
+      {copied ? '✓ কপি হয়েছে' : '📋 কপি'}
+    </button>
+  )
+}
+
 function OrderCard({ order }) {
   const [open, setOpen] = useState(false)
   const date = new Date(order.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -42,7 +65,10 @@ function OrderCard({ order }) {
           📦
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-800 text-sm">{order.order_number}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-gray-800 text-sm">{order.order_number}</p>
+            <CopyButton text={order.order_number} />
+          </div>
           <p className="text-xs text-gray-400 mt-0.5">{date}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
