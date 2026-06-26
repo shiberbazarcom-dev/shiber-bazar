@@ -501,6 +501,7 @@ export default function DashboardLayout({ type = 'user' }) {
   /* ── Sidebar link definitions ── */
   const userLinks = [
     { to: '/dashboard',              icon: '📊', label: 'ওভারভিউ',        end: true },
+    { to: '/dashboard/my-orders',    icon: '📦', label: 'আমার অর্ডার' },
     { to: '/dashboard/favorites',    icon: '❤️', label: 'পছন্দের দোকান' },
     { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
     { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },

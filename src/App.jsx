@@ -45,6 +45,7 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const ProviderProfile    = lazy(() => import('./pages/services/ProviderProfile'))
 const SubmitService      = lazy(() => import('./pages/services/SubmitService'))
 const MyServices         = lazy(() => import('./pages/dashboard/MyServices'))
+const MyOrders           = lazy(() => import('./pages/dashboard/MyOrders'))
 const ManageServices     = lazy(() => import('./pages/admin/ManageServices'))
 
 /* ── ইউনিয়ন পরিষদ ── */
@@ -280,6 +281,7 @@ export default function App() {
                   </ProGate>
                 </ProtectedRoute>
               } />
+              <Route path="my-orders"   element={<MyOrders />} />
               <Route path="my-services" element={<MyServices />} />
               <Route path="hisaber-khata" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
