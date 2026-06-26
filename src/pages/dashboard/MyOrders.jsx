@@ -129,21 +129,17 @@ export default function MyOrders() {
   const [manualPhone, setManualPhone] = useState('')
   const [searched, setSearched] = useState(profilePhone)
   const activePhone = searched
-  const { data: orders = [], isLoading } = useTrackOrder(activePhone)
+  const { data: orders = [], isLoading } = useTrackOrder(activePhone, { refetchInterval: 15000 })
   const qc = useQueryClient()
 
   // Realtime: নতুন order বা status change — দুটোতেই refetch
   useEffect(() => {
     if (!activePhone) return
-    const handler = (payload) => {
-      if (payload.new?.customer_phone === activePhone) {
-        qc.invalidateQueries({ queryKey: ['track-order', activePhone] })
-      }
-    }
+    const invalidate = () => qc.invalidateQueries({ queryKey: ['track-order', activePhone] })
     const ch = supabase
       .channel(`my-orders-realtime-${activePhone}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, handler)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, handler)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, invalidate)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, invalidate)
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [activePhone, qc])

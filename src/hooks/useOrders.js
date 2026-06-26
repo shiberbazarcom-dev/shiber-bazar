@@ -29,7 +29,7 @@ export function usePlaceOrder() {
 }
 
 /* ── Customer: track orders by phone (uses RPC to avoid unrestricted table read) ── */
-export function useTrackOrder(phone) {
+export function useTrackOrder(phone, options = {}) {
   return useQuery({
     queryKey: ['track-order', phone],
     queryFn: async () => {
@@ -39,6 +39,7 @@ export function useTrackOrder(phone) {
       return data || []
     },
     enabled: !!phone && phone.trim().length >= 10,
+    ...options,
   })
 }
 
