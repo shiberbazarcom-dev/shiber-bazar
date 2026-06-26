@@ -15,14 +15,23 @@ const STATUS_CONFIG = {
   rejected:   { label: 'বাতিল',      variant: 'destructive' },
 }
 
-const NEXT_STATUS = {
+const NEXT_STATUS_STAFF = {
   confirmed:  [{ value: 'processing', label: '▶ প্রস্তুত করুন' }],
   processing: [{ value: 'shipped',    label: '🚚 পাঠান' }],
   shipped:    [{ value: 'delivered',  label: '✅ ডেলিভারি' }],
 }
 
+// Manager can also reject orders
+const NEXT_STATUS_MANAGER = {
+  ...NEXT_STATUS_STAFF,
+  confirmed:  [{ value: 'processing', label: '▶ প্রস্তুত করুন' }, { value: 'rejected', label: '❌ বাতিল' }],
+  processing: [{ value: 'shipped',    label: '🚚 পাঠান' }, { value: 'rejected', label: '❌ বাতিল' }],
+}
+
 export default function StaffOrders() {
   const { staffSession } = useStaffAuth()
+  const isManager = staffSession?.role === 'manager'
+  const NEXT_STATUS = isManager ? NEXT_STATUS_MANAGER : NEXT_STATUS_STAFF
   const qc = useQueryClient()
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [filterStatus, setFilterStatus] = useState('')

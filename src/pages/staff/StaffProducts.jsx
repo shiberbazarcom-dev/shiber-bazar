@@ -5,10 +5,11 @@ import { useStaffAuth } from '../../context/StaffAuthContext'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import toast from 'react-hot-toast'
-import { Edit2, Plus, Eye, EyeOff, X } from 'lucide-react'
+import { Edit2, Plus, Eye, EyeOff, X, Trash2 } from 'lucide-react'
 
 export default function StaffProducts() {
   const { staffSession } = useStaffAuth()
+  const isManager = staffSession?.role === 'manager'
   const qc = useQueryClient()
   const [editProduct, setEditProduct] = useState(null)
   const [addOpen, setAddOpen] = useState(false)
@@ -56,6 +57,18 @@ export default function StaffProducts() {
       setAddOpen(false)
     },
     onError: () => toast.error('যোগ করা যায়নি'),
+  })
+
+  const deleteProduct = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('products').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['staff-products'] })
+      toast.success('প্রোডাক্ট মুছে ফেলা হয়েছে')
+    },
+    onError: () => toast.error('মুছে ফেলা যায়নি'),
   })
 
   function toggleActive(product) {
@@ -106,6 +119,14 @@ export default function StaffProducts() {
                   {p.is_active ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                   {p.is_active ? 'বন্ধ করুন' : 'চালু করুন'}
                 </button>
+                {isManager && (
+                  <button
+                    onClick={() => { if (confirm(`"${p.name}" মুছে ফেলবেন?`)) deleteProduct.mutate(p.id) }}
+                    className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" /> মুছুন
+                  </button>
+                )}
               </div>
             </div>
           </div>

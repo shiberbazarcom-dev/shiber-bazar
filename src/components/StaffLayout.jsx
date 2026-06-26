@@ -1,12 +1,17 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, Navigate } from 'react-router-dom'
 import { useStaffAuth } from '../context/StaffAuthContext'
-import { ShoppingBag, Package, LogOut, Menu, X } from 'lucide-react'
+import { ShoppingBag, Package, LogOut, Menu, X, Users } from 'lucide-react'
 import { useState } from 'react'
 
 export default function StaffLayout() {
-  const { staffSession, logout } = useStaffAuth()
+  const { staffSession, loading, logout } = useStaffAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">লোড হচ্ছে...</div>
+  if (!staffSession) return <Navigate to="/staff-login" replace />
+
+  const isManager = staffSession.role === 'manager'
 
   function handleLogout() {
     logout()
@@ -14,8 +19,9 @@ export default function StaffLayout() {
   }
 
   const navItems = [
-    { to: '/staff/orders',   label: 'অর্ডার',   icon: ShoppingBag },
-    { to: '/staff/products', label: 'প্রোডাক্ট', icon: Package },
+    { to: '/staff/orders',   label: 'অর্ডার',    icon: ShoppingBag },
+    { to: '/staff/products', label: 'প্রোডাক্ট',  icon: Package },
+    ...(isManager ? [{ to: '/staff/team', label: 'টিম', icon: Users }] : []),
   ]
 
   return (

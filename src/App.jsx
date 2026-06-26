@@ -107,6 +107,7 @@ const StaffLogin    = lazy(() => import('./pages/StaffLogin'))
 const StaffLayout   = lazy(() => import('./components/StaffLayout'))
 const StaffOrders   = lazy(() => import('./pages/staff/StaffOrders'))
 const StaffProducts = lazy(() => import('./pages/staff/StaffProducts'))
+const StaffTeam     = lazy(() => import('./pages/staff/StaffTeam'))
 
 /* ── Owner: Staff Management ── */
 const StaffManagement = lazy(() => import('./pages/dashboard/StaffManagement'))
@@ -358,6 +359,7 @@ export default function App() {
             <Route path="/staff" element={<StaffLayout />}>
               <Route path="orders"   element={<StaffOrders />} />
               <Route path="products" element={<StaffProducts />} />
+              <Route path="team"     element={<StaffTeam />} />
               <Route index element={<Navigate to="/staff/orders" replace />} />
             </Route>
 

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ProGate } from '@/components/ProGate'
 import toast from 'react-hot-toast'
 import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check } from 'lucide-react'
 
@@ -53,7 +54,7 @@ function useShopStaff(shopId: string | null) {
 
 type AddMethod = 'pin' | 'invite' | 'phone'
 
-export default function StaffManagement() {
+function StaffManagementInner() {
   const { user } = useAuthHook()
   const qc = useQueryClient()
   const { data: shops = [] } = useMyShops()
@@ -346,5 +347,23 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       {copied ? 'কপি হয়েছে!' : label}
     </button>
+  )
+}
+
+export default function StaffManagement() {
+  return (
+    <ProGate
+      title="Staff ম্যানেজমেন্ট — Pro Feature"
+      description="দোকানে Staff ও Manager যোগ করুন, কাজ ভাগ করুন"
+      features={[
+        '👥 একাধিক Staff ও Manager যোগ করুন',
+        '🔑 PIN বা Invite লিংকে access দিন',
+        '📦 Staff অর্ডার manage করতে পারবে',
+        '🛍️ Manager পণ্য delete করতে পারবে',
+        '🏪 Shop owner সব নিয়ন্ত্রণ রাখবেন',
+      ]}
+    >
+      <StaffManagementInner />
+    </ProGate>
   )
 }
