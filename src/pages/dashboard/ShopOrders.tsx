@@ -30,6 +30,8 @@ type Order = {
   total_amount: number
   notes: string
   created_at: string
+  staff_updated_by?: string
+  staff_updated_at?: string
   shops: { shop_name: string }
   order_items: { id: string; quantity: number; unit_price: number; products: { product_name: string } }[]
 }
@@ -498,6 +500,23 @@ export default function ShopOrders() {
                     </div>
                   </div>
                 </div>
+
+                {/* Staff update info */}
+                {selectedOrder.staff_updated_by && (
+                  <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                    <span className="text-purple-500 text-sm">👤</span>
+                    <div>
+                      <p className="text-xs text-purple-700 font-medium">
+                        <span className="font-bold">{selectedOrder.staff_updated_by}</span> স্ট্যাটাস আপডেট করেছেন
+                      </p>
+                      {selectedOrder.staff_updated_at && (
+                        <p className="text-xs text-purple-400">
+                          {new Date(selectedOrder.staff_updated_at).toLocaleString('bn-BD')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* WhatsApp */}
                 {selectedOrder.customer_phone && (() => {

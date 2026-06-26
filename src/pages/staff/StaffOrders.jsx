@@ -55,7 +55,11 @@ export default function StaffOrders() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }) => {
-      const { error } = await supabase.from('orders').update({ status }).eq('id', id)
+      const { error } = await supabase.from('orders').update({
+        status,
+        staff_updated_by: staffSession?.name,
+        staff_updated_at: new Date().toISOString(),
+      }).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
