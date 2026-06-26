@@ -40,6 +40,15 @@ const SECTIONS = [
     ],
   },
   {
+    label: 'Staff ম্যানেজমেন্ট',
+    rows: [
+      { text: 'Staff যোগ করুন (PIN/Invite)',  free: false, pro: true,  biz: true },
+      { text: 'Manager role',                 free: false, pro: true,  biz: true },
+      { text: 'Staff activity log',           free: false, pro: true,  biz: true },
+      { text: 'IP ও device tracking',         free: false, pro: true,  biz: true },
+    ],
+  },
+  {
     label: 'Business tools',
     rows: [
       { text: 'হিসাবের খাতা',   free: false, pro: true,  biz: true },

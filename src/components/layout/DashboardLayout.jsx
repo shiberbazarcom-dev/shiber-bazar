@@ -520,7 +520,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/hisaber-khata', icon: '📒', label: 'হিসাবের খাতা',   pro: true },
     { to: '/dashboard/landing-pages', icon: '📣', label: 'ল্যান্ডিং পেজ',  pro: true },
     { to: '/dashboard/broadcast',     icon: '📢', label: 'ব্রডকাস্ট',   pro: true },
-    { to: '/dashboard/staff',         icon: '👥', label: 'Staff ম্যানেজমেন্ট' },
+    { to: '/dashboard/staff',         icon: '👥', label: 'Staff ম্যানেজমেন্ট', pro: true },
     { to: '/dashboard/my-services',   icon: '🛠️', label: 'আমার সেবা' },
     { to: '/dashboard/profile',       icon: '👤', label: 'প্রোফাইল' },
   ]
