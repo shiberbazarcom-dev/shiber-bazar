@@ -109,10 +109,7 @@ export default function ShopChatOverlay({ conversation, shopName, shopLogo, onCl
 
         {/* Chat body — fills remaining screen */}
         <div className="flex-1 overflow-hidden bg-white">
-          {conversation
-            ? <ChatWindow conversation={conversation} otherName={name} />
-            : <div className="flex items-center justify-center h-full text-gray-400 text-sm">লোড হচ্ছে...</div>
-          }
+          <ChatWindow conversation={conversation} otherName={name} />
         </div>
       </div>
     </>
