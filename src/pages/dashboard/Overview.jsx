@@ -25,8 +25,11 @@ const ORDER_STATUS_LABELS = {
 }
 
 function OrderHistory({ profile }) {
-  const phone = profile?.phone || ''
-  const { data: orders = [], isLoading } = useTrackOrder(phone)
+  const profilePhone = profile?.phone || ''
+  const [manualPhone, setManualPhone] = useState('')
+  const [searched, setSearched] = useState('')
+  const activePhone = profilePhone || searched
+  const { data: orders = [], isLoading } = useTrackOrder(activePhone)
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -39,29 +42,40 @@ function OrderHistory({ profile }) {
         )}
       </div>
 
-      {!phone && (
-        <div className="px-5 py-6 text-center">
-          <p className="text-gray-400 text-sm">প্রোফাইলে ফোন নম্বর যোগ করলে অর্ডার দেখা যাবে</p>
+      {!profilePhone && (
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-xs text-gray-400 mb-2">অর্ডারে দেওয়া ফোন নম্বর দিয়ে খুঁজুন</p>
+          <form onSubmit={e => { e.preventDefault(); if (manualPhone.trim().length >= 10) setSearched(manualPhone.trim()) }}
+            className="flex gap-2">
+            <input
+              value={manualPhone}
+              onChange={e => { setManualPhone(e.target.value); setSearched('') }}
+              placeholder="01XXXXXXXXX"
+              type="tel"
+              className="input flex-1 text-sm"
+            />
+            <button type="submit"
+              className="px-4 py-2 text-white text-sm font-semibold rounded-xl flex-shrink-0"
+              style={{ background: BLUE }}>
+              খুঁজুন
+            </button>
+          </form>
           <Link to="/dashboard/profile"
-            className="inline-block mt-3 text-sm font-medium px-4 py-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50">
-            ফোন নম্বর যোগ করুন →
+            className="inline-block mt-2 text-xs text-blue-500 hover:underline">
+            প্রোফাইলে ফোন যোগ করুন →
           </Link>
         </div>
       )}
 
-      {phone && isLoading && (
+      {activePhone && isLoading && (
         <div className="py-6 text-center">
           <div className="w-5 h-5 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto" />
         </div>
       )}
 
-      {phone && !isLoading && orders.length === 0 && (
+      {activePhone && !isLoading && orders.length === 0 && (
         <div className="px-5 py-6 text-center">
-          <p className="text-gray-400 text-sm">এখনো কোনো অর্ডার নেই</p>
-          <Link to="/shops"
-            className="inline-block mt-2 text-sm font-medium text-blue-600 hover:underline">
-            দোকান দেখুন →
-          </Link>
+          <p className="text-gray-400 text-sm">এই নম্বরে কোনো অর্ডার পাওয়া যায়নি</p>
         </div>
       )}
 
