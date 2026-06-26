@@ -81,6 +81,8 @@ function StaffManagementInner() {
   })
 
   const currentShop = shops.find(s => s.id === shopId)
+  const shopCode = currentShop?.slug?.toUpperCase() || ''
+  const staffLoginUrl = `${window.location.origin}/staff-login`
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -93,6 +95,26 @@ function StaffManagementInner() {
           <Plus className="h-4 w-4" /> Staff যোগ করুন
         </Button>
       </div>
+
+      {/* Staff Login Info Card */}
+      {shopCode && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+          <p className="text-sm font-semibold text-blue-800">Staff Login তথ্য</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <p className="text-xs text-gray-500 mb-1">Staff Login URL</p>
+              <p className="text-xs text-blue-700 font-medium break-all">{staffLoginUrl}</p>
+              <CopyButton text={staffLoginUrl} label="URL কপি করুন" />
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <p className="text-xs text-gray-500 mb-1">দোকান কোড</p>
+              <p className="text-2xl font-bold text-blue-800 tracking-widest">{shopCode}</p>
+              <CopyButton text={shopCode} label="কোড কপি করুন" />
+            </div>
+          </div>
+          <p className="text-xs text-blue-600">Staff-কে এই URL ও দোকান কোড দিন। PIN দিয়ে login করবে।</p>
+        </div>
+      )}
 
       {/* Shop selector */}
       {shops.length > 1 && (
