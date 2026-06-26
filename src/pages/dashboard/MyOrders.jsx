@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTrackOrder } from '../../hooks/useOrders'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '../../lib/supabase'
 
 const BLUE = '#2563EB'
 
@@ -102,6 +104,24 @@ export default function MyOrders() {
   const [searched, setSearched] = useState(profilePhone)
   const activePhone = searched
   const { data: orders = [], isLoading } = useTrackOrder(activePhone)
+  const qc = useQueryClient()
+
+  // Realtime: যখনই কোনো order এর status update হয়, refetch করো
+  useEffect(() => {
+    if (!activePhone) return
+    const ch = supabase
+      .channel(`my-orders-realtime-${activePhone}`)
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload.new?.customer_phone === activePhone) {
+            qc.invalidateQueries({ queryKey: ['track-order', activePhone] })
+          }
+        }
+      )
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [activePhone, qc])
 
   function handleSearch(e) {
     e.preventDefault()
