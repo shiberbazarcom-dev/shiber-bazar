@@ -97,22 +97,17 @@ function StaffManagementInner() {
       </div>
 
       {/* Staff Login Info Card */}
-      {shopCode && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
-          <p className="text-sm font-semibold text-blue-800">Staff Login তথ্য</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-lg p-3 border border-blue-100">
-              <p className="text-xs text-gray-500 mb-1">Staff Login URL</p>
-              <p className="text-xs text-blue-700 font-medium break-all">{staffLoginUrl}</p>
-              <CopyButton text={staffLoginUrl} label="URL কপি করুন" />
-            </div>
-            <div className="bg-white rounded-lg p-3 border border-blue-100">
-              <p className="text-xs text-gray-500 mb-1">দোকান কোড</p>
-              <p className="text-2xl font-bold text-blue-800 tracking-widest">{shopCode}</p>
-              <CopyButton text={shopCode} label="কোড কপি করুন" />
-            </div>
+      {shopId && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-blue-800">Staff লগইন লিংক</p>
+            <span className="text-xs text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full">শেয়ার করুন</span>
           </div>
-          <p className="text-xs text-blue-600">Staff-কে এই URL ও দোকান কোড দিন। PIN দিয়ে login করবে।</p>
+          <div className="bg-white rounded-lg p-3 border border-blue-100 flex items-center justify-between gap-3">
+            <p className="text-xs text-blue-700 font-medium break-all">{staffLoginUrl}</p>
+            <CopyButton text={staffLoginUrl} label="কপি" />
+          </div>
+          <p className="text-xs text-blue-600">Staff ও Manager — সবাই এই লিংকে গিয়ে PIN দিয়ে লগইন করবে।</p>
         </div>
       )}
 
@@ -138,35 +133,44 @@ function StaffManagementInner() {
       )}
 
       <div className="space-y-3">
-        {staffList.filter(s => s.is_active).map(staff => (
-          <div key={staff.id} className="bg-white rounded-xl border shadow-sm p-4 flex items-start justify-between gap-3">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-800">{staff.name}</span>
-                <Badge variant={staff.role === 'manager' ? 'default' : 'secondary'} className="text-xs">
-                  {staff.role === 'manager' ? 'ম্যানেজার' : 'স্টাফ'}
-                </Badge>
+        {staffList.filter(s => s.is_active).map(staff => {
+          const isManager = staff.role === 'manager'
+          const hasPending = !!staff.invite_token
+          return (
+            <div key={staff.id} className="bg-white rounded-xl border shadow-sm p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Avatar */}
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${isManager ? 'bg-purple-500' : 'bg-blue-500'}`}>
+                  {staff.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-800 text-sm">{staff.name}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isManager ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {isManager ? 'ম্যানেজার' : 'স্টাফ'}
+                    </span>
+                    {hasPending && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⏳ Pending</span>}
+                  </div>
+                  {staff.phone && <p className="text-xs text-gray-400 mt-0.5">📞 {staff.phone}</p>}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {staff.last_login_at
+                      ? `সর্বশেষ লগইন: ${new Date(staff.last_login_at).toLocaleDateString('bn-BD')}`
+                      : hasPending ? 'এখনো join করেননি' : 'লগইন ইতিহাস নেই'
+                    }
+                  </p>
+                  {hasPending && <InviteLinkCopy token={staff.invite_token!} />}
+                </div>
               </div>
-              {staff.phone && <p className="text-xs text-gray-500">📞 {staff.phone}</p>}
-              <p className="text-xs text-gray-400">
-                {staff.last_login_at
-                  ? `সর্বশেষ লগইন: ${new Date(staff.last_login_at).toLocaleDateString('bn-BD')}`
-                  : staff.invite_token ? '⏳ এখনো join করেননি' : 'লগইন ইতিহাস নেই'
-                }
-              </p>
-              {/* Invite link copy if pending */}
-              {staff.invite_token && (
-                <InviteLinkCopy token={staff.invite_token} />
-              )}
+              <button
+                onClick={() => { if (confirm(`${staff.name} কে সরিয়ে দেবেন?`)) removeStaff.mutate(staff.id) }}
+                className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0"
+                title="সরিয়ে দিন"
+              >
+                <UserX className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              onClick={() => { if (confirm(`${staff.name} কে সরিয়ে দেবেন?`)) removeStaff.mutate(staff.id) }}
-              className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"
-            >
-              <UserX className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Add Staff Modal */}
