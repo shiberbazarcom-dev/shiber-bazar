@@ -1,27 +1,8 @@
 import { useState, useEffect } from 'react'
 import ChatWindow from './ChatWindow'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
 
-/* ── Fetch conversation object by id ── */
-function useConversation(id) {
-  return useQuery({
-    queryKey: ['conversation', id],
-    enabled: !!id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('conversations')
-        .select('*, shop:shops(shop_name, logo_url, owner_id)')
-        .eq('id', id)
-        .single()
-      return data
-    },
-  })
-}
-
-export default function ShopChatOverlay({ conversationId, shopName, shopLogo, onClose }) {
+export default function ShopChatOverlay({ conversation, shopName, shopLogo, onClose }) {
   const [minimized, setMinimized] = useState(false)
-  const { data: conversation } = useConversation(conversationId)
 
   // Close on Escape
   useEffect(() => {
@@ -36,7 +17,7 @@ export default function ShopChatOverlay({ conversationId, shopName, shopLogo, on
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const name = shopName || conversation?.shop?.shop_name || 'দোকান'
+  const name = shopName || 'দোকান'
 
   return (
     <>
@@ -87,10 +68,7 @@ export default function ShopChatOverlay({ conversationId, shopName, shopLogo, on
         {/* Chat body */}
         {!minimized && (
           <div className="flex-1 bg-white overflow-hidden">
-            {conversation
-              ? <ChatWindow conversation={conversation} otherName={name} />
-              : <div className="flex items-center justify-center h-full text-gray-400 text-sm">লোড হচ্ছে...</div>
-            }
+            <ChatWindow conversation={conversation} otherName={name} />
           </div>
         )}
       </div>

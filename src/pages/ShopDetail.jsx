@@ -184,7 +184,7 @@ export default function ShopDetail() {
     if (shop.owner_id === user.id) { toast('নিজের দোকানে বার্তা পাঠানো যাবে না'); return }
     try {
       const conv = await startConversation.mutateAsync({ shopId: shop.id, ownerId: shop.owner_id })
-      setChatConvId(conv.id)
+      setChatConv(conv)
     } catch { toast.error('বার্তা শুরু করা যায়নি') }
   }
 
@@ -198,7 +198,7 @@ export default function ShopDetail() {
   const [orderProduct, setOrderProduct] = useState(null)
   const [chatRevealed, setChatRevealed] = useState(false)
   const [showPulse, setShowPulse] = useState(false)
-  const [chatConvId, setChatConvId] = useState(null)
+  const [chatConv, setChatConv] = useState(null)
 
   useEffect(() => {
     if (!shop) return
@@ -740,12 +740,12 @@ export default function ShopDetail() {
       />
 
       {/* ══ CHAT OVERLAY (messenger-style) ══ */}
-      {chatConvId && (
+      {chatConv && (
         <ShopChatOverlay
-          conversationId={chatConvId}
+          conversation={chatConv}
           shopName={shop.shop_name}
           shopLogo={shop.logo_url}
-          onClose={() => setChatConvId(null)}
+          onClose={() => setChatConv(null)}
         />
       )}
     </div>
