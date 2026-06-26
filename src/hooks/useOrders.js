@@ -55,21 +55,20 @@ export function getGuestOrders() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') } catch { return [] }
 }
 
-/* ── Customer: track single order by order_number + phone (security: both must match) ── */
-export function useTrackByOrderNumber(orderNumber, phone) {
+/* ── Customer: track single order by order_number only ── */
+export function useTrackByOrderNumber(orderNumber) {
   return useQuery({
-    queryKey: ['track-order-number', orderNumber, phone],
+    queryKey: ['track-order-number', orderNumber],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
         .select('*, shops(id, shop_name, slug)')
         .eq('order_number', orderNumber.trim().toUpperCase())
-        .eq('customer_phone', phone.trim())
         .maybeSingle()
       if (error) throw error
       return data
     },
-    enabled: !!orderNumber && orderNumber.trim().length >= 5 && !!phone && phone.trim().length >= 10,
+    enabled: !!orderNumber && orderNumber.trim().length >= 5,
     retry: false,
   })
 }

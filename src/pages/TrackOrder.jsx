@@ -215,12 +215,10 @@ function OrderNumberSearch() {
   const [searchParams] = useSearchParams()
   const initialOrder = searchParams.get('order') || ''
   const [orderNum, setOrderNum] = useState(initialOrder)
-  const [phone, setPhone] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [submitted, setSubmitted] = useState(!!initialOrder)
 
   const { data: order, isLoading, isFetching } = useTrackByOrderNumber(
-    submitted ? orderNum : '',
-    submitted ? phone : ''
+    submitted ? orderNum : ''
   )
 
   function handleSearch(e) {
@@ -232,34 +230,27 @@ function OrderNumberSearch() {
 
   return (
     <>
-      <form onSubmit={handleSearch} className="space-y-2 mb-5">
+      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
         <input
           value={orderNum}
           onChange={e => { setOrderNum(e.target.value); setSubmitted(false) }}
           placeholder="অর্ডার নম্বর (যেমন: SB202506001)"
-          className="input w-full"
-        />
-        <input
-          value={phone}
-          onChange={e => { setPhone(e.target.value); setSubmitted(false) }}
-          placeholder="ফোন নম্বর (01XXXXXXXXX)"
-          className="input w-full"
-          type="tel"
+          className="input flex-1"
         />
         <button
           type="submit"
           disabled={isFetching}
-          className="w-full py-2.5 text-white text-sm font-semibold rounded-xl disabled:opacity-60"
+          className="px-4 py-2.5 text-white text-sm font-semibold rounded-xl disabled:opacity-60 flex-shrink-0"
           style={{ background: PURPLE }}
         >
-          {isFetching ? 'খোঁজা হচ্ছে...' : 'অর্ডার খুঁজুন'}
+          {isFetching ? '...' : 'খুঁজুন'}
         </button>
       </form>
 
       {isLoading && <Spinner />}
-      {notFound && <Empty text="অর্ডার নম্বর বা ফোন নম্বর সঠিক নয়" />}
+      {notFound && <Empty text="এই অর্ডার নম্বরে কোনো অর্ডার পাওয়া যায়নি" />}
       {order && <OrderCard order={order} />}
-      {!submitted && <Hint text="অর্ডার নম্বর ও ফোন নম্বর দিয়ে নির্দিষ্ট অর্ডার ট্র্যাক করুন" />}
+      {!submitted && <Hint text="অর্ডার নম্বর দিয়ে নির্দিষ্ট অর্ডার ট্র্যাক করুন" />}
     </>
   )
 }
