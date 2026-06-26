@@ -55,18 +55,15 @@ export function getGuestOrders() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') } catch { return [] }
 }
 
-/* ── Customer: track single order by order_number only ── */
+/* ── Customer: track single order by order_number only (uses RPC for anon access) ── */
 export function useTrackByOrderNumber(orderNumber) {
   return useQuery({
     queryKey: ['track-order-number', orderNumber],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('orders')
-        .select('*, shops(id, shop_name, slug)')
-        .eq('order_number', orderNumber.trim().toUpperCase())
-        .maybeSingle()
+        .rpc('track_order_by_number', { p_order_number: orderNumber.trim().toUpperCase() })
       if (error) throw error
-      return data
+      return data || null
     },
     enabled: !!orderNumber && orderNumber.trim().length >= 5,
     retry: false,
