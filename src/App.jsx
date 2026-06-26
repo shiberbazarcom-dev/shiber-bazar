@@ -11,6 +11,7 @@ import OfflineBanner from './components/ui/OfflineBanner'
 import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { StaffAuthProvider } from './context/StaffAuthContext'
 import { useRealtimeNotifications } from './hooks/useNotifications'
 import { useUpdateLastSeen } from './hooks/useChat'
 import Navbar from './components/layout/Navbar'
@@ -101,6 +102,15 @@ const ManageJobs           = lazy(() => import('./pages/admin/ManageJobs'))
 const JobsPage             = lazy(() => import('./pages/JobsPage'))
 const JobDetail            = lazy(() => import('./pages/JobDetail'))
 
+/* ── Staff pages ── */
+const StaffLogin    = lazy(() => import('./pages/StaffLogin'))
+const StaffLayout   = lazy(() => import('./components/StaffLayout'))
+const StaffOrders   = lazy(() => import('./pages/staff/StaffOrders'))
+const StaffProducts = lazy(() => import('./pages/staff/StaffProducts'))
+
+/* ── Owner: Staff Management ── */
+const StaffManagement = lazy(() => import('./pages/dashboard/StaffManagement'))
+
 /* Loading fallback */
 function PageLoader() {
   return (
@@ -164,6 +174,7 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
+      <StaffAuthProvider>
       <BrowserRouter>
         <ScrollToTop />
         <NotificationListener />
@@ -290,6 +301,11 @@ export default function App() {
                   </ProGate>
                 </ProtectedRoute>
               } />
+              <Route path="staff" element={
+                <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
+                  <StaffManagement />
+                </ProtectedRoute>
+              } />
               <Route path="landing-pages" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
                   <ProGate title="ল্যান্ডিং পেজ — Pro Feature" description="আপনার পণ্যের জন্য আলাদা সুন্দর পেজ বানান, Facebook-এ শেয়ার করুন — সরাসরি WhatsApp-এ অর্ডার আসবে।" features={['🎨 ৬টি রেডিমেড ডিজাইন টেমপ্লেট — এক ক্লিকে সুন্দর পেজ', '🤖 AI দিয়ে হেডলাইন, বিবরণ ও অফার কপি লিখুন', '📲 পেজে WhatsApp অর্ডার বাটন — কাস্টমার সরাসরি মেসেজ করবে', '🔥 ব্যাজ, ছাড়ের মূল্য, ফিচার লিস্ট দিয়ে পণ্য আকর্ষণীয় করুন', '❓ FAQ সেকশন — কাস্টমারের প্রশ্নের আগেই উত্তর দিন', '🔗 Unique লিংক — Facebook, WhatsApp, SMS যেখানে খুশি শেয়ার করুন']}>
@@ -335,6 +351,16 @@ export default function App() {
               <Route path="jobs"            element={<ManageJobs />} />
             </Route>
 
+            {/* ══════════════════════════════════
+                STAFF ROUTES (PIN-based auth)
+            ══════════════════════════════════ */}
+            <Route path="/staff-login" element={<StaffLogin />} />
+            <Route path="/staff" element={<StaffLayout />}>
+              <Route path="orders"   element={<StaffOrders />} />
+              <Route path="products" element={<StaffProducts />} />
+              <Route index element={<Navigate to="/staff/orders" replace />} />
+            </Route>
+
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -357,6 +383,7 @@ export default function App() {
           }}
         />
       </BrowserRouter>
+      </StaffAuthProvider>
       </CartProvider>
     </AuthProvider>
   )
