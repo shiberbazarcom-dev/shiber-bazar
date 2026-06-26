@@ -12,7 +12,7 @@ import { Input, Textarea, Select } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Store, Plus, Edit2, Trash2, Upload, Phone, MapPin, Package, AlertCircle, ShieldCheck, FileText, X } from 'lucide-react'
+import { Store, Plus, Edit2, Trash2, Upload, Phone, MapPin, Package, AlertCircle, ShieldCheck, FileText, X, ExternalLink } from 'lucide-react'
 import ShopStatusBadge from '@/components/shop/ShopStatusBadge'
 import toast from 'react-hot-toast'
 
@@ -372,6 +372,13 @@ export default function MyShops() {
                         <span className="truncate">পণ্য</span>
                       </Button>
                     </Link>
+                    {shop.status === 'approved' && shop.slug && (
+                      <a href={`/shop/${shop.slug}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                        <Button size="sm" variant="outline" className="px-3" title="দোকান দেখুন">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      </a>
+                    )}
                     <Button size="sm" variant="destructive" className="flex-shrink-0 px-3" onClick={() => setDeleteShop(shop)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
