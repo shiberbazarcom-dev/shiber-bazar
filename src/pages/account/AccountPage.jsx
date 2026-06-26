@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTrackOrder } from '../../hooks/useOrders'
-import { useState } from 'react'
 
 const GREEN = '#2563EB'
 
@@ -9,27 +8,102 @@ const STATUS_COLORS = {
   pending:   'bg-yellow-100 text-yellow-700',
   forwarded: 'bg-blue-100 text-blue-700',
   accepted:  'bg-green-100 text-green-700',
+  shipped:   'bg-indigo-100 text-indigo-700',
   rejected:  'bg-red-100 text-red-700',
   delivered: 'bg-purple-100 text-purple-700',
 }
 const STATUS_LABELS = {
   pending:   '⏳ অপেক্ষমান',
   forwarded: '📤 দোকানে পাঠানো',
-  accepted:  '✅ গ্রহণ করা হয়েছে',
+  accepted:  '✅ গ্রহণ হয়েছে',
+  shipped:   '🚚 শিপ হয়েছে',
   rejected:  '❌ বাতিল',
   delivered: '🎉 ডেলিভারি সম্পন্ন',
 }
 
+function OrderHistory({ profile }) {
+  const phone = profile?.phone || ''
+  const { data: orders = [], isLoading } = useTrackOrder(phone)
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card overflow-hidden mb-6">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+        <h3 className="font-bold text-gray-800">📦 আমার অর্ডার</h3>
+        {orders.length > 0 && (
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-blue-50 text-blue-600">
+            {orders.length}টি
+          </span>
+        )}
+      </div>
+
+      {!phone && (
+        <div className="px-5 py-8 text-center">
+          <p className="text-gray-400 text-sm">প্রোফাইলে ফোন নম্বর যোগ করলে অর্ডার দেখা যাবে</p>
+          <Link to="/dashboard/profile"
+            className="inline-block mt-3 text-sm font-medium px-4 py-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50">
+            ফোন নম্বর যোগ করুন →
+          </Link>
+        </div>
+      )}
+
+      {phone && isLoading && (
+        <div className="py-8 text-center">
+          <div className="w-6 h-6 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto" />
+        </div>
+      )}
+
+      {phone && !isLoading && orders.length === 0 && (
+        <div className="px-5 py-8 text-center">
+          <p className="text-3xl mb-2">🛒</p>
+          <p className="text-gray-500 text-sm font-medium">এখনো কোনো অর্ডার নেই</p>
+          <Link to="/shops"
+            className="inline-block mt-3 text-sm font-medium px-4 py-2 rounded-xl text-white"
+            style={{ background: GREEN }}>
+            দোকান দেখুন
+          </Link>
+        </div>
+      )}
+
+      {orders.length > 0 && (
+        <div className="divide-y divide-gray-50">
+          {orders.slice(0, 5).map(order => (
+            <div key={order.id} className="flex items-center gap-3 px-4 py-3.5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-50">
+                <span className="text-lg">📦</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-800 text-sm">{order.order_number}</p>
+                <p className="text-xs text-gray-400 truncate">
+                  {order.product_name} × {order.quantity}
+                  {order.shops?.shop_name ? ` · ${order.shops.shop_name}` : ''}
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-500'}`}>
+                  {STATUS_LABELS[order.status] || order.status}
+                </span>
+                {order.total_amount > 0 && (
+                  <p className="text-xs text-gray-400 mt-0.5">৳{Number(order.total_amount).toLocaleString('bn-BD')}</p>
+                )}
+              </div>
+            </div>
+          ))}
+          {orders.length > 0 && (
+            <div className="px-4 py-3 bg-gray-50">
+              <Link to={`/track-order?phone=${encodeURIComponent(phone)}`}
+                className="block text-center text-sm font-medium" style={{ color: GREEN }}>
+                সব অর্ডার দেখুন ({orders.length}টি) →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AccountPage() {
   const { user, profile, logout } = useAuth()
-  const [phone, setPhone] = useState('')
-  const [searched, setSearched] = useState('')
-  const { data: orders = [], isLoading } = useTrackOrder(searched)
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (phone.trim().length >= 10) setSearched(phone.trim())
-  }
 
   if (!user) {
     return (
@@ -101,58 +175,7 @@ export default function AccountPage() {
         ))}
       </div>
 
-      {/* Order tracker */}
-      <div className="bg-white rounded-2xl shadow-card p-5 mb-6">
-        <h3 className="font-bold text-gray-800 mb-3">📦 অর্ডার খুঁজুন</h3>
-        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-          <input
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-            placeholder="ফোন নম্বর দিয়ে খুঁজুন"
-            type="tel"
-            className="input flex-1"
-          />
-          <button type="submit" disabled={isLoading}
-            className="px-4 py-2.5 text-white font-semibold rounded-xl text-sm disabled:opacity-60"
-            style={{ background: GREEN }}>
-            খুঁজুন
-          </button>
-        </form>
-
-        {isLoading && (
-          <div className="py-6 text-center">
-            <div className="w-6 h-6 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto" />
-          </div>
-        )}
-
-        {!isLoading && searched && orders.length === 0 && (
-          <p className="text-sm text-center text-gray-400 py-4">
-            এই নম্বরে কোনো অর্ডার পাওয়া যায়নি
-          </p>
-        )}
-
-        {orders.length > 0 && (
-          <div className="space-y-3">
-            {orders.map(order => (
-              <div key={order.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div>
-                  <p className="font-semibold text-gray-800 text-sm">{order.order_number}</p>
-                  <p className="text-xs text-gray-400">
-                    {order.product_name} × {order.quantity}
-                  </p>
-                </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[order.status] || ''}`}>
-                  {STATUS_LABELS[order.status] || order.status}
-                </span>
-              </div>
-            ))}
-            <Link to={`/track-order?phone=${encodeURIComponent(searched)}`}
-              className="block text-center text-xs mt-2 font-medium" style={{ color: GREEN }}>
-              বিস্তারিত দেখুন →
-            </Link>
-          </div>
-        )}
-      </div>
+      <OrderHistory profile={profile} />
 
       {/* Logout */}
       <button onClick={logout}

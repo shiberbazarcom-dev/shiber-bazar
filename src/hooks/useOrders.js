@@ -42,6 +42,19 @@ export function useTrackOrder(phone) {
   })
 }
 
+/* ── localStorage helpers for guest order history ── */
+const LS_KEY = 'sb_guest_orders'
+export function saveGuestOrder(order) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(LS_KEY) || '[]')
+    const updated = [order, ...existing.filter(o => o.order_number !== order.order_number)].slice(0, 20)
+    localStorage.setItem(LS_KEY, JSON.stringify(updated))
+  } catch {}
+}
+export function getGuestOrders() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') } catch { return [] }
+}
+
 /* ── Customer: track single order by order_number + phone (security: both must match) ── */
 export function useTrackByOrderNumber(orderNumber, phone) {
   return useQuery({

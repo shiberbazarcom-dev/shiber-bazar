@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useTrackOrder, useTrackByOrderNumber } from '../hooks/useOrders'
+import { useTrackOrder, useTrackByOrderNumber, getGuestOrders } from '../hooks/useOrders'
 
 const PURPLE = '#7c3aed'
 
@@ -296,6 +296,60 @@ function Hint({ text }) {
   )
 }
 
+/* ── Guest recent orders from localStorage ── */
+const STATUS_BADGE = {
+  pending:   'bg-yellow-100 text-yellow-700',
+  forwarded: 'bg-blue-100 text-blue-700',
+  accepted:  'bg-green-100 text-green-700',
+  shipped:   'bg-indigo-100 text-indigo-700',
+  delivered: 'bg-purple-100 text-purple-700',
+  rejected:  'bg-red-100 text-red-700',
+}
+const STATUS_LBL = {
+  pending: 'অপেক্ষমান', forwarded: 'দোকানে পাঠানো', accepted: 'গ্রহণ হয়েছে',
+  shipped: 'শিপ হয়েছে', delivered: 'ডেলিভারি সম্পন্ন', rejected: 'বাতিল',
+}
+function GuestRecentOrders() {
+  const [orders, setOrders] = useState([])
+  useEffect(() => { setOrders(getGuestOrders()) }, [])
+  if (!orders.length) return null
+  return (
+    <div className="bg-white rounded-2xl border border-purple-100 overflow-hidden mb-5">
+      <div className="flex items-center justify-between px-4 py-3" style={{ background: '#ede9fe' }}>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📋</span>
+          <span className="font-bold text-purple-800 text-sm">সাম্প্রতিক অর্ডার</span>
+        </div>
+        <span className="text-xs text-purple-500">{orders.length}টি অর্ডার</span>
+      </div>
+      <div className="divide-y divide-gray-50">
+        {orders.slice(0, 5).map(o => (
+          <div key={o.order_number} className="flex items-center gap-3 px-4 py-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#ede9fe' }}>
+              <span className="text-base">📦</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-gray-800 text-sm">{o.order_number}</p>
+              <p className="text-xs text-gray-400 truncate">{o.product_name}{o.shop_name ? ` · ${o.shop_name}` : ''}</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[o.status] || 'bg-gray-100 text-gray-600'}`}>
+                {STATUS_LBL[o.status] || o.status}
+              </span>
+              {o.total_amount > 0 && (
+                <p className="text-xs text-gray-400 mt-0.5">৳{o.total_amount.toLocaleString('bn-BD')}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="px-4 py-2.5 border-t border-gray-50 bg-gray-50">
+        <p className="text-xs text-gray-400 text-center">এই ডিভাইসে দেওয়া অর্ডার · সঠিক status জানতে নিচে ফোন দিয়ে ট্র্যাক করুন</p>
+      </div>
+    </div>
+  )
+}
+
 /* ── Main page ── */
 export default function TrackOrder() {
   const [tab, setTab] = useState('phone')
@@ -308,6 +362,8 @@ export default function TrackOrder() {
         <h1 className="text-2xl font-bold text-gray-800">অর্ডার ট্র্যাক করুন</h1>
         <p className="text-sm text-gray-400 mt-1">আপনার অর্ডারের সর্বশেষ অবস্থান জানুন</p>
       </div>
+
+      <GuestRecentOrders />
 
       {/* Tabs */}
       <div className="bg-gray-100 rounded-xl p-1 flex gap-1 mb-5">

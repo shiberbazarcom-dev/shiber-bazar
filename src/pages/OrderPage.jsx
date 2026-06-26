@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useSearchParams, useLocation } from 'react-router-dom'
-import { usePlaceOrder } from '../hooks/useOrders'
+import { usePlaceOrder, saveGuestOrder } from '../hooks/useOrders'
 import { useAdminWhatsapp } from '../hooks/useSettings'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -75,6 +75,18 @@ export default function OrderPage() {
       // exclude 'price' — it's UI-only, not a DB column
       const { price: _price, ...orderFields } = form
       const data = await placeOrder.mutateAsync({ ...orderFields, total_amount })
+      saveGuestOrder({
+        order_number:     data.order_number,
+        product_name:     form.product_name,
+        quantity:         form.quantity,
+        total_amount,
+        customer_name:    form.customer_name,
+        customer_phone:   form.customer_phone,
+        customer_address: form.customer_address,
+        status:           'pending',
+        created_at:       new Date().toISOString(),
+        shop_name:        shopName || null,
+      })
       setSuccess(data)
       clearCart()
     } catch (err) {
