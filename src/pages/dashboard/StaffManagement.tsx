@@ -11,6 +11,12 @@ import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check } from 'lucide-r
 // @ts-ignore
 const useAuthHook = useAuth as () => { user: any; [k: string]: any }
 
+async function hashPin(pin: string, shopId: string): Promise<string> {
+  const data = new TextEncoder().encode(pin + shopId)
+  const buf  = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 type Staff = {
   id: string
   name: string
@@ -185,37 +191,39 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
     e.preventDefault()
     if (!name.trim()) { toast.error('নাম দিন'); return }
     if (method === 'pin' && pin.length < 4) { toast.error('PIN কমপক্ষে ৪ সংখ্যার হতে হবে'); return }
+    if (method === 'phone' && !phone.trim()) { toast.error('ফোন নম্বর দিন'); return }
 
     setLoading(true)
     try {
-      let data: any
-      let error: any
+      let insertData: any = { shop_id: shopId, name: name.trim(), role, phone: phone || null }
 
       if (method === 'pin') {
-        ({ data, error } = await supabase.rpc('add_staff_with_pin', {
-          p_shop_id: shopId, p_name: name, p_pin: pin, p_role: role,
-          p_phone: phone || null,
-        }))
-      } else if (method === 'invite') {
-        ({ data, error } = await supabase.rpc('add_staff_invite', {
-          p_shop_id: shopId, p_name: name, p_role: role,
-          p_phone: phone || null,
-        }))
-        if (!error && data?.invite_token) setResult(data)
+        // Hash PIN in browser using Web Crypto (no RPC needed)
+        insertData.pin_hash = await hashPin(pin, shopId)
       } else {
-        ({ data, error } = await supabase.rpc('add_staff_by_phone', {
-          p_shop_id: shopId, p_name: name, p_phone: phone, p_role: role,
-        }))
-        if (!error && data?.invite_token) setResult(data)
+        // Invite or phone — generate a random invite token
+        insertData.invite_token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => b.toString(16).padStart(2, '0')).join('')
       }
 
+      const { data, error } = await supabase
+        .from('shop_staff')
+        .insert(insertData)
+        .select('id, name, invite_token')
+        .single()
+
       if (error) throw error
+
       if (method === 'pin') {
         toast.success(`${name} কে Staff হিসেবে যোগ করা হয়েছে`)
         onDone()
+      } else {
+        // invite/phone — show the invite link
+        setResult({ invite_token: data.invite_token })
       }
     } catch (err: any) {
-      toast.error(err?.message?.includes('unauthorized') ? 'অনুমতি নেই' : 'যোগ করা যায়নি')
+      console.error('[AddStaff]', err)
+      toast.error(err?.message?.includes('violates row') ? 'অনুমতি নেই' : 'যোগ করা যায়নি: ' + (err?.message || ''))
     } finally {
       setLoading(false)
     }
