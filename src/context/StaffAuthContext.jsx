@@ -54,32 +54,23 @@ export function StaffAuthProvider({ children }) {
     }
   }
 
-  const loginWithPin = useCallback(async (shopCode, pin) => {
-    // 1. Find shop by slug (case-insensitive)
-    const { data: shop, error: shopErr } = await supabase
-      .from('shops')
-      .select('id, shop_name, slug')
-      .ilike('slug', shopCode.trim())
-      .eq('status', 'approved')
-      .maybeSingle()
+  const loginWithPin = useCallback(async (pin) => {
+    // 1. Hash PIN only (no shop code needed)
+    const pinHash = await sha256Hex(pin.trim())
 
-    if (shopErr || !shop) throw new Error('shop_not_found')
-
-    // 2. Hash PIN with shop_id (same as add-staff flow)
-    const pinHash = await sha256Hex(pin.trim() + shop.id)
-
-    // 3. Find matching staff
+    // 2. Find matching active staff
     const { data: staff, error: staffErr } = await supabase
       .from('shop_staff')
-      .select('id, name, role, shop_id')
-      .eq('shop_id', shop.id)
+      .select('id, name, role, shop_id, shops(id, shop_name)')
       .eq('pin_hash', pinHash)
       .eq('is_active', true)
       .maybeSingle()
 
     if (staffErr || !staff) throw new Error('invalid_credentials')
 
-    // 4. Create session
+    const shop = Array.isArray(staff.shops) ? staff.shops[0] : staff.shops
+
+    // 3. Create session
     const token = randomHex(32)
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const { error: sessErr } = await supabase
@@ -93,8 +84,8 @@ export function StaffAuthProvider({ children }) {
       staff_id:  staff.id,
       name:      staff.name,
       role:      staff.role,
-      shop_id:   shop.id,
-      shop_name: shop.shop_name,
+      shop_id:   staff.shop_id,
+      shop_name: shop?.shop_name || '',
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData))
     setStaffSession(sessionData)
@@ -114,8 +105,8 @@ export function StaffAuthProvider({ children }) {
 
     const shop = Array.isArray(staff.shops) ? staff.shops[0] : staff.shops
 
-    // 2. Hash new PIN
-    const pinHash = await sha256Hex(pin.trim() + staff.shop_id)
+    // 2. Hash new PIN (same format as add-staff)
+    const pinHash = await sha256Hex(pin.trim())
 
     // 3. Update staff: set PIN hash, clear invite token
     const { error: updateErr } = await supabase

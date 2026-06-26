@@ -11,8 +11,8 @@ import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check } from 'lucide-r
 // @ts-ignore
 const useAuthHook = useAuth as () => { user: any; [k: string]: any }
 
-async function hashPin(pin: string, shopId: string): Promise<string> {
-  const data = new TextEncoder().encode(pin + shopId)
+async function hashPin(pin: string): Promise<string> {
+  const data = new TextEncoder().encode(pin)
   const buf  = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
@@ -221,7 +221,7 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
 
       if (method === 'pin') {
         // Hash PIN in browser using Web Crypto (no RPC needed)
-        insertData.pin_hash = await hashPin(pin, shopId)
+        insertData.pin_hash = await hashPin(pin)
       } else {
         // Invite or phone — generate a random invite token
         insertData.invite_token = Array.from(crypto.getRandomValues(new Uint8Array(16)))

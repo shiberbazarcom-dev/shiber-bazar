@@ -9,7 +9,6 @@ export default function StaffLogin() {
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('invite')
 
-  const [shopCode, setShopCode]   = useState('')
   const [pin, setPin]             = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [loading, setLoading]     = useState(false)
@@ -30,14 +29,13 @@ export default function StaffLogin() {
         await loginWithInvite(inviteToken, pin)
         toast.success('স্বাগতম! PIN সেট হয়েছে')
       } else {
-        await loginWithPin(shopCode, pin)
+        await loginWithPin(pin)
         toast.success('লগইন সফল!')
       }
       navigate('/staff/orders', { replace: true })
     } catch (err) {
       const msg = err?.message || ''
-      if (msg.includes('shop_not_found'))      toast.error('দোকান কোড ভুল')
-      else if (msg.includes('invalid_credentials')) toast.error('PIN ভুল')
+      if (msg.includes('invalid_credentials')) toast.error('PIN ভুল')
       else if (msg.includes('invalid_token'))  toast.error('লিংক মেয়াদ উত্তীর্ণ')
       else toast.error('লগইন হয়নি, আবার চেষ্টা করুন')
       console.error(err)
@@ -50,7 +48,6 @@ export default function StaffLogin() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 space-y-6">
 
-        {/* Logo / Title */}
         <div className="text-center space-y-1">
           <div className="text-4xl">🏪</div>
           <h1 className="text-xl font-bold text-gray-800">Staff Login</h1>
@@ -60,26 +57,9 @@ export default function StaffLogin() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Shop Code — only for PIN flow */}
-          {!isInviteFlow && (
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">দোকান কোড</label>
-              <input
-                type="text"
-                value={shopCode}
-                onChange={e => setShopCode(e.target.value.toUpperCase())}
-                placeholder="DEMO"
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest font-mono"
-              />
-              <p className="text-xs text-gray-400">আপনার দোকানের মালিক এই কোড দেবেন</p>
-            </div>
-          )}
-
-          {/* PIN */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">
-              {isInviteFlow ? 'নতুন PIN (৪+ সংখ্যা)' : 'PIN'}
+              {isInviteFlow ? 'নতুন PIN (৪+ সংখ্যা)' : 'আপনার PIN'}
             </label>
             <input
               type="password"
@@ -88,12 +68,12 @@ export default function StaffLogin() {
               onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="••••"
               required
+              autoFocus
               maxLength={6}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tracking-widest font-mono text-center text-xl"
             />
           </div>
 
-          {/* Confirm PIN — only invite flow */}
           {isInviteFlow && (
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">PIN নিশ্চিত করুন</label>
