@@ -8,6 +8,7 @@ export function usePlaceOrder() {
   return useMutation({
     mutationFn: async (orderData) => {
       // Use RPC so SECURITY DEFINER returns the inserted row (anon has no SELECT policy)
+      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase.rpc('place_order_public', {
         p_customer_name:    orderData.customer_name,
         p_customer_phone:   orderData.customer_phone,
@@ -17,6 +18,7 @@ export function usePlaceOrder() {
         p_total_amount:     orderData.total_amount,
         p_shop_id:          orderData.shop_id ?? null,
         p_notes:            orderData.notes ?? null,
+        p_user_id:          user?.id ?? null,
       })
       if (error) {
         console.error('[usePlaceOrder] Supabase error:', error)
@@ -24,7 +26,11 @@ export function usePlaceOrder() {
       }
       return data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] })
+      qc.invalidateQueries({ queryKey: ['track-order'] })
+      qc.invalidateQueries({ queryKey: ['my-orders-user'] })
+    },
   })
 }
 
@@ -40,6 +46,21 @@ export function useTrackOrder(phone, options = {}) {
     },
     enabled: !!phone && phone.trim().length >= 10,
     ...options,
+  })
+}
+
+/* ── Logged-in user: all orders by user_id ── */
+export function useMyOrdersByUser(userId) {
+  return useQuery({
+    queryKey: ['my-orders-user', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('track_orders_by_user', { p_user_id: userId })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!userId,
+    refetchInterval: 15000,
   })
 }
 

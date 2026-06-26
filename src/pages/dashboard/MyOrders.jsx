@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { useTrackOrder } from '../../hooks/useOrders'
+import { useMyOrdersByUser } from '../../hooks/useOrders'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 
@@ -124,30 +124,21 @@ function Row({ label, value, bold }) {
 }
 
 export default function MyOrders() {
-  const { profile } = useAuth()
-  const profilePhone = profile?.phone || ''
-  const [manualPhone, setManualPhone] = useState('')
-  const [searched, setSearched] = useState(profilePhone)
-  const activePhone = searched
-  const { data: orders = [], isLoading } = useTrackOrder(activePhone, { refetchInterval: 15000 })
+  const { user } = useAuth()
+  const { data: orders = [], isLoading } = useMyOrdersByUser(user?.id)
   const qc = useQueryClient()
 
-  // Realtime: নতুন order বা status change — দুটোতেই refetch
+  // Realtime: নতুন order বা status change
   useEffect(() => {
-    if (!activePhone) return
-    const invalidate = () => qc.invalidateQueries({ queryKey: ['track-order', activePhone] })
+    if (!user?.id) return
+    const invalidate = () => qc.invalidateQueries({ queryKey: ['my-orders-user', user.id] })
     const ch = supabase
-      .channel(`my-orders-realtime-${activePhone}`)
+      .channel(`my-orders-user-${user.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, invalidate)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, invalidate)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [activePhone, qc])
-
-  function handleSearch(e) {
-    e.preventDefault()
-    if (manualPhone.trim().length >= 10) setSearched(manualPhone.trim())
-  }
+  }, [user?.id, qc])
 
   const delivered = orders.filter(o => o.status === 'delivered').length
   const active    = orders.filter(o => !['delivered','rejected'].includes(o.status)).length
@@ -160,26 +151,6 @@ export default function MyOrders() {
         <h1 className="text-xl font-bold text-gray-800">আমার অর্ডার</h1>
         <p className="text-sm text-gray-400 mt-0.5">সব অর্ডারের তালিকা ও সর্বশেষ অবস্থা</p>
       </div>
-
-      {/* Phone search (no profile phone) */}
-      {!profilePhone && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-5 shadow-sm">
-          <p className="text-sm font-semibold text-gray-700 mb-1">অর্ডারে দেওয়া ফোন নম্বর দিন</p>
-          <p className="text-xs text-gray-400 mb-3">যে নম্বর দিয়ে অর্ডার করেছিলেন সেটা লিখুন</p>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input value={manualPhone} onChange={e => setManualPhone(e.target.value)}
-              placeholder="01XXXXXXXXX" type="tel" className="input flex-1" />
-            <button type="submit"
-              className="px-5 py-2.5 text-white text-sm font-semibold rounded-xl flex-shrink-0 hover:opacity-90"
-              style={{ background: BLUE }}>
-              খুঁজুন
-            </button>
-          </form>
-          <Link to="/dashboard/profile" className="inline-block mt-2 text-xs text-blue-500 hover:underline">
-            প্রোফাইলে ফোন যোগ করুন →
-          </Link>
-        </div>
-      )}
 
       {/* Summary stats */}
       {orders.length > 0 && (
@@ -199,16 +170,6 @@ export default function MyOrders() {
         </div>
       )}
 
-      {/* Phone indicator */}
-      {profilePhone && (
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-gray-400">📱 {profilePhone}</p>
-          <Link to="/track-order" className="text-xs font-medium text-blue-500 hover:underline">
-            অন্য নম্বরে খুঁজুন →
-          </Link>
-        </div>
-      )}
-
       {/* Loading */}
       {isLoading && (
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
@@ -218,24 +179,16 @@ export default function MyOrders() {
       )}
 
       {/* No orders */}
-      {!isLoading && activePhone && orders.length === 0 && (
+      {!isLoading && orders.length === 0 && (
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-dashed border-gray-200">
           <p className="text-5xl mb-4">🛒</p>
-          <p className="font-semibold text-gray-700 mb-1">কোনো অর্ডার পাওয়া যায়নি</p>
-          <p className="text-sm text-gray-400 mb-5">{activePhone} নম্বরে কোনো অর্ডার নেই</p>
+          <p className="font-semibold text-gray-700 mb-1">এখনো কোনো অর্ডার নেই</p>
+          <p className="text-sm text-gray-400 mb-5">অর্ডার করলে এখানে দেখা যাবে</p>
           <Link to="/shops"
             className="inline-block px-6 py-2.5 text-white text-sm font-semibold rounded-xl hover:opacity-90"
             style={{ background: BLUE }}>
             দোকান দেখুন
           </Link>
-        </div>
-      )}
-
-      {/* Empty state — no phone entered */}
-      {!isLoading && !activePhone && (
-        <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-dashed border-gray-200">
-          <p className="text-4xl mb-3">📱</p>
-          <p className="text-sm text-gray-400">ফোন নম্বর দিয়ে আপনার অর্ডার খুঁজুন</p>
         </div>
       )}
 
