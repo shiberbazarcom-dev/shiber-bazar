@@ -393,6 +393,8 @@ export function useDeleteShop() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-shops'] })
       qc.invalidateQueries({ queryKey: ['my-shops'] })
+      qc.invalidateQueries({ queryKey: ['shops'] })
+      qc.invalidateQueries({ queryKey: ['market-stats'] })
       qc.invalidateQueries({ queryKey: ['products'] })
       qc.invalidateQueries({ queryKey: ['my-products'] })
       qc.invalidateQueries({ queryKey: ['admin-products'] })
