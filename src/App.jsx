@@ -377,7 +377,6 @@ export default function App() {
                 STAFF ROUTES (PIN-based auth)
             ══════════════════════════════════ */}
             <Route path="/staff-login" element={<StaffLogin />} />
-            <Route path="/staff-login/:shopSlug" element={<StaffLogin />} />
             <Route path="/staff" element={<StaffLayout />}>
               <Route index element={<StaffDashboard />} />
               <Route path="orders"   element={<StaffOrders />} />

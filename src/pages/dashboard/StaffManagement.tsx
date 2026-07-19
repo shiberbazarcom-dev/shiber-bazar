@@ -106,8 +106,8 @@ function StaffManagementInner() {
   })
 
   const currentShop = shops.find(s => s.id === shopId)
-  const shopCode = currentShop?.slug?.toUpperCase() || ''
-  const staffLoginUrl = currentShop?.slug ? `${window.location.origin}/staff-login/${currentShop.slug}` : ''
+  // Shop is baked into the link so staff only ever type their PIN
+  const staffLoginUrl = `${window.location.origin}/staff-login?shop=${encodeURIComponent(currentShop?.slug || shopId || '')}`
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -263,7 +263,6 @@ function StaffManagementInner() {
       {addOpen && shopId && (
         <AddStaffModal
           shopId={shopId}
-          shopSlug={currentShop?.slug || shopId}
           onClose={() => setAddOpen(false)}
           onDone={() => { qc.invalidateQueries({ queryKey: ['shop-staff'] }); setAddOpen(false) }}
         />
@@ -288,8 +287,8 @@ function InviteLinkCopy({ token }: { token: string }) {
   )
 }
 
-function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
-  shopId: string; shopSlug: string; onClose: () => void; onDone: () => void
+function AddStaffModal({ shopId, onClose, onDone }: {
+  shopId: string; onClose: () => void; onDone: () => void
 }) {
   const [method, setMethod] = useState<AddMethod>('pin')
   const [name, setName]     = useState('')
@@ -308,29 +307,27 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
     setLoading(true)
     try {
       if (method === 'pin') {
-        // Server-side bcrypt hashing via RPC (SECURITY DEFINER, verifies ownership)
+        // PIN is hashed server-side with bcrypt (also rejects duplicate PIN in the same shop)
         const { error } = await supabase.rpc('add_staff_with_pin', {
           p_shop_id: shopId, p_name: name.trim(), p_pin: pin, p_role: role, p_phone: phone || null,
         })
         if (error) throw error
         toast.success(`${name} কে Staff হিসেবে যোগ করা হয়েছে`)
         onDone()
-      } else if (method === 'invite') {
+      } else {
+        // Invite or phone — server generates the invite token
         const { data, error } = await supabase.rpc('add_staff_invite', {
           p_shop_id: shopId, p_name: name.trim(), p_role: role, p_phone: phone || null,
-        })
-        if (error) throw error
-        setResult({ invite_token: data.invite_token })
-      } else {
-        const { data, error } = await supabase.rpc('add_staff_by_phone', {
-          p_shop_id: shopId, p_name: name.trim(), p_phone: phone.trim(), p_role: role,
         })
         if (error) throw error
         setResult({ invite_token: data.invite_token })
       }
     } catch (err: any) {
       console.error('[AddStaff]', err)
-      toast.error(err?.message?.includes('violates row') ? 'অনুমতি নেই' : 'যোগ করা যায়নি: ' + (err?.message || ''))
+      const msg = err?.message || ''
+      if (msg.includes('pin_taken')) toast.error('এই PIN অন্য একজন Staff ব্যবহার করছে — আলাদা PIN দিন')
+      else if (msg.includes('unauthorized') || msg.includes('violates row')) toast.error('অনুমতি নেই')
+      else toast.error('যোগ করা যায়নি: ' + msg)
     } finally {
       setLoading(false)
     }
@@ -345,7 +342,7 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
         <p className="text-sm text-gray-700 font-medium mt-3">এই লিংকটি তাকে পাঠান:</p>
         <div className="bg-gray-50 rounded-xl p-3 text-xs break-all text-blue-700 border mt-1">{link}</div>
         <CopyButton text={link} label="লিংক কপি করুন" />
-        <p className="text-xs text-gray-400 mt-2">প্রথমবার লিংকে ক্লিক করলে PIN সেট করতে পারবে, তারপর একই লিংকে গিয়ে শুধু PIN দিয়ে login করবে।</p>
+        <p className="text-xs text-gray-400 mt-2">প্রথমবার লিংকে ক্লিক করলে PIN সেট করতে পারবে, তারপর Staff লগইন লিংকে গিয়ে PIN দিয়ে login করবে।</p>
         <Button className="w-full mt-4" onClick={onDone}>ঠিক আছে</Button>
       </ModalShell>
     )
@@ -403,7 +400,7 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
               className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-center tracking-widest font-mono"
             />
             <p className="text-xs text-gray-400 mt-1">
-              উপরের Staff লগইন লিংকে গিয়ে এই PIN দিয়ে login করবে
+              Staff লগইন লিংকে গিয়ে এই PIN দিয়ে login করবে
             </p>
           </Field>
         )}

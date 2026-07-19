@@ -36,13 +36,12 @@ export function StaffAuthProvider({ children }) {
       p_shop_code: shopCode.trim(),
       p_pin: pin.trim(),
     })
-    if (error || !data) throw new Error(error?.message?.includes('shop_not_found') ? 'shop_not_found' : 'invalid_credentials')
+    if (error) throw new Error(error.message || 'invalid_credentials')
 
-    const sessionData = { ...data, token: data.token }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData))
-    setStaffSession(sessionData)
-    logStaffActivity(sessionData, 'login', { method: 'pin' })
-    return sessionData
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    setStaffSession(data)
+    logStaffActivity(data, 'login', { method: 'pin' })
+    return data
   }, [])
 
   const loginWithInvite = useCallback(async (inviteToken, pin) => {
@@ -50,18 +49,20 @@ export function StaffAuthProvider({ children }) {
       p_token: inviteToken.trim(),
       p_pin: pin.trim(),
     })
-    if (error || !data) throw new Error('invalid_token')
+    if (error) throw new Error(error.message || 'invalid_token')
 
-    const sessionData = { ...data, token: data.token }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData))
-    setStaffSession(sessionData)
-    logStaffActivity(sessionData, 'login', { method: 'invite' })
-    return sessionData
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    setStaffSession(data)
+    logStaffActivity(data, 'login', { method: 'invite' })
+    return data
   }, [])
 
   const logout = useCallback(() => {
     const session = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-    if (session) logStaffActivity(session, 'logout')
+    if (session) {
+      logStaffActivity(session, 'logout')
+      if (session.token) supabase.rpc('staff_logout', { p_token: session.token }).then(() => {})
+    }
     localStorage.removeItem(STORAGE_KEY)
     setStaffSession(null)
   }, [])

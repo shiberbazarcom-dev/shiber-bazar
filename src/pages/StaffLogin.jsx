@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStaffAuth } from '../context/StaffAuthContext'
 import toast from 'react-hot-toast'
+
+const SHOP_KEY = 'sb_staff_shop' // remember shop code for next login on this device
 
 export default function StaffLogin() {
   const { loginWithPin, loginWithInvite, staffSession } = useStaffAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { shopSlug } = useParams()
   const inviteToken = searchParams.get('invite')
+  const shopFromUrl = searchParams.get('shop')
 
+  const [shopCode, setShopCode]     = useState(shopFromUrl || localStorage.getItem(SHOP_KEY) || '')
   const [pin, setPin]               = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [loading, setLoading]       = useState(false)
   const isInviteFlow = !!inviteToken
+  const shopLocked = !!shopFromUrl // shop came from the shared link — no need to type it
 
   useEffect(() => {
     if (staffSession) navigate('/staff/orders', { replace: true })
@@ -23,22 +27,24 @@ export default function StaffLogin() {
     e.preventDefault()
     if (pin.length < 4) { toast.error('PIN কমপক্ষে ৪ সংখ্যার হতে হবে'); return }
     if (isInviteFlow && pin !== confirmPin) { toast.error('PIN দুটো মিলছে না'); return }
-    if (!isInviteFlow && !shopSlug) { toast.error('দোকানের লিংক সঠিক নয়, মালিকের কাছ থেকে আবার লিংক নিন'); return }
+    if (!isInviteFlow && !shopCode.trim()) { toast.error('দোকান কোড দিন'); return }
     setLoading(true)
     try {
       if (isInviteFlow) {
-        await loginWithInvite(inviteToken, pin)
+        const session = await loginWithInvite(inviteToken, pin)
+        if (session?.shop_slug) localStorage.setItem(SHOP_KEY, session.shop_slug)
         toast.success('স্বাগতম! PIN সেট হয়েছে')
       } else {
-        await loginWithPin(shopSlug, pin)
+        const session = await loginWithPin(shopCode, pin)
+        if (session?.shop_slug) localStorage.setItem(SHOP_KEY, session.shop_slug)
         toast.success('লগইন সফল!')
       }
       navigate('/staff/orders', { replace: true })
     } catch (err) {
       const msg = err?.message || ''
-      if (msg.includes('shop_not_found'))      toast.error('দোকান পাওয়া যায়নি')
-      else if (msg.includes('invalid_credentials')) toast.error('PIN ভুল, আবার চেষ্টা করুন')
-      else if (msg.includes('invalid_token'))  toast.error('লিংক মেয়াদ উত্তীর্ণ')
+      if (msg.includes('invalid_credentials'))  toast.error('PIN ভুল, আবার চেষ্টা করুন')
+      else if (msg.includes('shop_not_found'))  toast.error('দোকান খুঁজে পাওয়া যায়নি — লিংকটি ঠিক আছে কিনা দেখুন')
+      else if (msg.includes('invalid_token'))   toast.error('লিংক মেয়াদ উত্তীর্ণ')
       else toast.error('লগইন হয়নি')
       console.error(err)
     } finally {
@@ -69,6 +75,21 @@ export default function StaffLogin() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isInviteFlow && !shopLocked && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700 block">দোকান কোড</label>
+                <input
+                  type="text"
+                  value={shopCode}
+                  onChange={e => setShopCode(e.target.value)}
+                  placeholder="যেমন: my-shop"
+                  required
+                  className="w-full border-2 border-gray-200 focus:border-blue-500 rounded-xl px-4 py-3 text-center text-sm font-mono outline-none transition-colors"
+                />
+                <p className="text-xs text-gray-400">দোকানের মালিকের পাঠানো লিংক ব্যবহার করলে এটি লাগবে না</p>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700 block">
                 {isInviteFlow ? 'নতুন PIN (৪–৬ সংখ্যা)' : 'আপনার PIN'}

@@ -13,17 +13,12 @@ export default function StaffTeam() {
   const { data: team = [], isLoading } = useQuery({
     queryKey: ['staff-team', staffSession?.shop_id],
     queryFn: async () => {
-      if (!staffSession?.shop_id) return []
-      const { data, error } = await supabase
-        .from('shop_staff')
-        .select('id, name, phone, role, is_active, last_login_at')
-        .eq('shop_id', staffSession.shop_id)
-        .eq('is_active', true)
-        .order('created_at')
+      if (!staffSession?.token) return []
+      const { data, error } = await supabase.rpc('staff_get_team', { p_token: staffSession.token })
       if (error) throw error
       return data || []
     },
-    enabled: !!staffSession?.shop_id,
+    enabled: !!staffSession?.token,
   })
 
   if (isLoading) return <div className="text-center py-16 text-gray-400">লোড হচ্ছে...</div>
