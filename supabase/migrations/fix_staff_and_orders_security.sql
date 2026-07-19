@@ -56,6 +56,13 @@ ALTER TABLE orders
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 
 -- ── 3. place_order_public: link order to the logged-in customer ──
+-- Old 8-arg version (pre-p_user_id) is a DIFFERENT overload in Postgres —
+-- CREATE OR REPLACE won't touch it, so drop it explicitly first or the
+-- name stays ambiguous for GRANT/PostgREST.
+DROP FUNCTION IF EXISTS public.place_order_public(
+  text, text, text, text, int, numeric, uuid, text
+);
+
 CREATE OR REPLACE FUNCTION public.place_order_public(
   p_customer_name    text,
   p_customer_phone   text,
@@ -87,7 +94,9 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.place_order_public TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.place_order_public(
+  text, text, text, text, int, numeric, uuid, text, uuid
+) TO anon, authenticated;
 
 -- ── 4a. track_orders_by_phone: add missing shop slug (chat link) ─
 CREATE OR REPLACE FUNCTION public.track_orders_by_phone(p_phone text)
@@ -264,7 +273,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.add_staff_by_phone TO authenticated;
+GRANT EXECUTE ON FUNCTION public.add_staff_by_phone(uuid, text, text, text) TO authenticated;
 
 -- Reload PostgREST schema cache
 NOTIFY pgrst, 'reload schema';
