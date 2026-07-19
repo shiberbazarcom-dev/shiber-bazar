@@ -235,7 +235,7 @@ export default function Navbar() {
             </Link>
 
             {/* Search bar */}
-            <form onSubmit={handleSearch} className="flex-1 min-w-0 mx-1 sm:mx-2 relative">
+            <form onSubmit={handleSearch} className="flex-1 min-w-[90px] sm:min-w-[160px] mx-1 sm:mx-2 relative">
               <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-gray-50">
                 <input
                   value={query}
@@ -267,7 +267,9 @@ export default function Navbar() {
             </form>
 
             {/* ── Desktop nav ── */}
-            <nav className="hidden md:flex items-center gap-1.5 flex-shrink-0">
+            {/* min-w-0 + overflow-x-auto: if items overflow, this scrolls internally
+                instead of squeezing the search bar down to nothing */}
+            <nav className="hidden md:flex items-center gap-1.5 min-w-0 overflow-x-auto">
               {/* Categories dropdown */}
               <div className="relative" ref={catRef}>
                 <button onClick={() => setCatOpen(o => !o)}
@@ -306,7 +308,7 @@ export default function Navbar() {
 
               <NavLink to="/used" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
-                পুরাতন বাজার
+                পুরাতন
               </NavLink>
 
               <NavLink to="/track-order" className={({ isActive }) =>
@@ -427,7 +429,7 @@ export default function Navbar() {
                 { to: '/categories',  label: 'ক্যাটাগরি' },
                 { to: '/services',       label: 'সেবাসমূহ' },
                 { to: '/shops',          label: 'সব দোকান' },
-                { to: '/used',           label: 'পুরাতন বাজার' },
+                { to: '/used',           label: 'পুরাতন' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/pricing',     label: 'প্যাকেজ' },
                 { to: '/contact',     label: 'যোগাযোগ' },
