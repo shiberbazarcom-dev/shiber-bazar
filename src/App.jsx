@@ -102,6 +102,13 @@ const ManageJobs           = lazy(() => import('./pages/admin/ManageJobs'))
 const JobsPage             = lazy(() => import('./pages/JobsPage'))
 const JobDetail            = lazy(() => import('./pages/JobDetail'))
 
+/* ── পুরাতন বাজার (Used Marketplace) ── */
+const UsedMarketPage     = lazy(() => import('./pages/used/UsedMarketPage'))
+const UsedListingDetail  = lazy(() => import('./pages/used/UsedListingDetail'))
+const PostUsedListing    = lazy(() => import('./pages/used/PostUsedListing'))
+const MyUsedListings     = lazy(() => import('./pages/dashboard/MyUsedListings'))
+const ManageUsedListings = lazy(() => import('./pages/admin/ManageUsedListings'))
+
 /* ── Staff pages ── */
 const StaffLogin     = lazy(() => import('./pages/StaffLogin'))
 const StaffLayout    = lazy(() => import('./components/StaffLayout'))
@@ -210,6 +217,17 @@ export default function App() {
             <Route path="/jobs"     element={<PublicLayout><JobsPage /></PublicLayout>} />
             <Route path="/jobs/:id" element={<PublicLayout><JobDetail /></PublicLayout>} />
 
+            {/* ── পুরাতন বাজার (Used Marketplace) ── */}
+            <Route path="/used"      element={<PublicLayout><UsedMarketPage /></PublicLayout>} />
+            <Route path="/used/post" element={
+              <PublicLayout>
+                <ProtectedRoute requireAuth>
+                  <PostUsedListing />
+                </ProtectedRoute>
+              </PublicLayout>
+            } />
+            <Route path="/used/:id"  element={<PublicLayout><UsedListingDetail /></PublicLayout>} />
+
             {/* ── সেবাসমূহ — স্থানীয় সেবা ডিরেক্টরি (services page এখন এটাই) ── */}
             <Route path="/hatkhula-union"  element={<PublicLayout><HatkhulaUnion /></PublicLayout>} />
             <Route path="/emergency"       element={<PublicLayout><EmergencyContacts /></PublicLayout>} />
@@ -296,6 +314,7 @@ export default function App() {
               } />
               <Route path="my-orders"   element={<MyOrders />} />
               <Route path="my-services" element={<MyServices />} />
+              <Route path="my-listings" element={<MyUsedListings />} />
               <Route path="hisaber-khata" element={
                 <ProtectedRoute requireRole={['shop_owner','market_manager','super_admin']}>
                   <ProGate title="হিসাবের খাতা — Pro Feature" description="গ্রাহকের বাকি ও লেনদেনের হিসাব রাখুন" features={['গ্রাহকভিত্তিক বাকির হিসাব','লেনদেন entry ও ইতিহাস','মোট পাওনা overview','Excel export (Business)']}>
@@ -351,12 +370,14 @@ export default function App() {
               <Route path="bulk-import"     element={<BulkImport />} />
               <Route path="sections"        element={<ManageSections />} />
               <Route path="jobs"            element={<ManageJobs />} />
+              <Route path="used-listings"   element={<ManageUsedListings />} />
             </Route>
 
             {/* ══════════════════════════════════
                 STAFF ROUTES (PIN-based auth)
             ══════════════════════════════════ */}
             <Route path="/staff-login" element={<StaffLogin />} />
+            <Route path="/staff-login/:shopSlug" element={<StaffLogin />} />
             <Route path="/staff" element={<StaffLayout />}>
               <Route index element={<StaffDashboard />} />
               <Route path="orders"   element={<StaffOrders />} />

@@ -505,6 +505,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/favorites',    icon: '❤️', label: 'পছন্দের দোকান' },
     { to: '/dashboard/chat',         icon: '💬', label: 'বার্তা' },
     { to: '/dashboard/my-services',  icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/my-listings',  icon: '♻️', label: 'আমার বিজ্ঞাপন' },
     { to: '/dashboard/profile',      icon: '👤', label: 'প্রোফাইল' },
   ]
 
@@ -522,6 +523,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/dashboard/broadcast',     icon: '📢', label: 'ব্রডকাস্ট',   pro: true },
     { to: '/dashboard/staff',         icon: '👥', label: 'Staff ম্যানেজমেন্ট', pro: true },
     { to: '/dashboard/my-services',   icon: '🛠️', label: 'আমার সেবা' },
+    { to: '/dashboard/my-listings',   icon: '♻️', label: 'আমার বিজ্ঞাপন' },
     { to: '/dashboard/profile',       icon: '👤', label: 'প্রোফাইল' },
   ]
 
@@ -550,6 +552,7 @@ export default function DashboardLayout({ type = 'user' }) {
     { to: '/admin/sections',          icon: '🏠', label: 'সেকশন বিল্ডার' },
     { to: '/admin/ads',               icon: '📢', label: 'বিজ্ঞাপন' },
     { to: '/admin/jobs',              icon: '💼', label: 'চাকরির বোর্ড' },
+    { to: '/admin/used-listings',     icon: '♻️', label: 'পুরাতন বাজার' },
     { section: 'সিস্টেম' },
     { to: '/admin/audit-log',         icon: '🗂️', label: 'Audit Log' },
     { to: '/admin/error-logs',        icon: '🐛', label: 'Error Logs' },

@@ -304,6 +304,11 @@ export default function Navbar() {
                 সব দোকান
               </NavLink>
 
+              <NavLink to="/used" className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
+                পুরাতন বাজার
+              </NavLink>
+
               <NavLink to="/track-order" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
                 অর্ডার ট্র্যাক
@@ -422,6 +427,7 @@ export default function Navbar() {
                 { to: '/categories',  label: 'ক্যাটাগরি' },
                 { to: '/services',       label: 'সেবাসমূহ' },
                 { to: '/shops',          label: 'সব দোকান' },
+                { to: '/used',           label: 'পুরাতন বাজার' },
                 { to: '/track-order', label: 'অর্ডার ট্র্যাক' },
                 { to: '/pricing',     label: 'প্যাকেজ' },
                 { to: '/contact',     label: 'যোগাযোগ' },
