@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useStaffAuth } from '../context/StaffAuthContext'
 import toast from 'react-hot-toast'
 
@@ -7,6 +7,7 @@ export default function StaffLogin() {
   const { loginWithPin, loginWithInvite, staffSession } = useStaffAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { shopSlug } = useParams()
   const inviteToken = searchParams.get('invite')
 
   const [pin, setPin]               = useState('')
@@ -22,19 +23,21 @@ export default function StaffLogin() {
     e.preventDefault()
     if (pin.length < 4) { toast.error('PIN কমপক্ষে ৪ সংখ্যার হতে হবে'); return }
     if (isInviteFlow && pin !== confirmPin) { toast.error('PIN দুটো মিলছে না'); return }
+    if (!isInviteFlow && !shopSlug) { toast.error('দোকানের লিংক সঠিক নয়, মালিকের কাছ থেকে আবার লিংক নিন'); return }
     setLoading(true)
     try {
       if (isInviteFlow) {
         await loginWithInvite(inviteToken, pin)
         toast.success('স্বাগতম! PIN সেট হয়েছে')
       } else {
-        await loginWithPin(pin)
+        await loginWithPin(shopSlug, pin)
         toast.success('লগইন সফল!')
       }
       navigate('/staff/orders', { replace: true })
     } catch (err) {
       const msg = err?.message || ''
-      if (msg.includes('invalid_credentials')) toast.error('PIN ভুল, আবার চেষ্টা করুন')
+      if (msg.includes('shop_not_found'))      toast.error('দোকান পাওয়া যায়নি')
+      else if (msg.includes('invalid_credentials')) toast.error('PIN ভুল, আবার চেষ্টা করুন')
       else if (msg.includes('invalid_token'))  toast.error('লিংক মেয়াদ উত্তীর্ণ')
       else toast.error('লগইন হয়নি')
       console.error(err)

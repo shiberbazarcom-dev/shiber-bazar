@@ -9,40 +9,35 @@ export default function StaffDashboard() {
   const isManager = staffSession?.role === 'manager'
   const shopId = staffSession?.shop_id
 
-  const { data: stats } = useQuery({
-    queryKey: ['staff-stats', shopId],
+  const { data: orders = [] } = useQuery({
+    queryKey: ['staff-stats-orders', shopId],
     queryFn: async () => {
-      const [ordersRes, productsRes] = await Promise.all([
-        supabase.from('orders').select('id, status').eq('shop_id', shopId),
-        supabase.from('products').select('id, is_active').eq('shop_id', shopId),
-      ])
-      const orders = ordersRes.data || []
-      const products = productsRes.data || []
-      return {
-        totalOrders:   orders.length,
-        pendingOrders: orders.filter(o => o.status === 'pending').length,
-        processingOrders: orders.filter(o => ['confirmed','processing'].includes(o.status)).length,
-        deliveredOrders: orders.filter(o => o.status === 'delivered').length,
-        totalProducts: products.length,
-        activeProducts: products.filter(p => p.is_active).length,
-      }
+      const { data, error } = await supabase.rpc('staff_list_orders', { p_token: staffSession.token })
+      if (error) throw error
+      return data || []
     },
-    enabled: !!shopId,
+    enabled: !!staffSession?.token,
   })
 
-  const { data: recentOrders = [] } = useQuery({
-    queryKey: ['staff-recent-orders', shopId],
+  const { data: products = [] } = useQuery({
+    queryKey: ['staff-stats-products', shopId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('orders')
-        .select('id, order_number, customer_name, status, total_amount, created_at')
-        .eq('shop_id', shopId)
-        .order('created_at', { ascending: false })
-        .limit(5)
+      const { data } = await supabase.from('products').select('id, is_active').eq('shop_id', shopId)
       return data || []
     },
     enabled: !!shopId,
   })
+
+  const stats = {
+    totalOrders:   orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    processingOrders: orders.filter(o => ['confirmed','processing'].includes(o.status)).length,
+    deliveredOrders: orders.filter(o => o.status === 'delivered').length,
+    totalProducts: products.length,
+    activeProducts: products.filter(p => p.is_active).length,
+  }
+
+  const recentOrders = orders.slice(0, 5)
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ন' : 'শুভ সন্ধ্যা'

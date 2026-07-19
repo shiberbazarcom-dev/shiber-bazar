@@ -11,12 +11,6 @@ import { Plus, Copy, UserX, Users, Link2, Phone, Hash, X, Check, Activity, Monit
 // @ts-ignore
 const useAuthHook = useAuth as () => { user: any; [k: string]: any }
 
-async function hashPin(pin: string): Promise<string> {
-  const data = new TextEncoder().encode(pin)
-  const buf  = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
 type Staff = {
   id: string
   name: string
@@ -113,7 +107,7 @@ function StaffManagementInner() {
 
   const currentShop = shops.find(s => s.id === shopId)
   const shopCode = currentShop?.slug?.toUpperCase() || ''
-  const staffLoginUrl = `${window.location.origin}/staff-login`
+  const staffLoginUrl = currentShop?.slug ? `${window.location.origin}/staff-login/${currentShop.slug}` : ''
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -313,30 +307,25 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
 
     setLoading(true)
     try {
-      let insertData: any = { shop_id: shopId, name: name.trim(), role, phone: phone || null }
-
       if (method === 'pin') {
-        // Hash PIN in browser using Web Crypto (no RPC needed)
-        insertData.pin_hash = await hashPin(pin)
-      } else {
-        // Invite or phone — generate a random invite token
-        insertData.invite_token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-          .map(b => b.toString(16).padStart(2, '0')).join('')
-      }
-
-      const { data, error } = await supabase
-        .from('shop_staff')
-        .insert(insertData)
-        .select('id, name, invite_token')
-        .single()
-
-      if (error) throw error
-
-      if (method === 'pin') {
+        // Server-side bcrypt hashing via RPC (SECURITY DEFINER, verifies ownership)
+        const { error } = await supabase.rpc('add_staff_with_pin', {
+          p_shop_id: shopId, p_name: name.trim(), p_pin: pin, p_role: role, p_phone: phone || null,
+        })
+        if (error) throw error
         toast.success(`${name} কে Staff হিসেবে যোগ করা হয়েছে`)
         onDone()
+      } else if (method === 'invite') {
+        const { data, error } = await supabase.rpc('add_staff_invite', {
+          p_shop_id: shopId, p_name: name.trim(), p_role: role, p_phone: phone || null,
+        })
+        if (error) throw error
+        setResult({ invite_token: data.invite_token })
       } else {
-        // invite/phone — show the invite link
+        const { data, error } = await supabase.rpc('add_staff_by_phone', {
+          p_shop_id: shopId, p_name: name.trim(), p_phone: phone.trim(), p_role: role,
+        })
+        if (error) throw error
         setResult({ invite_token: data.invite_token })
       }
     } catch (err: any) {
@@ -356,8 +345,7 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
         <p className="text-sm text-gray-700 font-medium mt-3">এই লিংকটি তাকে পাঠান:</p>
         <div className="bg-gray-50 rounded-xl p-3 text-xs break-all text-blue-700 border mt-1">{link}</div>
         <CopyButton text={link} label="লিংক কপি করুন" />
-        <p className="text-xs text-gray-400 mt-2">প্রথমবার লিংকে ক্লিক করলে PIN সেট করতে পারবে, তারপর প্রতিবার দোকান কোড + PIN দিয়ে login করবে।</p>
-        <p className="text-xs text-gray-500 mt-1">দোকান কোড: <strong className="text-gray-700 uppercase">{shopSlug}</strong></p>
+        <p className="text-xs text-gray-400 mt-2">প্রথমবার লিংকে ক্লিক করলে PIN সেট করতে পারবে, তারপর একই লিংকে গিয়ে শুধু PIN দিয়ে login করবে।</p>
         <Button className="w-full mt-4" onClick={onDone}>ঠিক আছে</Button>
       </ModalShell>
     )
@@ -415,7 +403,7 @@ function AddStaffModal({ shopId, shopSlug, onClose, onDone }: {
               className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-center tracking-widest font-mono"
             />
             <p className="text-xs text-gray-400 mt-1">
-              দোকান কোড: <strong className="uppercase">{shopSlug}</strong> + এই PIN দিয়ে Staff login করবে
+              উপরের Staff লগইন লিংকে গিয়ে এই PIN দিয়ে login করবে
             </p>
           </Field>
         )}

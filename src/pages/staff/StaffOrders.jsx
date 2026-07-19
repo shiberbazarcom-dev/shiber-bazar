@@ -37,30 +37,25 @@ export default function StaffOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [filterStatus, setFilterStatus] = useState('')
 
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['staff-orders', staffSession?.shop_id, filterStatus],
+  const { data: allOrders = [], isLoading } = useQuery({
+    queryKey: ['staff-orders', staffSession?.shop_id],
     queryFn: async () => {
-      if (!staffSession?.shop_id) return []
-      let q = supabase
-        .from('orders')
-        .select('*')
-        .eq('shop_id', staffSession.shop_id)
-        .order('created_at', { ascending: false })
-      if (filterStatus) q = q.eq('status', filterStatus)
-      const { data, error } = await q
+      if (!staffSession?.token) return []
+      const { data, error } = await supabase.rpc('staff_list_orders', { p_token: staffSession.token })
       if (error) throw error
       return data || []
     },
-    enabled: !!staffSession?.shop_id,
+    enabled: !!staffSession?.token,
   })
+  const orders = filterStatus ? allOrders.filter(o => o.status === filterStatus) : allOrders
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }) => {
-      const { error } = await supabase.from('orders').update({
-        status,
-        staff_updated_by: staffSession?.name,
-        staff_updated_at: new Date().toISOString(),
-      }).eq('id', id)
+      const { error } = await supabase.rpc('staff_update_order_status', {
+        p_token: staffSession?.token,
+        p_order_id: id,
+        p_status: status,
+      })
       if (error) throw error
     },
     onSuccess: (_, vars) => {
