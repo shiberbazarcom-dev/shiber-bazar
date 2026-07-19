@@ -99,6 +99,10 @@ GRANT EXECUTE ON FUNCTION public.place_order_public(
 ) TO anon, authenticated;
 
 -- ── 4a. track_orders_by_phone: add missing shop slug (chat link) ─
+-- DROP first: a differently-typed version of this function may already
+-- exist (from an earlier partial run or another session) — CREATE OR
+-- REPLACE cannot change an existing function's return type.
+DROP FUNCTION IF EXISTS public.track_orders_by_phone(text);
 CREATE OR REPLACE FUNCTION public.track_orders_by_phone(p_phone text)
 RETURNS json
 LANGUAGE sql
@@ -121,6 +125,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.track_orders_by_phone(text) TO anon, authenticated;
 
 -- ── 4b. track_orders_by_user: logged-in customer's own orders ────
+DROP FUNCTION IF EXISTS public.track_orders_by_user(uuid);
 CREATE OR REPLACE FUNCTION public.track_orders_by_user(p_user_id uuid)
 RETURNS json
 LANGUAGE sql
@@ -143,6 +148,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.track_orders_by_user(uuid) TO anon, authenticated;
 
 -- ── 4c. track_order_by_number: single order, public tracking ─────
+DROP FUNCTION IF EXISTS public.track_order_by_number(text);
 CREATE OR REPLACE FUNCTION public.track_order_by_number(p_order_number text)
 RETURNS json
 LANGUAGE sql
