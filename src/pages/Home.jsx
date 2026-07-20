@@ -646,7 +646,7 @@ export default function Home() {
     '@type': 'ItemList',
     'name': 'শিবের বাজার — দোকান তালিকা',
     'description': 'সিলেটের শিবের বাজারের সকল দোকান',
-    'url': 'https://shiberbazar.vercel.app/shops',
+    'url': 'https://shiber-bazar.vercel.app/shops',
   }
 
   // ── Section render functions (closures over component state) ──

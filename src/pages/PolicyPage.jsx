@@ -30,7 +30,7 @@ export default function PolicyPage() {
       <SEO
         title="গোপনীয়তা ও শর্তাবলী"
         description="শিবের বাজারের গোপনীয়তা নীতি ও ব্যবহারের শর্তাবলী। আমাদের সেবা ব্যবহার করার আগে এই নীতিমালা পড়ুন।"
-        url="https://shiberbazar.vercel.app/policy"
+        url="https://shiber-bazar.vercel.app/policy"
         noindex={true}
       />
       {/* Header */}

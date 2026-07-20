@@ -10,4 +10,4 @@ Disallow: /cart
 Disallow: /order/
 Disallow: /track-order
 
-Sitemap: https://shiberbazar.vercel.app/sitemap.xml
+Sitemap: https://shiber-bazar.vercel.app/sitemap.xml

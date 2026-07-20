@@ -7,7 +7,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSiteSettings } from '../hooks/useSettings'
 
-export const SITE_URL  = 'https://shiberbazar.vercel.app'
+export const SITE_URL  = 'https://shiber-bazar.vercel.app'
 export const SITE_NAME = 'শিবের বাজার'
 const DEFAULT_DESC = 'সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।'
 const DEFAULT_IMG  = `${SITE_URL}/logo.png`
