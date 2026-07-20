@@ -267,11 +267,10 @@ export default function Navbar() {
             </form>
 
             {/* ── Desktop nav ── */}
-            {/* min-w-0 + overflow-x-auto: if items overflow, this scrolls internally
-                instead of squeezing the search bar down to nothing */}
-            <nav className="hidden md:flex items-center gap-1.5 min-w-0 overflow-x-auto">
-              {/* Categories dropdown */}
-              <div className="relative" ref={catRef}>
+            <nav className="hidden md:flex items-center gap-1.5 min-w-0">
+              {/* Categories dropdown — must stay OUTSIDE the scrollable strip,
+                  otherwise overflow-x-auto clips the absolutely-positioned menu */}
+              <div className="relative flex-shrink-0" ref={catRef}>
                 <button onClick={() => setCatOpen(o => !o)}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
                   ক্যাটাগরি <span className="text-xs">{catOpen ? '▲' : '▼'}</span>
@@ -295,6 +294,10 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+
+              {/* Scrollable link strip: overflows internally instead of
+                  squeezing the search bar down to nothing */}
+              <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto">
 
               <NavLink to="/services" className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50'}`}>
@@ -330,6 +333,7 @@ export default function Navbar() {
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive ? 'text-emerald-700 bg-emerald-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}>
                 ইউনিয়ন
               </NavLink>
+              </div>
             </nav>
 
             {/* Cart icon — desktop */}
