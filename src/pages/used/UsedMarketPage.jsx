@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePublicListings, USED_CATEGORIES, CONDITION_LABELS } from '../../hooks/useUsedListings'
 import { useAuth } from '../../context/AuthContext'
 import SEO from '../../components/SEO'
@@ -56,7 +56,12 @@ function ListingCard({ listing }) {
 
 export default function UsedMarketPage() {
   const { user } = useAuth()
-  const [category, setCategory] = useState('all')
+  const [searchParams] = useSearchParams()
+  // Deep-link support: /used?cat=📱 মোবাইল preselects that category chip
+  const catFromUrl = searchParams.get('cat')
+  const [category, setCategory] = useState(
+    catFromUrl && USED_CATEGORIES.includes(catFromUrl) ? catFromUrl : 'all'
+  )
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
 

@@ -12,7 +12,7 @@ import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
 import { useDirectoryCategories } from '../hooks/useServiceDirectory'
 import { useSiteSettings } from '../hooks/useSettings'
 import { useHomeSections } from '../hooks/useHomeSections'
-import { usePublicListings, CONDITION_LABELS as USED_CONDITION_LABELS } from '../hooks/useUsedListings'
+import { usePublicListings, CONDITION_LABELS as USED_CONDITION_LABELS, USED_CATEGORIES } from '../hooks/useUsedListings'
 
 // CMS fallbacks for Home page
 const HOME_FB = {
@@ -378,6 +378,20 @@ function HomeUsedMarketSection({ title, subtitle }) {
           </Link>
         </div>
 
+        {/* Category quick-chips — one tap to a pre-filtered browse page */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
+          {USED_CATEGORIES.slice(0, 6).map(cat => (
+            <Link key={cat} to={`/used?cat=${encodeURIComponent(cat)}`}
+              className="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 bg-white text-gray-700 border border-emerald-100 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors shadow-sm">
+              {cat}
+            </Link>
+          ))}
+          <Link to="/used"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm">
+            আরও দেখুন →
+          </Link>
+        </div>
+
         {listings.length === 0 ? (
           /* No listings yet — promo banner */
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-10 sm:py-12 text-center">
@@ -399,6 +413,7 @@ function HomeUsedMarketSection({ title, subtitle }) {
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
               {listings.map(l => {
                 const img = Array.isArray(l.images) && l.images[0]
+                const isNew = Date.now() - new Date(l.created_at).getTime() < 24 * 60 * 60 * 1000
                 return (
                   <Link key={l.id} to={`/used/${l.id}`}
                     className="w-40 flex-shrink-0 snap-start sm:w-auto bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all overflow-hidden group">
@@ -407,6 +422,11 @@ function HomeUsedMarketSection({ title, subtitle }) {
                         <img src={img} alt={l.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl text-gray-300">📦</div>
+                      )}
+                      {isNew && (
+                        <span className="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+                          নতুন
+                        </span>
                       )}
                       <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
                         {USED_CONDITION_LABELS[l.condition] || l.condition}
@@ -418,8 +438,11 @@ function HomeUsedMarketSection({ title, subtitle }) {
                       </p>
                       <p className="text-emerald-700 font-bold text-sm sm:text-base mt-0.5">
                         ৳{Number(l.price).toLocaleString('bn-BD')}
+                        {l.negotiable && <span className="text-[9px] text-gray-400 font-normal ml-1">(আলোচনা)</span>}
                       </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{usedTimeAgo(l.created_at)}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">
+                        {l.location ? `📍 ${l.location} · ` : ''}{usedTimeAgo(l.created_at)}
+                      </p>
                     </div>
                   </Link>
                 )

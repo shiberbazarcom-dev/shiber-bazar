@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 const MAX_IMAGES = 4
 
 export default function PostUsedListing() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
@@ -29,6 +29,16 @@ export default function PostUsedListing() {
   const [previews, setPreviews] = useState([])   // object URLs for newFiles
   const [saving, setSaving] = useState(false)
   const [loadingEdit, setLoadingEdit] = useState(!!editId)
+
+  // Prefill contact numbers from profile so most users never type them
+  useEffect(() => {
+    if (editId || !profile?.phone) return
+    setForm(f => ({
+      ...f,
+      contact_phone:   f.contact_phone   || profile.phone,
+      whatsapp_number: f.whatsapp_number || profile.phone,
+    }))
+  }, [profile?.phone, editId])
 
   // Edit mode: load own listing
   useEffect(() => {
