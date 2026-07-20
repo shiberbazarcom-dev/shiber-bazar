@@ -12,6 +12,7 @@ import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
 import { useDirectoryCategories } from '../hooks/useServiceDirectory'
 import { useSiteSettings } from '../hooks/useSettings'
 import { useHomeSections } from '../hooks/useHomeSections'
+import { usePublicListings, CONDITION_LABELS as USED_CONDITION_LABELS } from '../hooks/useUsedListings'
 
 // CMS fallbacks for Home page
 const HOME_FB = {
@@ -342,6 +343,102 @@ function CategoryPill({ category }) {
   )
 }
 
+/* ── Homepage Used Market (পুরাতন বাজার) Section ───────────────── */
+function usedTimeAgo(iso) {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+  if (mins < 60) return `${mins || 1} মিনিট আগে`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} ঘণ্টা আগে`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days} দিন আগে`
+  return new Date(iso).toLocaleDateString('bn-BD')
+}
+
+function HomeUsedMarketSection({ title, subtitle }) {
+  const { data: allListings = [] } = usePublicListings()
+  const listings = allListings.filter(l => l.status === 'approved').slice(0, 8)
+
+  return (
+    <section className="py-10 sm:py-14 bg-gradient-to-b from-emerald-50/70 to-white">
+      <div className="container-app">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              ♻️ {title}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+          </div>
+          <Link
+            to="/used"
+            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 group flex-shrink-0">
+            সব দেখুন
+            <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
+        {listings.length === 0 ? (
+          /* No listings yet — promo banner */
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-10 sm:py-12 text-center">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-x-1/3 -translate-y-1/3" />
+            <div className="relative z-10">
+              <p className="text-3xl mb-2">♻️</p>
+              <h3 className="text-white font-bold text-lg sm:text-xl mb-1">পুরাতন জিনিস বিক্রি করুন — সম্পূর্ণ ফ্রি</h3>
+              <p className="text-emerald-100 text-sm mb-5">মোবাইল, ল্যাপটপ, ফার্নিচার, বাইক — যা খুশি, সরাসরি এলাকার মানুষের কাছে</p>
+              <Link
+                to="/used/post"
+                className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-lg">
+                ➕ প্রথম বিজ্ঞাপনটি দিন
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Mobile: horizontal snap scroll · Desktop: grid */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
+              {listings.map(l => {
+                const img = Array.isArray(l.images) && l.images[0]
+                return (
+                  <Link key={l.id} to={`/used/${l.id}`}
+                    className="w-40 flex-shrink-0 snap-start sm:w-auto bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all overflow-hidden group">
+                    <div className="relative aspect-[4/3] bg-gray-100">
+                      {img ? (
+                        <img src={img} alt={l.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-300">📦</div>
+                      )}
+                      <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
+                        {USED_CONDITION_LABELS[l.condition] || l.condition}
+                      </span>
+                    </div>
+                    <div className="p-2.5">
+                      <p className="font-semibold text-gray-800 text-xs sm:text-sm line-clamp-1 group-hover:text-emerald-700 transition-colors">
+                        {l.title}
+                      </p>
+                      <p className="text-emerald-700 font-bold text-sm sm:text-base mt-0.5">
+                        ৳{Number(l.price).toLocaleString('bn-BD')}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{usedTimeAgo(l.created_at)}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+            <div className="mt-5 text-center">
+              <Link
+                to="/used/post"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-5 py-2.5 rounded-xl transition-colors">
+                + আপনার পুরাতন জিনিস বিক্রি করুন — ফ্রি
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
 /* ── Homepage Services Section ─────────────────────────────────── */
 function HomeServicesSection() {
   /* স্থানীয় সেবা ডিরেক্টরি-র category — /services/:slug এর সাথে মিলে */
@@ -419,10 +516,23 @@ export default function Home() {
   }
 
   // Sections in display_order; fall back to a fixed order if CMS is empty
-  const FALLBACK_ORDER = ['hero','categories','banner_ads','featured_shops','latest_shops','services','cta']
-  const orderedSlugs = cmsSections.length > 0
+  const FALLBACK_ORDER = ['hero','categories','banner_ads','featured_shops','latest_shops','used_market','services','cta']
+  let orderedSlugs = cmsSections.length > 0
     ? cmsSections.filter(s => s.is_active).map(s => s.section_slug)
     : FALLBACK_ORDER
+
+  // Newer sections may not have a CMS row yet (DB seeded before they existed) —
+  // show them anyway, slotted before 'cta', until a row is added to control them
+  if (cmsSections.length > 0) {
+    const knownSlugs = cmsSections.map(s => s.section_slug)
+    const missing = FALLBACK_ORDER.filter(slug => !knownSlugs.includes(slug))
+    if (missing.length > 0) {
+      const ctaIdx = orderedSlugs.indexOf('cta')
+      orderedSlugs = ctaIdx === -1
+        ? [...orderedSlugs, ...missing]
+        : [...orderedSlugs.slice(0, ctaIdx), ...missing, ...orderedSlugs.slice(ctaIdx)]
+    }
+  }
 
   // Filter by date validity
   const today = new Date().toISOString().slice(0, 10)
@@ -846,6 +956,15 @@ export default function Home() {
     return <HomeServicesSection />
   }
 
+  function renderUsedMarket() {
+    return (
+      <HomeUsedMarketSection
+        title={sectionTitle('used_market', 'পুরাতন বাজার')}
+        subtitle={sectionSubtitle('used_market', 'পুরাতন জিনিস কিনুন-বিক্রি করুন — সরাসরি এলাকার মানুষের সাথে')}
+      />
+    )
+  }
+
   function renderCTA() {
     return (
       <section className="relative py-16 pb-28 sm:py-20 sm:pb-20 overflow-hidden">
@@ -895,6 +1014,7 @@ export default function Home() {
     banner_ads:     renderBannerAds,
     featured_shops: renderFeaturedShops,
     latest_shops:   renderLatestShops,
+    used_market:    renderUsedMarket,
     services:       renderServices,
     cta:            renderCTA,
   }
