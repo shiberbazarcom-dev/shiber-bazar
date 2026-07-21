@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useMyShops } from '../../hooks/useShops'
 
-const SITE_URL = 'https://shiber-bazar.vercel.app'
+const SITE_URL = 'https://shiberbazar.com'
 const BLUE = '#2563EB'
 
 function qrUrl(url, size = 300) {

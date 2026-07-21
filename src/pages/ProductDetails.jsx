@@ -143,7 +143,7 @@ export default function ProductDetails() {
         title={product.name}
         description={product.description || `${product.name} — শিবের বাজারে পাওয়া যাচ্ছে। দাম ও বিস্তারিত দেখুন এবং সরাসরি অর্ডার করুন।`}
         image={product.image_url}
-        url={`https://shiber-bazar.vercel.app/product/${product.id}`}
+        url={`https://shiberbazar.com/product/${product.id}`}
       />
 
       {/* ── Back button ── */}

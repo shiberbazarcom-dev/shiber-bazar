@@ -76,7 +76,7 @@ export default function ContactPage() {
       <SEO
         title="যোগাযোগ"
         description="শিবের বাজারের সাথে যোগাযোগ করুন। ঠিকানা: শিবের বাজার, সিলেট সদর, সিলেট। ফোন ও হোয়াটসঅ্যাপে সরাসরি কথা বলুন।"
-        url="https://shiber-bazar.vercel.app/contact"
+        url="https://shiberbazar.com/contact"
       />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400 py-16 sm:py-20">

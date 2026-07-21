@@ -322,7 +322,7 @@ export default function ShopDetail() {
         title={shop.shop_name}
         description={shop.description || `${shop.shop_name} — শিবের বাজারের একটি দোকান।`}
         image={shop.logo || shop.logo_url}
-        url={`https://shiber-bazar.vercel.app/shop/${shop.slug || shop.id}`}
+        url={`https://shiberbazar.com/shop/${shop.slug || shop.id}`}
       />
 
       {/* ══════════════════════════════
