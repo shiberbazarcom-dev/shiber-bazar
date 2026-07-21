@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import SEO from '../components/SEO'
 import { useSiteSettings } from '../hooks/useSettings'
+import { normalizePhone } from '../lib/whatsapp'
 
 const CONTACT_FB = {
   contact_phone:         '01310012276',
@@ -69,7 +70,9 @@ export default function ContactPage() {
     }
   }
 
-  const whatsappUrl = `https://wa.me/${ccms(cmsSettings,'whatsapp_number')}?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি শিবের বাজার ওয়েবসাইট থেকে যোগাযোগ করছি।')}`
+  /* normalizePhone: CMS-এ নম্বর 01XXXXXXXXX আকারে সেভ করা থাকলেও wa.me কাজ করবে —
+     দেশের কোড ছাড়া wa.me লিংক খোলেই না */
+  const whatsappUrl = `https://wa.me/${normalizePhone(ccms(cmsSettings,'whatsapp_number'))}?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি শিবের বাজার ওয়েবসাইট থেকে যোগাযোগ করছি।')}`
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,7 +97,7 @@ export default function ContactPage() {
       {/* Contact Info Cards */}
       <section className="py-12 sm:py-16">
         <div className="container-app">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Phone Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-center">
               <div className="w-14 h-14 bg-brand-100 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -133,6 +136,24 @@ export default function ContactPage() {
               <p className="text-gray-600 text-sm whitespace-pre-line">
                 {ccms(cmsSettings,'contact_address')}
               </p>
+            </div>
+
+            {/* Facebook Card */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-center">
+              <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">ফেসবুক</h3>
+              <a
+                href="https://www.facebook.com/shiberbazardigital"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+              >
+                পেজ দেখুন →
+              </a>
             </div>
           </div>
         </div>

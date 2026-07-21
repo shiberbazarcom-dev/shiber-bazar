@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCategories } from '../../hooks/useCategories'
 import { useSiteSettings } from '../../hooks/useSettings'
+import { normalizePhone } from '../../lib/whatsapp'
 
 const YEAR = new Date().getFullYear()
 
@@ -101,9 +102,17 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="flex-shrink-0">💬</span>
-                <a href={`https://wa.me/${cms(settings,'whatsapp_number')}`} target="_blank" rel="noopener noreferrer"
+                {/* normalizePhone: CMS-এ 01XXXXXXXXX থাকলেও wa.me লিংক কাজ করবে */}
+                <a href={`https://wa.me/${normalizePhone(cms(settings,'whatsapp_number'))}`} target="_blank" rel="noopener noreferrer"
                    className="hover:text-green-600 transition-colors">
                   WhatsApp করুন
+                </a>
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="flex-shrink-0">📘</span>
+                <a href="https://www.facebook.com/shiberbazardigital" target="_blank" rel="noopener noreferrer"
+                   className="hover:text-blue-600 transition-colors">
+                  ফেসবুক পেজ
                 </a>
               </li>
             </ul>

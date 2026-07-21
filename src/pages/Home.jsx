@@ -14,6 +14,7 @@ import { useServices } from '../hooks/useServices'
 import { useSiteSettings } from '../hooks/useSettings'
 import { useHomeSections } from '../hooks/useHomeSections'
 import { usePublicListings, CONDITION_LABELS as USED_CONDITION_LABELS, USED_CATEGORIES } from '../hooks/useUsedListings'
+import { normalizePhone } from '../lib/whatsapp'
 
 // CMS fallbacks for Home page
 const HOME_FB = {
@@ -1217,7 +1218,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <span>💬</span>
-              <a href={`https://wa.me/${hcms(cmsSettings,'whatsapp_number')}`} target="_blank" rel="noopener noreferrer"
+              <a href={`https://wa.me/${normalizePhone(hcms(cmsSettings,'whatsapp_number'))}`} target="_blank" rel="noopener noreferrer"
                  className="font-medium text-green-600 hover:underline">
                 WhatsApp করুন
               </a>
