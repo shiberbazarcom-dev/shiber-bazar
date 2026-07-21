@@ -988,18 +988,31 @@ export default function Home() {
     return (
       <section className="py-10 sm:py-14 bg-white">
         <div className="container-app">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
-                {sectionTitle('latest_shops', 'নতুন দোকান')}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1.5">
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
+                  {sectionTitle('latest_shops', 'নতুন দোকান')}
+                </h2>
+                {/* সদ্য যুক্ত দোকানের সংখ্যা — তালিকার সাথে নিজে থেকেই বদলায় */}
+                {latestShops.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex-shrink-0">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    {latestShops.length.toLocaleString('bn-BD')}টি নতুন
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-1.5 flex items-center gap-1.5">
+                <span className="text-emerald-600">✨</span>
                 {sectionSubtitle('latest_shops', 'সম্প্রতি যুক্ত হওয়া দোকানসমূহ')}
               </p>
             </div>
             <Link
               to="/shops"
-              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group flex-shrink-0 mt-1"
             >
               সব দেখুন
               <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1024,11 +1037,24 @@ export default function Home() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 [&>*:nth-child(n+5)]:hidden sm:[&>*:nth-child(n+5)]:block">
+              {/* মোবাইলে শুধু প্রথম ৪টি দেখায় — নিচের সেকশনগুলো যেন চাপা না পড়ে।
+                  ট্যাব/ডেস্কটপে (sm+) সবগুলোই দেখায়। */}
               {isLatestLoading
                 ? Array.from({ length: 8 }).map((_, i) => <ShopCardSkeleton key={i} />)
                 : latestShops.map((shop, idx) => <ShopCard key={shop.id} shop={shop} index={idx} />)
               }
+            </div>
+          )}
+          {/* মোবাইলে বাকি দোকানগুলো লুকানো থাকে — তাই এখানে পথ দেখিয়ে দিই */}
+          {latestShops.length > 4 && (
+            <div className="mt-5 text-center sm:hidden">
+              <Link
+                to="/shops"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 border border-brand-200 bg-brand-50 hover:bg-brand-100 px-5 py-2.5 rounded-xl transition-colors"
+              >
+                আরও {(latestShops.length - 4).toLocaleString('bn-BD')}টি দোকান দেখুন →
+              </Link>
             </div>
           )}
         </div>
