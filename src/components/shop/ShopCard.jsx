@@ -40,7 +40,9 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
     >
       {/* ── Cover image ── */}
       <Link to={shopUrl} className="block relative flex-shrink-0">
-        <div className="relative h-36 overflow-hidden bg-gray-100">
+        {/* কভার ছবি না থাকলে অর্ধেক উচ্চতার রঙিন ব্যান্ড — খালি ধূসর বাক্স
+            প্রতি কার্ডে ~১৪৪px নষ্ট করত, আর "ভাঙা" দেখাত */}
+        <div className={`relative overflow-hidden ${coverUrl ? 'h-32 sm:h-36 bg-gray-100' : 'h-20 sm:h-24'}`}>
           {coverUrl ? (
             <img
               src={coverUrl}
@@ -49,10 +51,10 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
               onError={e => { e.target.style.display = 'none' }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="w-full h-full bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 flex items-center justify-end pr-4">
+              <span className="text-4xl opacity-30 select-none" aria-hidden="true">
+                {shop.categories?.icon || '🏪'}
+              </span>
             </div>
           )}
 
