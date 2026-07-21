@@ -232,6 +232,8 @@ export default function App() {
             <Route path="/hatkhula-union"  element={<PublicLayout><HatkhulaUnion /></PublicLayout>} />
             <Route path="/emergency"       element={<PublicLayout><EmergencyContacts /></PublicLayout>} />
             <Route path="/services"       element={<PublicLayout><LocalServices /></PublicLayout>} />
+            {/* ব্যবহারকারীর জমা দেওয়া সেবাদাতাদের তালিকা — /services/:slug এর আগে রাখতে হবে */}
+            <Route path="/services/all"   element={<PublicLayout><ServicesPage /></PublicLayout>} />
             <Route path="/services/detail/:id"         element={<PublicLayout><ServiceDetail /></PublicLayout>} />
             <Route path="/services/provider/:userId"   element={<PublicLayout><ProviderProfile /></PublicLayout>} />
             <Route path="/services/:slug" element={<PublicLayout><LocalServiceCategory /></PublicLayout>} />

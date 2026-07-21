@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 import ServiceCategoryCard from '../components/services/ServiceCategoryCard'
 import { useDirectoryCategories } from '../hooks/useServiceDirectory'
+import { useServices } from '../hooks/useServices'
 import { useSiteSettings } from '../hooks/useSettings'
 import { useHomeSections } from '../hooks/useHomeSections'
 import { usePublicListings, CONDITION_LABELS as USED_CONDITION_LABELS, USED_CATEGORIES } from '../hooks/useUsedListings'
@@ -467,7 +468,10 @@ function HomeServicesSection() {
   /* স্থানীয় সেবা ডিরেক্টরি-র category — /services/:slug এর সাথে মিলে */
   const { data: dbCats = [] } = useDirectoryCategories()
   const cats = dbCats.slice(0, 10)
-  if (cats.length === 0) return null
+  /* ব্যবহারকারীর জমা দেওয়া সেবা — admin অনুমোদন করলেই এখানে চলে আসে */
+  const { data: allProviders = [] } = useServices()
+  const providers = allProviders.slice(0, 8)
+  if (cats.length === 0 && providers.length === 0) return null
 
   return (
     <section className="py-10 sm:py-14 bg-white">
@@ -491,6 +495,59 @@ function HomeServicesSection() {
             <ServiceCategoryCard key={cat.slug || cat.id} category={cat} />
           ))}
         </div>
+
+        {/* সম্প্রতি অনুমোদিত সেবাদাতা — নতুন সেবা যোগ হলেই এখানে দেখা যাবে */}
+        {providers.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-blue-400 rounded-full" />
+                সম্প্রতি যুক্ত সেবাদাতা
+              </h3>
+              <Link to="/services/all" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                সব সেবাদাতা →
+              </Link>
+            </div>
+            {/* মোবাইলে পাশাপাশি স্ক্রল, ডেস্কটপে গ্রিড */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
+              {providers.map(s => (
+                <Link
+                  key={s.id}
+                  to={s.user_id ? `/services/provider/${s.user_id}` : `/services/detail/${s.id}`}
+                  className="w-40 flex-shrink-0 snap-start sm:w-auto bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-3 flex flex-col items-center text-center group"
+                >
+                  <div className="relative mb-2">
+                    {s.image_url ? (
+                      <img src={s.image_url} alt={s.name} loading="lazy"
+                        className="w-14 h-14 rounded-full object-cover border-2 border-blue-50" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-xl text-blue-400">
+                        {s.service_categories?.icon || '🛠️'}
+                      </div>
+                    )}
+                    {s.is_verified && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center border-2 border-white">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-semibold text-gray-800 text-sm line-clamp-1 group-hover:text-blue-700 transition-colors">
+                    {s.name}
+                  </p>
+                  {s.service_categories?.name_bn && (
+                    <p className="text-[11px] text-blue-600 mt-0.5 line-clamp-1">
+                      {s.service_categories.icon} {s.service_categories.name_bn}
+                    </p>
+                  )}
+                  {s.location && (
+                    <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">📍 {s.location}</p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-5 text-center">
           <Link
             to="/services/submit"
