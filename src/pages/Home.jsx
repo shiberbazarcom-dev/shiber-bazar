@@ -324,7 +324,7 @@ function CategoryPill({ category }) {
   return (
     <Link
       to={`/category/${category.slug}`}
-      className="group relative flex flex-col items-center gap-2 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 min-w-[76px] sm:min-w-0 flex-shrink-0 sm:flex-shrink"
+      className="group relative flex flex-col items-center gap-2 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 w-[82px] sm:w-auto min-w-[76px] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start"
     >
       {/* Background Glow Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300" />
@@ -364,10 +364,10 @@ function HomeUsedMarketSection({ title, subtitle }) {
       <div className="container-app">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight flex items-center gap-2">
               ♻️ {title}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+            <p className="text-sm text-gray-500 mt-1.5">{subtitle}</p>
           </div>
           <Link
             to="/used"
@@ -478,8 +478,8 @@ function HomeServicesSection() {
       <div className="container-app">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">🛠️ প্রয়োজনীয় সেবাসমূহ</h2>
-            <p className="text-sm text-gray-500 mt-1">শিবের বাজারের বিশ্বস্ত স্থানীয় সেবা প্রদানকারী</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">🛠️ প্রয়োজনীয় সেবাসমূহ</h2>
+            <p className="text-sm text-gray-500 mt-1.5">শিবের বাজারের বিশ্বস্ত স্থানীয় সেবা প্রদানকারী</p>
           </div>
           <Link
             to="/services"
@@ -490,9 +490,12 @@ function HomeServicesSection() {
             </svg>
           </Link>
         </div>
-        <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-3">
+        {/* মোবাইলে পাশাপাশি স্ক্রল, ডেস্কটপে গ্রিড */}
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-5 md:grid-cols-10">
           {cats.map(cat => (
-            <ServiceCategoryCard key={cat.slug || cat.id} category={cat} />
+            <div key={cat.slug || cat.id} className="w-[78px] flex-shrink-0 snap-start sm:w-auto sm:flex-shrink">
+              <ServiceCategoryCard category={cat} />
+            </div>
           ))}
         </div>
 
@@ -902,10 +905,10 @@ export default function Home() {
         <div className="container-app">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
                 {sectionTitle('categories', 'ক্যাটাগরিসমূহ')}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-1.5">
                 {sectionSubtitle('categories', 'আপনার পছন্দের ক্যাটাগরি বেছে নিন')}
               </p>
             </div>
@@ -919,7 +922,8 @@ export default function Home() {
               </svg>
             </Link>
           </div>
-          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
+          {/* মোবাইলে এক সারিতে পাশাপাশি স্ক্রল, ট্যাব/ডেস্কটপে গ্রিড */}
+          <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 sm:gap-4">
             {categories.map(cat => (
               <CategoryPill key={cat.id} category={cat} />
             ))}
@@ -951,7 +955,7 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
                   {sectionTitle('featured_shops', 'ফিচার্ড দোকান')}
                 </h2>
                 <p className="text-sm text-gray-500 mt-0.5">
@@ -986,10 +990,10 @@ export default function Home() {
         <div className="container-app">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
                 {sectionTitle('latest_shops', 'নতুন দোকান')}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-1.5">
                 {sectionSubtitle('latest_shops', 'সম্প্রতি যুক্ত হওয়া দোকানসমূহ')}
               </p>
             </div>
