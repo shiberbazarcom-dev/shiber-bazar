@@ -34,12 +34,27 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
   const shopUrl  = `/shop/${shop.slug || shop.id}`
 
   return (
+    /* এক root element — গ্রিডের nth-child হিসাব ঠিক রাখতে ভেতরেই লেআউট বদলায়।
+       মোবাইল: বাঁয়ে লোগো + ডানে তথ্য (সারি)। sm+: কভার ব্যান্ড সহ পুরো কার্ড। */
     <div
-      className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow hover:shadow-lg transition-shadow duration-200 flex flex-col"
+      className="bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 shadow-sm sm:shadow hover:shadow-lg transition-shadow duration-200 flex flex-row sm:flex-col gap-3 sm:gap-0 p-3 sm:p-0"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* ── Cover image ── */}
-      <Link to={shopUrl} className="block relative flex-shrink-0">
+      {/* ── মোবাইল থাম্বনেইল ── */}
+      <Link to={shopUrl} className="sm:hidden flex-shrink-0 relative">
+        <img
+          src={logoUrl}
+          alt=""
+          className="w-14 h-14 rounded-xl object-cover border border-gray-100 bg-gray-50"
+          onError={e => { e.target.src = avatarUrl(shop.shop_name) }}
+        />
+        {featured && (
+          <span className="absolute -top-1 -right-1 text-[10px] leading-none bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center">★</span>
+        )}
+      </Link>
+
+      {/* ── কভার ছবি (sm+) ── */}
+      <Link to={shopUrl} className="hidden sm:block relative flex-shrink-0">
         {/* কভার ছবি না থাকলে অর্ধেক উচ্চতার রঙিন ব্যান্ড — খালি ধূসর বাক্স
             প্রতি কার্ডে ~১৪৪px নষ্ট করত, আর "ভাঙা" দেখাত */}
         <div className={`relative overflow-hidden ${coverUrl ? 'h-32 sm:h-36 bg-gray-100' : 'h-20 sm:h-24'}`}>
@@ -78,10 +93,10 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
       </Link>
 
       {/* ── Body ── */}
-      <div className="flex flex-col flex-1 pt-7 pb-3 px-4 gap-2">
+      <div className="flex flex-col flex-1 min-w-0 gap-1 sm:gap-2 sm:pt-7 sm:pb-3 sm:px-4">
 
         {/* Name + Verified + Tier */}
-        <Link to={shopUrl} className="group">
+        <Link to={shopUrl} className="group order-1 sm:order-none">
           <div className="flex items-start gap-1.5 flex-wrap">
             <h3 className="font-bold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors">
               {shop.shop_name}
@@ -104,16 +119,16 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
           )}
         </Link>
 
-        {/* Description */}
+        {/* Description — মোবাইলে লুকানো, কার্ড ছোট রাখতে */}
         {shop.description && (
-          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+          <p className="hidden sm:block text-xs text-gray-500 leading-relaxed line-clamp-2">
             {shop.description}
           </p>
         )}
 
-        {/* Rating */}
+        {/* Rating — মোবাইলে লুকানো */}
         {shop.avg_rating > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1">
             {[1,2,3,4,5].map(s => (
               <svg key={s} className={`w-3 h-3 ${s <= Math.round(shop.avg_rating) ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -124,7 +139,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
         )}
 
         {/* Phone + WhatsApp — outlined, minimal */}
-        <div className="flex gap-2 mt-auto pt-1">
+        <div className="flex gap-2 order-3 sm:order-none mt-1 sm:mt-auto sm:pt-1">
           {phone && (
             <a
               href={`tel:${phone}`}
@@ -153,9 +168,9 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
           )}
         </div>
 
-        {/* Address */}
+        {/* Address — মোবাইলে বাটনের উপরে, ডেস্কটপে সোর্স ক্রমে (নিচে) */}
         {shop.address && (
-          <div className="flex items-center gap-1 text-[11px] text-gray-400">
+          <div className="flex items-center gap-1 text-[11px] text-gray-400 order-2 sm:order-none">
             <svg className="w-3 h-3 flex-shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -165,10 +180,10 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
         )}
       </div>
 
-      {/* দোকান দেখুন — bottom border CTA */}
+      {/* দোকান দেখুন — মোবাইলে লুকানো, নাম/লোগোতে ট্যাপ করলেই দোকানে যায় */}
       <Link
         to={shopUrl}
-        className="flex items-center justify-center gap-1.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+        className="hidden sm:flex items-center justify-center gap-1.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors"
       >
         দোকান দেখুন
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
