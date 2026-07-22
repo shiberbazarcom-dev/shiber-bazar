@@ -134,7 +134,7 @@ export default function ShopsPage() {
 
       {/* ── Results ── */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {Array(8).fill(0).map((_, i) => <ShopCardSkeleton key={i} />)}
         </div>
       ) : shops.length === 0 ? (
@@ -149,7 +149,7 @@ export default function ShopsPage() {
           )}
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {shops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
         </div>
       ) : (

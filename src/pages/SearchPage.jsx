@@ -273,7 +273,7 @@ export default function SearchPage() {
 
         {/* Loading */}
         {query && isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {Array(8).fill(0).map((_, i) => <ShopCardSkeleton key={i} />)}
           </div>
         )}
@@ -290,7 +290,7 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {shops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
             </div>
           )
