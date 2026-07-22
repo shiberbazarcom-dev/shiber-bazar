@@ -1,5 +1,5 @@
 // Bump this version on EVERY deploy to force SW update
-const CACHE = 'shiberbazar-v8'
+const CACHE = 'shiberbazar-v9'
 
 self.addEventListener('install', e => {
   // Skip waiting immediately — take over all tabs right away
