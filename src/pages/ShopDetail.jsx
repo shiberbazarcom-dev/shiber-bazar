@@ -407,7 +407,7 @@ export default function ShopDetail() {
           <div className="h-36 sm:h-48 w-full overflow-hidden"
             style={{ background: BLUE_GRADIENT }}>
             {(shop.cover_image || shop.cover_image_url) && (
-              <img src={shop.cover_image || shop.cover_image_url} alt=""
+              <img src={shop.cover_image || shop.cover_image_url} alt={`${shop.shop_name} — দোকানের ছবি`}
                 className="w-full h-full object-cover"
                 onError={e => { e.target.style.display = 'none' }} />
             )}

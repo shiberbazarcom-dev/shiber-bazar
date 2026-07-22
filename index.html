@@ -10,6 +10,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563EB" />
 
+    <!-- Fonts — loaded here rather than via @import in index.css. An @import
+         forces the browser to fetch the stylesheet, parse it, and only then
+         discover and fetch the font, delaying first paint by a full round
+         trip. Weight 300 was dropped: no font-light class exists in the app. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap"
+    />
+
     <!-- Primary SEO -->
     <title>শিবের বাজার — আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা</title>
     <meta name="description" content="সিলেটের শিবের বাজারের সকল দোকান এক জায়গায়। খাবার, পোশাক, ইলেকট্রনিক্স, মুদিপণ্য সহ শতাধিক দোকান খুঁজুন, পণ্য দেখুন ও সরাসরি যোগাযোগ করুন।" />

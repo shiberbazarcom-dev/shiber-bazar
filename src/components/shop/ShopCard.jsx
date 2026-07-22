@@ -44,7 +44,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
       <Link to={shopUrl} className="sm:hidden flex-shrink-0 relative">
         <img
           src={logoUrl}
-          alt=""
+          alt={shop.shop_name}
           className="w-14 h-14 rounded-xl object-cover border border-gray-100 bg-gray-50"
           onError={e => { e.target.src = avatarUrl(shop.shop_name) }}
         />
@@ -85,7 +85,7 @@ export function ShopCard({ shop, featured = false, index = 0 }) {
         <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md bg-white flex-shrink-0 z-10">
           <img
             src={logoUrl}
-            alt=""
+            alt={shop.shop_name}
             className="w-full h-full object-cover"
             onError={e => { e.target.src = avatarUrl(shop.shop_name) }}
           />
@@ -206,7 +206,7 @@ export function ShopListItem({ shop }) {
       <div className="flex-shrink-0">
         <img
           src={logoUrl}
-          alt=""
+          alt={shop.shop_name}
           className="w-12 h-12 rounded-xl object-cover"
           onError={e => { e.target.src = avatarUrl(shop.shop_name) }}
         />

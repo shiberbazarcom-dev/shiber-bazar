@@ -37,6 +37,35 @@ function hcms(settings, key) {
   return (v !== undefined && v !== null && v !== '') ? v : (HOME_FB[key] ?? '')
 }
 
+/* Rendered on the homepage and emitted as FAQPage structured data, so the
+   same answers can appear as an expandable block in Google results. */
+const FAQS = [
+  {
+    q: 'শিবের বাজারে দোকান যোগ করতে কত খরচ হয়?',
+    a: 'কোনো খরচ নেই। রেজিস্ট্রেশন করে দোকান যোগ করা, পণ্য আপলোড করা ও অর্ডার নেওয়া সম্পূর্ণ বিনামূল্যে। অ্যানালিটিক্স, হিসাবের খাতা ও ল্যান্ডিং পেজের মতো বাড়তি সুবিধার জন্য প্রো প্ল্যান আছে, তবে শুরু করতে টাকা লাগে না।',
+  },
+  {
+    q: 'অর্ডার করতে কি অ্যাকাউন্ট খুলতে হয়?',
+    a: 'না। পণ্য পছন্দ করে নাম, ফোন নম্বর ও ঠিকানা দিলেই অর্ডার হয়ে যায়। দোকান WhatsApp-এ কনফার্ম করে, আর পণ্য হাতে পেয়ে টাকা দিতে পারবেন।',
+  },
+  {
+    q: 'অর্ডার কোথায় পৌঁছেছে কীভাবে জানব?',
+    a: 'অর্ডার ট্র্যাক পেজে আপনার ফোন নম্বর বা অর্ডার নম্বর দিলেই প্রতিটি ধাপ দেখা যাবে — গ্রহণ, প্রস্তুত, পাঠানো ও ডেলিভারি।',
+  },
+  {
+    q: 'পুরাতন জিনিস বিক্রির বিজ্ঞাপন দেওয়া যায়?',
+    a: 'হ্যাঁ। পুরাতন বাজার অংশে মোবাইল, ল্যাপটপ, ফার্নিচার, বাইকসহ যেকোনো পুরাতন জিনিসের বিজ্ঞাপন বিনামূল্যে দেওয়া যায়। ক্রেতা সরাসরি আপনাকে ফোন করবে, কোনো কমিশন কাটা হয় না।',
+  },
+  {
+    q: 'শিবের বাজার কোন এলাকায় কাজ করে?',
+    a: 'শিবের বাজার, হাটখোলা ইউনিয়ন, জালালাবাদ ও সিলেট সদরের আশপাশের এলাকা।',
+  },
+  {
+    q: 'দোকানদার হিসেবে অর্ডার কীভাবে পাব?',
+    a: 'কাস্টমার অর্ডার দিলে আপনার ড্যাশবোর্ডে চলে আসবে এবং WhatsApp-এ জানিয়ে দেওয়া যাবে। ব্যস্ত থাকলে বা রাতে AI চ্যাট নিজে থেকেই কাস্টমারের দাম ও স্টকের প্রশ্নের উত্তর দেয়।',
+  },
+]
+
 // Animated counter component
 function AnimatedCounter({ value, suffix = '' }) {
   const [count, setCount] = useState(0)
@@ -600,7 +629,7 @@ export default function Home() {
   }
 
   // Sections in display_order; fall back to a fixed order if CMS is empty
-  const FALLBACK_ORDER = ['hero','categories','banner_ads','featured_shops','latest_shops','used_market','services','cta']
+  const FALLBACK_ORDER = ['hero','categories','banner_ads','featured_shops','latest_shops','used_market','services','about','cta']
   let orderedSlugs = cmsSections.length > 0
     ? cmsSections.filter(s => s.is_active).map(s => s.section_slug)
     : FALLBACK_ORDER
@@ -704,10 +733,22 @@ export default function Home() {
 
   const homeJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    'name': 'শিবের বাজার — দোকান তালিকা',
-    'description': 'সিলেটের শিবের বাজারের সকল দোকান',
-    'url': 'https://shiberbazar.com/shops',
+    '@graph': [
+      {
+        '@type': 'ItemList',
+        name: 'শিবের বাজার — দোকান তালিকা',
+        description: 'সিলেটের শিবের বাজারের সকল দোকান',
+        url: 'https://shiberbazar.com/shops',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: FAQS.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      },
+    ],
   }
 
   // ── Section render functions (closures over component state) ──
@@ -1118,6 +1159,64 @@ export default function Home() {
     )
   }
 
+  /* ── About + FAQ ────────────────────────────────────────────────
+     Search engines had almost no readable text on this page — every
+     section was images, icons and short labels. This gives them real
+     copy about what the site is and where it serves, and the FAQ can
+     surface as an expandable result in Google. */
+  function renderAbout() {
+    return (
+      <section className="py-10 sm:py-14 bg-white border-t border-gray-100">
+        <div className="container-app max-w-4xl">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed tracking-tight">
+            শিবের বাজার কী?
+          </h2>
+          <div className="mt-3 space-y-3 text-sm sm:text-[15px] text-gray-600 leading-relaxed">
+            <p>
+              <strong className="text-gray-800">শিবের বাজার</strong> হলো সিলেটের শিবের বাজার ও আশপাশের
+              এলাকার দোকানগুলোর একটি অনলাইন ডিরেক্টরি ও বাজার। এখানে এলাকার মুদি দোকান, ফার্মেসি,
+              পোশাক, ইলেকট্রনিক্স, প্রসাধনী, লাইব্রেরিসহ নানা ধরনের দোকান এক জায়গায় পাবেন —
+              পণ্যের ছবি, দাম ও দোকানের ফোন নম্বরসহ।
+            </p>
+            <p>
+              ঘরে বসে পছন্দের দোকান খুঁজে অর্ডার দিতে পারবেন, অথবা সরাসরি দোকানদারকে ফোন বা
+              WhatsApp করতে পারবেন। অ্যাকাউন্ট খোলা বা অ্যাপ ইনস্টল করার প্রয়োজন নেই।
+            </p>
+            <p>
+              দোকানদারদের জন্য শিবের বাজারে দোকান যোগ করা <strong className="text-gray-800">সম্পূর্ণ
+              বিনামূল্যে</strong>। পণ্য আপলোড, অর্ডার ব্যবস্থাপনা, QR কোড ও AI চ্যাট সুবিধা ফ্রি
+              প্ল্যানেই পাওয়া যায়।
+            </p>
+          </div>
+
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-8 mb-2 leading-relaxed">
+            কোন কোন এলাকায় সেবা পাওয়া যায়?
+          </h3>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            শিবের বাজার, হাটখোলা ইউনিয়ন, জালালাবাদ ও সিলেট সদরের আশপাশের এলাকা। এলাকার
+            ইলেকট্রিশিয়ান, প্লাম্বার, ডাক্তার, সিএনজি ও পিকআপ ভ্যান চালকসহ স্থানীয় সেবাদাতাদের
+            নম্বরও এখানে পাবেন, সাথে চাকরির বিজ্ঞপ্তি ও ইউনিয়ন পরিষদের প্রয়োজনীয় তথ্য।
+          </p>
+
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-8 mb-3 leading-relaxed">
+            সাধারণ জিজ্ঞাসা
+          </h3>
+          <div className="divide-y divide-gray-100 border-y border-gray-100">
+            {FAQS.map((f, i) => (
+              <details key={i} className="group py-3">
+                <summary className="flex items-start justify-between gap-3 cursor-pointer list-none text-sm font-semibold text-gray-800 hover:text-brand-600 transition-colors">
+                  {f.q}
+                  <span className="text-gray-400 group-open:rotate-45 transition-transform text-lg leading-none flex-shrink-0">+</span>
+                </summary>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   // Section registry: slug → render function
   const SECTION_RENDERERS = {
     hero:           renderHero,
@@ -1127,6 +1226,7 @@ export default function Home() {
     latest_shops:   renderLatestShops,
     used_market:    renderUsedMarket,
     services:       renderServices,
+    about:          renderAbout,
     cta:            renderCTA,
   }
 

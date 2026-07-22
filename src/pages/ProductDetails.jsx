@@ -233,7 +233,7 @@ export default function ProductDetails() {
                       className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
                         activeImg === i ? 'border-blue-500 shadow-md' : 'border-transparent hover:border-gray-300 bg-gray-50'
                       }`}>
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt={`${product.name} — ছবি ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -410,7 +410,7 @@ export default function ProductDetails() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-shrink-0">
                   {(shop.logo || shop.logo_url)
-                    ? <img src={shop.logo || shop.logo_url} alt="" className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-sm" />
+                    ? <img src={shop.logo || shop.logo_url} alt={shop.shop_name || 'দোকান'} className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-sm" />
                     : <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border-4 border-white shadow-sm" style={{ background: '#eff6ff' }}>🏪</div>
                   }
                 </div>
@@ -521,7 +521,7 @@ export default function ProductDetails() {
               {allImages.map((img, i) => (
                 <button key={i} onClick={e => { e.stopPropagation(); setActiveImg(i) }}
                   className={`w-10 h-10 rounded-lg overflow-hidden border-2 ${activeImg === i ? 'border-white' : 'border-transparent opacity-60'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt={`${product.name} — ছবি ${i + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

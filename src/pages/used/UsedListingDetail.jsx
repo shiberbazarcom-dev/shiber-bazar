@@ -64,7 +64,7 @@ export default function UsedListingDetail() {
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-colors ${
                       i === activeImg ? 'border-emerald-500' : 'border-transparent opacity-70'
                     }`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt={`${listing.title} — ছবি ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

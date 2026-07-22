@@ -47,7 +47,7 @@ function ProductCard({ product }) {
           <Link to={`/shop/${shop.slug || shop.id}`}
             className="flex items-center gap-1.5 mb-3 group">
             {shop.logo_url
-              ? <img src={shop.logo_url} alt="" className="w-5 h-5 rounded object-cover" />
+              ? <img src={shop.logo_url} alt={shop.shop_name} className="w-5 h-5 rounded object-cover" />
               : <span className="text-xs">🏪</span>
             }
             <span className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors truncate">
