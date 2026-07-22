@@ -48,8 +48,8 @@ function setJsonLd(data) {
 /* ── component ── */
 export default function SEO({
   title,                        // page-specific title (site name appended automatically)
-  description = DEFAULT_DESC,
-  image       = DEFAULT_IMG,
+  description = null,           // null → fall back to the CMS/site default
+  image       = null,
   type        = 'website',
   noindex     = false,
   jsonLd      = null,
@@ -59,17 +59,24 @@ export default function SEO({
 
   const siteName = (s['site_name'] && s['site_name'] !== '') ? s['site_name'] : SITE_NAME
   const siteTagline = s['site_tagline'] || 'আপনার স্থানীয় বাজারের ডিজিটাল ঠিকানা'
-  const siteUrl = (s['site_url'] && s['site_url'] !== '') ? s['site_url'] : SITE_URL
-  const cmsDesc = (s['meta_description'] && s['meta_description'] !== '') ? s['meta_description'] : null
-  const cmsImg = (s['og_image_url'] && s['og_image_url'] !== '') ? s['og_image_url'] : null
 
-  const resolvedDesc = cmsDesc || description
-  const resolvedImg  = cmsImg  || image
+  /* Site-wide defaults: CMS value first, then the built-in constant.
+     A page that passes its own description/image always wins over these —
+     otherwise every shop and product page would share one generic snippet,
+     which is exactly what search engines penalise as duplicate content. */
+  const defaultDesc = (s['meta_description'] && s['meta_description'] !== '') ? s['meta_description'] : DEFAULT_DESC
+  const defaultImg  = (s['og_image_url'] && s['og_image_url'] !== '') ? s['og_image_url'] : DEFAULT_IMG
+
+  const resolvedDesc = description || defaultDesc
+  const resolvedImg  = image       || defaultImg
 
   const fullTitle = title
     ? `${title} — ${siteName}`
     : `${siteName} — ${siteTagline}`
-  const canonical = `${siteUrl}${pathname}`
+
+  /* Canonical host is infrastructure, not editable content — a stale CMS
+     site_url once pointed these at a domain that does not resolve. */
+  const canonical = `${SITE_URL}${pathname}`
 
   useEffect(() => {
     // Title

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
+import SEO from '../../components/SEO'
 
 const BLUE = '#2563EB'
 
@@ -88,6 +89,7 @@ export default function Login() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-10 px-4 pb-28 md:pb-10">
+      <SEO title="লগইন" description="শিবের বাজারে লগইন করুন।" noindex />
       <div className="w-full max-w-md">
 
         {/* Header */}

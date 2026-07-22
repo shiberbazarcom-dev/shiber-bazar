@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
+import SEO from '../components/SEO'
 
 const GREEN = '#2563EB'
 
@@ -163,6 +164,7 @@ export default function OrderPage() {
   /* ── Order form ── */
   return (
     <div className="container-app py-8 pb-28 md:pb-10 px-4" style={{ maxWidth: 560 }}>
+      <SEO title="অর্ডার করুন" description="শিবের বাজারে সরাসরি অর্ডার দিন — অ্যাকাউন্ট খোলার প্রয়োজন নেই।" noindex />
       {/* Header */}
       <div className="text-center mb-6">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3"

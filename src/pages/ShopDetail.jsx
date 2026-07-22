@@ -316,13 +316,55 @@ export default function ShopDetail() {
     { id: 'reviews',  label: 'রিভিউ', count: reviews.length },
   ]
 
+  /* Store schema + breadcrumb — lets Google show the shop as a local business
+     (name, phone, address, rating) instead of a generic page result */
+  const shopUrl = `https://shiberbazar.com/shop/${shop.slug || shop.id}`
+  const shopJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Store',
+        '@id': `${shopUrl}#store`,
+        name: shop.shop_name,
+        url: shopUrl,
+        ...(shop.description && { description: shop.description }),
+        ...(logoUrl && { image: logoUrl }),
+        ...(phone && { telephone: phone }),
+        ...(shop.categories?.name && { '@type': 'Store', additionalType: shop.categories.name }),
+        address: {
+          '@type': 'PostalAddress',
+          ...(shop.address && { streetAddress: shop.address }),
+          addressLocality: 'সিলেট সদর',
+          addressRegion: 'সিলেট',
+          addressCountry: 'BD',
+        },
+        ...(avgRating && Number(shop.review_count) > 0 && {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: avgRating,
+            reviewCount: Number(shop.review_count),
+          },
+        }),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'হোম', item: 'https://shiberbazar.com/' },
+          { '@type': 'ListItem', position: 2, name: 'দোকান', item: 'https://shiberbazar.com/shops' },
+          { '@type': 'ListItem', position: 3, name: shop.shop_name, item: shopUrl },
+        ],
+      },
+    ],
+  }
+
   return (
     <div className="bg-white min-h-screen pb-36 md:pb-24 lg:pb-6">
       <SEO
         title={shop.shop_name}
-        description={shop.description || `${shop.shop_name} — শিবের বাজারের একটি দোকান।`}
-        image={shop.logo || shop.logo_url}
-        url={`https://shiberbazar.com/shop/${shop.slug || shop.id}`}
+        description={shop.description || `${shop.shop_name} — ${shop.categories?.name || 'দোকান'}, ${shop.address || 'শিবের বাজার'}। ফোন ${phone || ''} — শিবের বাজারে দেখুন।`}
+        image={logoUrl}
+        type="business.business"
+        jsonLd={shopJsonLd}
       />
 
       {/* ══════════════════════════════

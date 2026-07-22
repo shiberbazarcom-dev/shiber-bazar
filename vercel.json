@@ -4,6 +4,7 @@
     "api/auto-describe.js": { "maxDuration": 60 }
   },
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

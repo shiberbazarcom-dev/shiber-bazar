@@ -137,13 +137,56 @@ export default function ProductDetails() {
     ? Math.round((1 - product.price / product.original_price) * 100) : 0
   const savings = discount > 0 ? Number(product.original_price) - Number(product.price) : 0
 
+  /* Product schema — lets Google show price and stock directly in results */
+  const productUrl = `https://shiberbazar.com/product/${product.id}`
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Product',
+        '@id': `${productUrl}#product`,
+        name: product.name,
+        url: productUrl,
+        ...(product.description && { description: product.description }),
+        ...(allImages.length > 0 && { image: allImages }),
+        ...(product.shops?.shop_name && {
+          brand: { '@type': 'Brand', name: product.shops.shop_name },
+        }),
+        offers: {
+          '@type': 'Offer',
+          url: productUrl,
+          price: Number(product.price || 0),
+          priceCurrency: 'BDT',
+          availability: product.in_stock === false
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
+          ...(product.shops?.shop_name && {
+            seller: { '@type': 'Organization', name: product.shops.shop_name },
+          }),
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'হোম', item: 'https://shiberbazar.com/' },
+          ...(product.shops?.shop_name ? [{
+            '@type': 'ListItem', position: 2, name: product.shops.shop_name,
+            item: `https://shiberbazar.com/shop/${product.shops.slug || product.shop_id}`,
+          }] : []),
+          { '@type': 'ListItem', position: product.shops?.shop_name ? 3 : 2, name: product.name, item: productUrl },
+        ],
+      },
+    ],
+  }
+
   return (
     <div className="pb-36 md:pb-10 bg-white">
       <SEO
         title={product.name}
-        description={product.description || `${product.name} — শিবের বাজারে পাওয়া যাচ্ছে। দাম ও বিস্তারিত দেখুন এবং সরাসরি অর্ডার করুন।`}
-        image={product.image_url}
-        url={`https://shiberbazar.com/product/${product.id}`}
+        description={product.description || `${product.name} — দাম ৳${Number(product.price || 0).toLocaleString('bn-BD')}${product.shops?.shop_name ? `, ${product.shops.shop_name}` : ''}। শিবের বাজারে দেখুন ও সরাসরি অর্ডার করুন।`}
+        image={mainImage || product.image_url}
+        type="product"
+        jsonLd={productJsonLd}
       />
 
       {/* ── Back button ── */}

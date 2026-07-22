@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { whatsappUrl } from '../lib/utils'
 import toast from 'react-hot-toast'
+import SEO from '../components/SEO'
 
 const GREEN = '#16a34a'
 const BLUE  = '#2563EB'
@@ -27,6 +28,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-12 space-y-4">
+      <SEO title="কার্ট" description="আপনার কার্টে থাকা পণ্যসমূহ দেখুন ও অর্ডার সম্পন্ন করুন।" noindex />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

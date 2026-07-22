@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTrackOrder, useTrackByOrderNumber, getGuestOrders } from '../hooks/useOrders'
+import SEO from '../components/SEO'
 
 const PURPLE = '#7c3aed'
 
@@ -347,6 +348,7 @@ export default function TrackOrder() {
 
   return (
     <div className="container-app py-8 pb-28 md:pb-10 px-4" style={{ maxWidth: 560 }}>
+      <SEO title="অর্ডার ট্র্যাক করুন" description="ফোন নম্বর বা অর্ডার নম্বর দিয়ে আপনার অর্ডারের সর্বশেষ অবস্থা জানুন।" noindex />
       <div className="text-center mb-6">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3"
              style={{ background: '#ede9fe' }}>📦</div>
