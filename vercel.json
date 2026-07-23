@@ -3,6 +3,14 @@
     "api/auto-reply.js": { "maxDuration": 30 },
     "api/auto-describe.js": { "maxDuration": 60 }
   },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "shiber-bazar.vercel.app" }],
+      "destination": "https://shiberbazar.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/(.*)", "destination": "/index.html" }
