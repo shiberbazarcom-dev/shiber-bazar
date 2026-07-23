@@ -5,6 +5,12 @@
   },
   "redirects": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "shiber-bazar.vercel.app" }],
+      "destination": "https://shiberbazar.com/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "shiber-bazar.vercel.app" }],
       "destination": "https://shiberbazar.com/:path*",
