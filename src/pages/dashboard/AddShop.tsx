@@ -10,7 +10,7 @@ import { Input, Textarea, Select } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Upload, ArrowLeft, ArrowRight, CheckCircle, Store, Phone, Image, Clock, ShieldCheck, X, FileText } from 'lucide-react'
 // @ts-ignore
-import { getTemplateProducts } from '@/data/categoryProductTemplates'
+import { getTemplateProducts, imageForProduct } from '@/data/categoryProductTemplates'
 
 // @ts-ignore
 const useAuthHook = useAuth
@@ -314,7 +314,34 @@ export default function AddShop() {
 
       // Auto-add template products for the selected category
       const categoryName = categories.find((c: any) => c.id === categoryId)?.name || ''
-      const templates = getTemplateProducts(categoryName)
+      let templates: any[] = getTemplateProducts(categoryName)
+
+      // No hardcoded keyword match — e.g. a category the admin just added
+      // (getTemplateProducts only knows ~17 built-in names). Ask AI for a
+      // starter product list instead of leaving the shop with none, so any
+      // new category works automatically without editing the template file.
+      if (templates.length === 0 && categoryName && shopData?.id) {
+        try {
+          const aiRes = await fetch('/api/generate-category-products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categoryName }),
+          })
+          if (aiRes.ok) {
+            const aiData = await aiRes.json().catch(() => ({}))
+            if (Array.isArray(aiData.products) && aiData.products.length > 0) {
+              templates = aiData.products.map((p: any) => ({
+                ...p,
+                image: imageForProduct(p.name, '/product-placeholder.svg'),
+              }))
+            }
+          }
+        } catch {
+          // AI unavailable — shop is still created with zero products,
+          // same as today's behaviour for an unmatched category.
+        }
+      }
+
       if (templates.length > 0 && shopData?.id) {
         const products = templates.map((t: any) => ({
           shop_id: shopData.id,

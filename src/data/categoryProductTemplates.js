@@ -1239,7 +1239,7 @@ const IMG_RULES = [
   { img: '/products/tools.svg',    kw: ['হ্যামার', 'ড্রাইভার', 'প্লায়ার', 'রেঞ্চ', 'স্পানার', 'চিজেল', 'হ্যাকসো', 'ড্রিল', 'গ্রাইন্ড', 'ওয়েল্ডিং', 'মেজারিং', 'স্ক্রু', 'পেরেক', 'বোল্ট', 'মই'] },
 ]
 
-function imageForProduct(name, fallback) {
+export function imageForProduct(name, fallback) {
   for (const rule of IMG_RULES) {
     if (rule.kw.some(k => name.includes(k))) return rule.img
   }
